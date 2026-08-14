@@ -1,0 +1,309 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+  MAIN_ADMIN
+}
+
+enum TitleType {
+  MANGA
+  MANHWA
+  MANHUA
+}
+
+enum TitleStatus {
+  ONGOING
+  COMPLETED
+  HIATUS
+  DROPPED
+}
+
+// Entry 28: admin-authored reviews from anyone but the Main Admin sit in
+// PENDING_APPROVAL until the Main Admin approves them. Entry 42: a pending
+// review must not be readable/votable/commentable/seal-eligible.
+enum ReviewApprovalStatus {
+  PUBLISHED
+  PENDING_APPROVAL
+  REJECTED
+}
+
+// Entry 18/19: four statuses, independent of whether a review exists.
+enum LibraryStatus {
+  FINISHED
+  CURRENTLY_READING
+  PLAN_TO_READ
+  DROPPED
+}
+
+// Entry 9/11/12/13: provisional -> permanent probation state machine.
+enum SealAwardStatus {
+  PROVISIONAL
+  PERMANENT
+}
+
+enum SealGrantedVia {
+  ADMIN
+  VOTE_THRESHOLD
+}
+
+enum VoteTargetType {
+  REVIEW
+  COMMENT
+}
+
+enum VoteValue {
+  UP
+  DOWN
+}
+
+enum ReportTargetType {
+  REVIEW
+  COMMENT
+  TITLE
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+// App-profile row for a Supabase Auth user. `id` is NOT auto-generated here —
+// it is set to the same UUID as the corresponding auth.users.id (Entry 34:
+// Supabase Auth owns credentials/sessions; this table only owns profile data).
+model User {
+  id                          String   @id
+  username                    String   @unique
+  email                       String   @unique
+  avatarUrl                   String?
+  bio                         String?
+  role                        Role     @default(USER)
+  // Entry 28/41: only meaningful when role = ADMIN; the Main Admin lifts this
+  // per-admin, by manual judgment, not an automatic rule.
+  adminReviewsRequireApproval Boolean  @default(true)
+  reputationScore             Int      @default(0)
+  createdAt                   DateTime @default(now())
+
+  reviews           Review[]
+  libraryEntries    LibraryEntry[]
+  comments          Comment[]
+  votes             Vote[]
+  reports           Report[]       @relation("ReporterReports")
+  sealAwardsAsAdmin SealAward[]    @relation("SealGrantedByAdmin")
+
+  @@map("users")
+}
+
+model Title {
+  id              String      @id @default(uuid())
+  name            String
+  altNames        String[]
+  type            TitleType
+  status          TitleStatus
+  author          String?
+  illustrator     String?
+  genres          String[]
+  coverUrl        String?
+  synopsis        String?
+  publicationYear Int?
+  externalLinks   String[]
+  createdAt       DateTime    @default(now())
+
+  // Precomputed aggregates (Entry 39) — updated incrementally on
+  // review/vote/seal events, never recalculated live on read.
+  avgCategoryScores    Json? // { [categoryId]: avgScore }
+  reviewCount          Int   @default(0)
+  certifiedBangerCount Int   @default(0)
+  hiddenGemCount       Int   @default(0)
+
+  reviews        Review[]
+  libraryEntries LibraryEntry[]
+
+  @@index([type, status])
+  @@index([name])
+  @@map("titles")
+}
+
+// Data-driven, not hardcoded (Entry 2) — five seed rows for v1
+// (Art Style, Character, Plot, Pacing, Uniqueness).
+model Category {
+  id            String      @id @default(uuid())
+  name          String      @unique
+  appliesToType TitleType[]
+  scaleMin      Int         @default(1)
+  scaleMax      Int         @default(10)
+
+  scores ReviewCategoryScore[]
+
+  @@map("categories")
+}
+
+model Review {
+  id                   String               @id @default(uuid())
+  userId               String
+  titleId              String
+  // Computed as the simple average of this review's category scores (Entry 4).
+  overallScore         Float?
+  bodyText             String
+  spoilerFlag          Boolean              @default(false)
+  isAdminAuthored      Boolean              @default(false)
+  approvalStatus       ReviewApprovalStatus @default(PUBLISHED)
+  // Derived flag used by the future first-review reward (Entry 22/26).
+  isFirstReviewOfTitle Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  user           User                  @relation(fields: [userId], references: [id])
+  title          Title                 @relation(fields: [titleId], references: [id])
+  categoryScores ReviewCategoryScore[]
+  comments       Comment[]
+  sealAwards     SealAward[]
+
+  // One review per user per title — editing replaces, never duplicates.
+  @@unique([userId, titleId])
+  @@index([titleId])
+  @@index([approvalStatus])
+  @@map("reviews")
+}
+
+model ReviewCategoryScore {
+  id         String @id @default(uuid())
+  reviewId   String
+  categoryId String
+  score      Int
+
+  review   Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([reviewId, categoryId])
+  @@map("review_category_scores")
+}
+
+// Data-driven (Entry 14) — v1 seed rows: "Certified Banger", "Hidden Gem".
+model SealType {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  icon        String?
+
+  awards SealAward[]
+
+  @@map("seal_types")
+}
+
+// Attaches to a review, not the title directly (Entry 7); title-level counts
+// are precomputed aggregates on Title, updated when a SealAward's status changes.
+model SealAward {
+  id                  String          @id @default(uuid())
+  reviewId            String
+  sealTypeId          String
+  // Required, separate from the review body (Entry 5).
+  justificationText   String
+  status              SealAwardStatus @default(PROVISIONAL)
+  grantedVia          SealGrantedVia
+  grantedByAdminId    String?
+  grantedAt           DateTime        @default(now())
+  // Entry 12: increments daily while net vote score stays >= 0; resets to 0
+  // on any negative dip; converts to PERMANENT at 30. Entry 11: only tracked
+  // for grantedVia = VOTE_THRESHOLD — ADMIN grants are permanent immediately.
+  positiveStreakDays  Int             @default(0)
+  lastStreakResetAt   DateTime?
+  permanentAt         DateTime?
+  // Entry 13: manual admin override note when a permanent seal is demoted/removed.
+  adminOverrideStatus String?
+
+  review         Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  sealType       SealType @relation(fields: [sealTypeId], references: [id])
+  grantedByAdmin User?    @relation("SealGrantedByAdmin", fields: [grantedByAdminId], references: [id])
+
+  // A review can hold multiple distinct seal types at once (Entry 15), but
+  // only one award per seal type per review.
+  @@unique([reviewId, sealTypeId])
+  @@map("seal_awards")
+}
+
+// New v1 entity (Entry 18/19) — independent of Review.
+model LibraryEntry {
+  id        String        @id @default(uuid())
+  userId    String
+  titleId   String
+  status    LibraryStatus
+  addedAt   DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  title Title @relation(fields: [titleId], references: [id])
+
+  @@unique([userId, titleId])
+  @@map("library_entries")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  reviewId  String
+  bodyText  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  votes  Vote[]
+
+  @@map("comments")
+}
+
+// Polymorphic target (review | comment) — no DB-level FK to either, enforced
+// in application code, matching the brief's original Vote design.
+model Vote {
+  id         String         @id @default(uuid())
+  userId     String
+  targetType VoteTargetType
+  targetId   String
+  value      VoteValue
+  createdAt  DateTime       @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  comment   Comment? @relation(fields: [commentId], references: [id])
+  commentId String?
+
+  // Section 4.5 / Security 4.5: one vote per user per target, enforced at the DB level.
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@map("votes")
+}
+
+model Report {
+  id             String           @id @default(uuid())
+  reporterUserId String
+  targetType     ReportTargetType
+  targetId       String
+  reason         String
+  status         ReportStatus     @default(OPEN)
+  createdAt      DateTime         @default(now())
+
+  reporter User @relation("ReporterReports", fields: [reporterUserId], references: [id])
+
+  @@index([status])
+  @@map("reports")
+}
