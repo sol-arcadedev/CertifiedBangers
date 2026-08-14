@@ -1,0 +1,762 @@
+[
+  {
+    "id": 1,
+    "date": "2026-08-14",
+    "title": "Project Brief Review",
+    "type": "Process",
+    "status": "Completed",
+    "summary": "Read and reviewed the project brief (README.md) to establish a shared understanding of the CertifiedBanger platform before any design or implementation work began.",
+    "context": "The project brief, located at Projectinformation/README.md, is the ground-truth requirements document for CertifiedBanger — a community-curated review platform for manga/manhwa where readers rate titles across multiple structured categories and can award a distinct 'Certified Banger' quality seal. The brief defines the product vision, v1 goals and non-goals, target users and user stories, functional and non-functional requirements, a starting data model sketch, and explicitly flags six open product questions (Section 7) that the brief itself states 'should be resolved deliberately, not defaulted by accident.'",
+    "options": [],
+    "decision": "Proceed to resolve the six open questions listed in Section 7 of the brief, one at a time, before any implementation work starts.",
+    "rationale": "The brief explicitly calls these out as genuine product decisions rather than implementation details, and getting them wrong would require reworking the core data model (Title / Review / Category / SealAward / Vote) after the fact. Resolving them first keeps design and schema work aligned with actual product intent from day one."
+  },
+  {
+    "id": 2,
+    "date": "2026-08-14",
+    "title": "Rating Category Set — Data-Driven vs. Hardcoded",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Brief Section 7, Open Question #6",
+    "summary": "Decided whether the five rating categories (Art Style, Character, Plot, Pacing, Uniqueness) should be hardcoded in application code or stored in a data-driven Category table.",
+    "context": "The brief's data model sketch (Section 6) proposes a Category table with fields id, name, applies_to_type, scale_min, scale_max, explicitly marked as 'data-driven, not hardcoded, to support future media types.' The brief's long-term vision (Section 8) is to expand beyond manga/manhwa into other media types (games, movies, novels), which would need their own category sets reusing the same Review/Seal/Category infrastructure.",
+    "options": [
+      {
+        "name": "Hardcode the 5 categories in application code",
+        "description": "Simpler to build initially — no extra table or admin UI needed for v1, since only 5 fixed categories exist at launch."
+      },
+      {
+        "name": "Data-driven Category table",
+        "description": "Categories are rows in the database from day one, even though only 5 exist initially. Slightly more setup work now (one extra table, minimal seed data) but adding a 6th category, adjusting scale ranges, or introducing a category set for a future media type becomes a data change instead of a code change and deploy."
+      }
+    ],
+    "decision": "Adopt the data-driven Category table approach.",
+    "rationale": "The brief's own reasoning was decisive and not contested: this is cheap to build now (5 seed rows) and expensive to retrofit later once reviews and scores already reference hardcoded category identifiers. It is also a direct prerequisite for the stated multi-media expansion goal, where new media types must reuse Review/Category/Seal infrastructure rather than requiring parallel tables. Adopted directly without needing to put this to a vote — the brief's rationale was strong and the user raised no objection when this was presented."
+  },
+  {
+    "id": 3,
+    "date": "2026-08-14",
+    "title": "Anonymous Browsing vs. Required Signup",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Brief Section 7, Open Question #5",
+    "summary": "Decided how much of the platform should be usable without creating an account.",
+    "context": "The brief's target users include a 'casual reader looking for their next read' persona who wants trustworthy recommendations without necessarily committing to an account first. The brief itself suggests (but does not finalize) allowing anonymous browsing while gating write actions behind signup.",
+    "options": [
+      {
+        "name": "Fully open",
+        "description": "No account required for any action, including writing reviews, rating, voting, and commenting. Lowest possible friction, but removes any identity-based abuse mitigation from day one."
+      },
+      {
+        "name": "Fully closed",
+        "description": "Signup required even to browse titles, read reviews, or view the Certified Banger showcase. Maximizes control over who sees content but adds friction for new visitors who haven't yet seen the platform's value."
+      },
+      {
+        "name": "Hybrid — open browsing, gated writing",
+        "description": "Anyone can browse titles, read reviews, and view the seal showcase without an account. Writing a review, rating, voting, commenting, or any seal-related action requires signup."
+      }
+    ],
+    "decision": "Adopt the hybrid model: anonymous browsing and reading allowed; account required only for write/interaction actions (reviewing, rating, voting, commenting, seal-related actions).",
+    "rationale": "Lets new visitors see the platform's core value — structured multi-category reviews and the Certified Banger seal — before being asked to commit to an account, which matters for a discovery-focused product competing with 'scattered, low-signal sources.' All abuse-prone actions (content creation, voting, seal involvement) still require an account, so this does not weaken abuse resistance. This matches common practice on comparable platforms (e.g. Letterboxd, Goodreads)."
+  },
+  {
+    "id": 4,
+    "date": "2026-08-14",
+    "title": "Overall Score Calculation Method",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Brief Section 7, Open Question #1",
+    "summary": "Decided how a review's single 'overall score' is derived from its five per-category scores (Art Style, Character, Plot, Pacing, Uniqueness).",
+    "context": "The brief flags this explicitly: 'Is it a separately entered field, or computed (average/weighted average) from the five category scores? Weighted average lets you tune which categories matter most to the feel of the site.' This affects both the Review schema (whether overall_score is a stored input or a derived value) and the review-writing UX.",
+    "options": [
+      {
+        "name": "Simple average of the 5 category scores",
+        "description": "Overall score is always the mean of the five category ratings. No extra field for reviewers to fill in, fully transparent and predictable to users, no configuration surface to build or maintain."
+      },
+      {
+        "name": "Configurable weighted average",
+        "description": "Overall score is a weighted mean, with per-category weights set in admin configuration (e.g. Plot weighted higher than Pacing). Allows tuning the site's editorial 'feel' over time, but adds a config surface, and the resulting number becomes less self-evident to users trying to understand why it moved."
+      },
+      {
+        "name": "Separate explicit field",
+        "description": "The reviewer types an overall score independently of the five category scores. Gives reviewers full editorial control over the headline number, but the two numbers (categories vs. explicit overall) can end up contradicting each other, and it is an extra required input on every review."
+      }
+    ],
+    "decision": "Simple average of the 5 category scores.",
+    "rationale": "Simplest option, fully transparent to end users (no hidden weighting to explain or justify), avoids building and maintaining a weighting configuration system before there is any usage data to justify it, and avoids the internal-inconsistency problem where a reviewer's stated overall score disagrees with their own category scores. Weighting can be revisited post-launch once there is real rating data to inform sensible weights."
+  },
+  {
+    "id": 5,
+    "date": "2026-08-14",
+    "title": "Seal Justification vs. Review Body",
+    "type": "Decision",
+    "status": "Resolved — later refined, see Entry 9 and Entry 10",
+    "relatesTo": "Brief Section 7, Open Question #2",
+    "summary": "Decided whether awarding a seal requires its own justification text distinct from the review body, and whether a review is a prerequisite for awarding a seal at all.",
+    "context": "The brief frames this as: 'Is awarding a seal a separate action with its own text field, or does it just flag an existing review as seal-worthy? Separate is cleaner conceptually but adds friction; reusing the review is faster but muddies why I rated it this way vs why it's a banger.' This decision was made before the admin/community-vote verification workflow (Entry 6) was introduced later in the same session; see Entry 10 for the open reconciliation item this created.",
+    "options": [
+      {
+        "name": "Requires a review, plus its own separate justification field",
+        "description": "To award a seal, the user must have already reviewed the title; the seal itself carries a distinct required justification field separate from the review body."
+      },
+      {
+        "name": "Review body doubles as justification",
+        "description": "No separate field — checking an 'award seal' option on a review flags that review's existing text as the seal justification. Lower friction, but blends 'why I rated it this way' and 'why it deserves special recognition' into one piece of text."
+      },
+      {
+        "name": "Fully standalone, no review required",
+        "description": "A user can award a seal without ever reviewing the title, via a standalone justification field on the title page. Lowest friction for seal-awarding, but fully decouples the seal from any actual rating data and is the easiest of the three to abuse."
+      }
+    ],
+    "decision": "Requires a review, plus its own separate justification field.",
+    "rationale": "Keeps the rating rationale (the review) conceptually distinct from the special-recognition claim (the justification), while still requiring genuine engagement with the title — a user cannot claim a title is a 'banger' without having actually rated and reviewed it, which guards against drive-by seal claims disconnected from any real evaluation."
+  },
+  {
+    "id": 6,
+    "date": "2026-08-14",
+    "title": "Certified Banger Verification Workflow — Phased Admin-then-Vote Model",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Supersedes the self-service seal-award assumption implicit in Entry 5 and in Brief Section 7, Open Question #3, for the Certified Banger seal specifically",
+    "summary": "Replaced the assumption that any qualifying user can directly self-award the Certified Banger seal with a two-phase verification workflow: manual admin approval at launch, transitioning to automatic community-vote-based approval once the userbase and review volume grow.",
+    "context": "Prior to this decision, the working assumption (consistent with the brief's Section 4.3 and Open Question #3) was that any user meeting some eligibility bar (e.g. account age, prior review count, or reputation) could directly award the Certified Banger seal to a title themselves. The user redirected this: for the Certified Banger seal, the award should not be a direct user action at all. Instead: (1) at launch, an admin manually verifies a submitted review and grants the seal; (2) once the userbase and interaction volume have grown, the seal is instead granted automatically based on the balance of upvotes and downvotes other users give that review.",
+    "options": [
+      {
+        "name": "Original model — user self-award with eligibility gating",
+        "description": "Any user past a minimum account-age/review-count/reputation threshold can directly award the seal with a justification, per Open Question #3's framing. Simple to build, but seal credibility rests entirely on the eligibility threshold being well-tuned, and is vulnerable to coordinated abuse (sockpuppet accounts clearing the bar)."
+      },
+      {
+        "name": "Phased verification model — admin now, community vote later",
+        "description": "Phase 1 (launch): an admin reviews submitted reviews and manually grants the Certified Banger seal after verification — no user-facing 'award seal' action exists yet. Phase 2 (post-growth): the seal is instead granted automatically once a review's community upvotes/downvotes cross a defined threshold, removing the admin bottleneck as volume grows. Requires more workflow/state (an approval or pending status) but keeps seal-granting under direct human control while the userbase and vote signal are too small to trust algorithmically, then scales moderation effort via the community itself rather than more admin headcount."
+      }
+    ],
+    "decision": "Adopt the phased verification model: admin-verified at launch, transitioning to automatic vote-threshold-based approval later.",
+    "rationale": "The credibility of the Certified Banger seal is explicitly called out in the brief's non-functional requirements as 'the entire product' — it must not be easy to game. At launch, review and vote volume will be too low for an automated threshold to be a meaningful trust signal, so a human check is the safer default. Once there is enough community voting activity for a threshold to be statistically meaningful, switching to automatic approval removes the admin bottleneck without giving up the credibility bar, and reuses the Vote entity already present in the brief's data model (Section 6) rather than requiring new infrastructure."
+  },
+  {
+    "id": 7,
+    "date": "2026-08-14",
+    "title": "Seal Target — Attaches to Review vs. Attaches to Title",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Follow-on decision from Entry 6",
+    "summary": "Decided whether the Certified Banger seal, once verified, is attached to the specific review that earned it, or to the title as a single overall flag.",
+    "context": "The brief's data model sketch left this open, noting for SealAward: 'consider: linked to a review_id, or standalone.' With the phased verification workflow from Entry 6 now in place, this needed to be settled: does verification happen per-review (so a title could have several independently-certified reviews) or per-title (a single up/down decision about the title as a whole, informed by its reviews)?",
+    "options": [
+      {
+        "name": "Attaches to the review",
+        "description": "Each individual review can be independently verified and certified. A title's displayed seal count equals the number of its reviews that have earned the seal. Multiple different users' reviews on the same title can each separately earn certification. Matches the brief's original 'seal count as trust signal' framing (Section 4.3 and Open Question #4) and matches how the workflow was described — verifying a submitted review, and votes on the review."
+      },
+      {
+        "name": "Attaches to the title",
+        "description": "A single decision is made per title (by admin, or later by aggregate vote signal across its reviews): is this title Certified Banger or not. No per-review count — a single title-level flag informed by, but not tied to, one specific winning review."
+      }
+    ],
+    "decision": "The seal attaches to the review; the title inherits/aggregates certification through its certified reviews (seal count = number of certified reviews on that title).",
+    "rationale": "Preserves the brief's original design intent that seal count functions as a trust signal (Section 4.3: 'the ratio of seal-awards to total reviews should be visibly surfaced'), and matches the mechanics of the phased workflow directly — both admin verification and vote-threshold approval are naturally evaluated against one specific review's content and vote tally, not an abstract aggregate of the whole title."
+  },
+  {
+    "id": 8,
+    "date": "2026-08-14",
+    "title": "Phase 2 Auto-Certification Trigger — Vote Threshold Type",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Follow-on decision from Entry 6",
+    "summary": "Decided what kind of vote-based rule triggers automatic Certified Banger certification once Phase 2 (community-vote-driven) is active.",
+    "context": "Phase 2 of the verification workflow (Entry 6) certifies a review automatically once its community voting reaches some threshold. Two natural ways to define that threshold were considered.",
+    "options": [
+      {
+        "name": "Net score threshold (upvotes − downvotes ≥ N)",
+        "description": "A simple absolute count — e.g. net +50. Easy to reason about and configure, but does not distinguish a review with a large but closely contested vote split (e.g. 200 up / 150 down = net 50) from one with near-unanimous support (e.g. 50 up / 0 down = net 50); both would pass identically."
+      },
+      {
+        "name": "Ratio + minimum volume (e.g. ≥ 90% upvoted, ≥ 20 total votes)",
+        "description": "Requires both a consensus quality bar (upvote ratio) and a minimum sample size, preventing a review with a tiny but perfect vote count (e.g. 5 up / 0 down) from qualifying on volume alone. Better reflects genuine community consensus, at the cost of a slightly more complex rule to configure and explain."
+      }
+    ],
+    "decision": "Net score threshold: automatic certification triggers when (upvotes − downvotes) ≥ N, with N configurable.",
+    "rationale": "User's explicit choice. Simpler to configure and reason about than a combined ratio-plus-volume rule, and reuses the same net-vote concept already familiar from the review/comment voting feature (Section 4.2) rather than introducing a second, differently-shaped threshold concept."
+  },
+  {
+    "id": 9,
+    "date": "2026-08-14",
+    "title": "Seal Probation & Permanence Model",
+    "type": "Decision",
+    "status": "Resolved — see Entries 11–13 for the resolved sub-items",
+    "relatesTo": "Refines revocability of the seal granted under the workflow in Entry 6",
+    "summary": "Decided that a newly granted Certified Banger seal is not immediately final: it starts in a temporary/provisional state, and converts to permanent only if the review's community rating stays overall positive for one month.",
+    "context": "Following the phased verification workflow (Entry 6) and the review-level seal target (Entry 7), the question of whether a granted seal could later be revoked was raised. Rather than a simple yes/no on revocability, the user specified a concrete probation mechanism: certification is provisional at first, and a sustained one-month period of overall-positive community rating converts it to a permanent seal.",
+    "options": [
+      {
+        "name": "Certification is immediately final",
+        "description": "Once granted (by admin or by crossing the vote threshold), the seal is permanent from that moment, with no probation period. Simplest to implement, but offers no protection against an early vote-brigade or a since-reversed admin judgment call permanently locking in an undeserved seal."
+      },
+      {
+        "name": "Provisional-then-permanent probation model",
+        "description": "A newly granted seal starts in a temporary/provisional state. If the review's community rating stays overall positive across a one-month probation window, the seal converts to permanent. Adds a probation state and a scheduled re-check, but protects seal credibility against early, unrepresentative voting spikes in either direction."
+      }
+    ],
+    "decision": "Adopt the provisional-then-permanent probation model: newly certified reviews are marked provisional; after one month of sustained overall-positive community rating, the seal becomes permanent.",
+    "rationale": "User's explicit choice. Directly protects the seal's credibility — called out repeatedly in the brief as the platform's core differentiator — against a review being certified on an early, unrepresentative burst of votes (or, during Phase 1, a since-reconsidered admin judgment) that does not hold up once more of the community has weighed in.",
+    "openSubItems": [
+      "Does the one-month provisional period apply to both admin-granted (Phase 1) and auto vote-threshold-granted (Phase 2) seals, or only to Phase 2 seals?",
+      "What exactly counts as 'stays positive' — the net score (upvotes − downvotes) measured only at the end of the month, or must the net score remain ≥ 0 continuously throughout the month (i.e. does a mid-month dip into negative net disqualify it even if it recovers by day 30)?",
+      "If a review fails to stay positive through the probation window, is the provisional seal revoked outright (with the possibility of re-nomination later), or does it simply remain indefinitely 'provisional' until the trend turns positive again?",
+      "Once a seal converts to permanent, is it ever re-evaluated again (e.g. following a mass-reporting event or a heavily edited review), or is 'permanent' an absolute, one-way lock regardless of future activity?"
+    ]
+  },
+  {
+    "id": 10,
+    "date": "2026-08-14",
+    "title": "Consolidated Open Items Requiring Further Clarification",
+    "type": "Open Question Log",
+    "status": "Resolved — see Entries 11–16",
+    "summary": "Running list of unresolved sub-questions surfaced while working through Section 7 of the brief and the subsequent seal-verification workflow discussion. Maintained here as a single traceable list; each item should be moved into its own resolved Decision entry once settled.",
+    "decision": "All items below were resolved in a follow-up discussion — see Entries 11 through 16 for each individual resolution. New sub-items surfaced during that discussion are logged separately in Entry 17.",
+    "items": [
+      {
+        "topic": "Probation scope",
+        "question": "Does the one-month provisional-then-permanent model (Entry 9) apply to both Phase 1 (admin-granted) and Phase 2 (vote-threshold-granted) seals, or only to Phase 2?"
+      },
+      {
+        "topic": "Probation 'stays positive' definition",
+        "question": "Is probation success judged by the net vote score at the end of the month only, or must the net score remain non-negative continuously throughout the month?"
+      },
+      {
+        "topic": "Probation failure outcome",
+        "question": "If a provisional seal fails to stay positive, is it revoked outright, or does it remain indefinitely provisional until the trend recovers?"
+      },
+      {
+        "topic": "Permanent seal re-evaluation",
+        "question": "Once converted to permanent, can a seal ever be revoked later (e.g. after a reporting event), or is it a true one-way lock?"
+      },
+      {
+        "topic": "Seal-type scope of the verification workflow",
+        "question": "The admin-then-vote verification workflow (Entry 6) was described specifically for the 'Certified Banger' seal. The brief's schema supports multiple seal types (SealType table, e.g. a future 'Hidden Gem' or 'Art Masterpiece'). Does the same admin/vote verification workflow apply to all seal types generically, or only to Certified Banger? If only to Certified Banger, how would other/future seal types be awarded — direct user self-award as originally framed in Open Question #2/Entry 5, or some other mechanism?"
+      },
+      {
+        "topic": "Seal cardinality per review",
+        "question": "Original Open Question #4 asked whether a title (now: a review, per Entry 7) can carry more than one distinct seal type at once. This was never explicitly answered before the conversation moved into the verification-workflow redesign. Under the new model, can a single review independently earn multiple distinct seal types (e.g. both 'Certified Banger' and a future 'Hidden Gem'), or is certification limited to one seal per review?"
+      },
+      {
+        "topic": "Baseline gating on review submission itself",
+        "question": "Original Open Question #3 (minimum account age / review count / reputation before seal-awarding) is largely superseded by the admin/vote verification gate from Entry 6. Should there still be a lightweight baseline gate (e.g. minimum account age) on submitting a review at all, independent of seal certification, purely as spam/sockpuppet mitigation for the review system itself? Not yet explicitly discussed."
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "date": "2026-08-14",
+    "title": "Probation Scope — Applies Only to Phase 2 (Vote-Threshold) Seals",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves Open Item 'Probation scope' from Entry 10; refines Entry 9",
+    "summary": "Decided that the one-month provisional-to-permanent probation period (Entry 9) applies only to seals granted automatically via the Phase 2 vote-threshold mechanism (Entry 6), not to seals granted manually by an admin in Phase 1.",
+    "context": "Entry 9 established a provisional-then-permanent probation model but left open whether it applied uniformly to both ways a seal can be granted (Entry 6): manual admin verification (Phase 1) and automatic vote-threshold approval (Phase 2).",
+    "options": [
+      {"name": "Applies to both phases", "description": "Every certified seal, however granted, starts provisional and must earn a month of sustained positive rating to become permanent. One consistent lifecycle, but treats an admin's considered judgment the same as a purely automatic vote count."},
+      {"name": "Applies only to Phase 2", "description": "Seals granted by manual admin verification (Phase 1) become permanent immediately — the admin's review is treated as already-trustworthy. Only automatically-granted (Phase 2) seals go through the month-long probation, since nothing has yet verified they reflect genuine, sustained consensus."}
+    ],
+    "decision": "Probation applies only to Phase 2 (automatic, vote-threshold-granted) seals. Phase 1 (admin-granted) seals become permanent immediately upon admin approval.",
+    "rationale": "A manual admin verification already functions as a trusted human check before the seal is granted, so an additional automatic probation safeguard is redundant for Phase 1. Phase 2 grants are decided purely by an automatic vote-count threshold with no human review at the moment of granting, so the probation period substitutes for that missing human judgment — it lets a larger, more sustained sample of community voting confirm the initial threshold wasn't a fluke or an early brigade."
+  },
+  {
+    "id": 12,
+    "date": "2026-08-14",
+    "title": "Probation Mechanics — Continuous 30-Consecutive-Day Positive Streak",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves Open Items 'Probation \"stays positive\" definition' and 'Probation failure outcome' from Entry 10; refines Entry 9",
+    "summary": "Decided exactly how the one-month probation period (Entry 9, applicable only to Phase 2 seals per Entry 11) is measured: continuously rather than as a single end-of-month check, with no hard failure state — a review simply remains provisional until it achieves the required streak.",
+    "context": "Two related questions were open: (1) whether 'stays positive' is judged by a single net-score check at the end of the month or continuously throughout it, and (2) what happens if a provisional seal fails to stay positive — is it revoked outright, or does it remain provisional indefinitely.",
+    "options": [
+      {"name": "End-of-month snapshot", "description": "Only the net vote score at the 30-day mark is checked. Simple, single check, tolerant of early volatility that later recovers."},
+      {"name": "Continuous throughout the month", "description": "The net vote score must stay non-negative on every day of the 30-day window; any dip disqualifies that attempt immediately. Stricter and more sensitive to short-term volatility."},
+      {"name": "Revoke outright on failure", "description": "If probation fails, the seal is removed cleanly; the review could be re-nominated later to start a fresh attempt."},
+      {"name": "Stay provisional indefinitely on failure", "description": "No hard failure state — the review simply remains marked provisional and keeps being evaluated, converting to permanent whenever it eventually achieves the required run of positive days, however long that takes."}
+    ],
+    "decision": "Probation is evaluated continuously: the review's net vote score (upvotes − downvotes) must remain non-negative every single day. Any dip into negative net resets the streak counter to zero. There is no outright revocation — a Phase 2 seal simply stays in the provisional state indefinitely, and converts to permanent the moment it accumulates 30 consecutive days with a non-negative net score.",
+    "rationale": "Continuous tracking makes the probation period a genuine test of sustained community sentiment rather than a one-time coin flip on day 30. Not having a hard revocation state avoids arbitrarily punishing a review that is trending positive but had early volatility — it always has a path back to permanence rather than being locked out after one bad stretch, fitting the platform's goal of surfacing genuinely good content over time rather than being overly punitive on a single data point."
+  },
+  {
+    "id": 13,
+    "date": "2026-08-14",
+    "title": "Permanent Seal Revocability — Locked with Manual Admin Override",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves Open Item 'Permanent seal re-evaluation' from Entry 10; refines Entry 9",
+    "summary": "Decided whether a seal that has converted to permanent status can ever be revoked afterward.",
+    "context": "Entry 9 established that a seal converts to permanent after satisfying probation, but left open whether that permanent status could later be automatically stripped if community sentiment changed.",
+    "options": [
+      {"name": "Locked forever", "description": "Once permanent, a seal is never re-evaluated based on votes again — automatic revocation is impossible. Any later issue (e.g. fraud discovered after the fact) would need to be handled outside the automatic vote-tracking system entirely."},
+      {"name": "Always re-evaluated", "description": "Even permanent seals are continuously monitored and can be automatically stripped if the net score later goes negative. Keeps every seal 'live' indefinitely but undermines the meaning of 'permanent', and requires monitoring every certified review's votes forever."}
+    ],
+    "decision": "A permanent seal is locked against automatic, vote-based revocation — it will never be stripped purely because votes later swing negative. However, a human admin retains the ability to manually demote a permanent seal back to provisional status, or remove it entirely, as a moderation action.",
+    "rationale": "Locking permanence against automatic revocation gives the seal real meaning as a stable badge, consistent with how it's described throughout the brief as the platform's core trust signal. Retaining a manual admin override — rather than making it truly untouchable — provides an escape hatch for genuine abuse or fraud discovered after the fact (e.g. coordinated vote manipulation uncovered later), without reintroducing the automatic, purely vote-driven instability that permanence is meant to avoid."
+  },
+  {
+    "id": 14,
+    "date": "2026-08-14",
+    "title": "Seal-Type Scope of the Verification Workflow",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves Open Item 'Seal-type scope of the verification workflow' from Entry 10; refines Entry 6",
+    "summary": "Decided whether the admin-then-vote verification workflow (Entry 6), together with its probation/permanence rules (Entries 9, 11–13), applies only to the Certified Banger seal or to every seal type on the platform.",
+    "context": "The brief's schema (Section 6) supports multiple seal types via a SealType table, but the verification workflow had only been discussed in the context of Certified Banger specifically.",
+    "options": [
+      {"name": "Certified Banger only", "description": "The full admin/vote/probation workflow is specific to the flagship Certified Banger seal. Any other seal type would use a lighter mechanism, e.g. direct user self-award with justification (the original model from Entry 5)."},
+      {"name": "All seal types, generically", "description": "Every seal type — present and future — goes through the identical admin-then-vote-then-probation pipeline, just scoped to that seal type's own criteria and vote tallies."}
+    ],
+    "decision": "The verification workflow applies generically to all seal types, not just Certified Banger. As of this entry, the platform has exactly two seal types planned for v1: Certified Banger and Hidden Gem (see Entry 15) — both go through the same admin verification / vote-threshold / probation / permanence pipeline, evaluated against each seal type's own specific criteria.",
+    "rationale": "User's explicit choice. Keeps a single, consistent mechanism to build, test, and reason about rather than maintaining two different seal-granting code paths (one heavyweight for Certified Banger, one lightweight for everything else)."
+  },
+  {
+    "id": 15,
+    "date": "2026-08-14",
+    "title": "New Seal Type — \"Hidden Gem\" Definition, Criteria, and Relationship to Certified Banger",
+    "type": "Decision",
+    "status": "Resolved — numeric thresholds still TBD, see Entry 17",
+    "relatesTo": "New seal type introduced during resolution of Entry 10's open items; uses the workflow from Entries 6 and 14",
+    "summary": "Introduced a second v1 seal type, 'Hidden Gem', which recognizes titles with a genuinely strong community rating that are comparatively unpopular/low-demand — intended as a discovery tool for good-but-under-the-radar titles. Defined its criteria, its relationship to Certified Banger, and its permanence behavior.",
+    "context": "This decision emerged directly from the user during clarification of the seal-type-scope open item, rather than from a menu of options presented — it was not previously specified in the brief, which only names Certified Banger as the shipping seal type for v1 (with 'Hidden Gem' and 'Art Masterpiece' mentioned only as hypothetical future examples in Section 4.3).",
+    "options": [],
+    "decision": "Hidden Gem criteria and behavior, as specified: (1) Quality gate — the review must meet the same positive-vote quality bar used for Certified Banger (net upvotes − downvotes ≥ N, the same threshold from Entry 8, subject to Entry 14's generic workflow). (2) Popularity gate — popularity is measured as the total number of user votes cast on the product's highest-voted review (a volume metric, distinct from the net-score quality metric). Below the popularity threshold, a qualifying review earns Hidden Gem. At or above the popularity threshold, the product also earns Certified Banger. (3) Cardinality — a product can hold both Hidden Gem and Certified Banger at the same time; earning Certified Banger does not remove Hidden Gem. (4) Permanence — Hidden Gem, once earned, remains permanently attached (governed by the same continued-positive-votes logic as other seals), even after the product later also earns Certified Banger, so it continues to function as an accurate historical/discovery marker.",
+    "rationale": "Gives the platform a second, distinct axis of recognition beyond raw consensus quality — surfacing well-reviewed titles that haven't yet found a wide audience, which directly supports a stated future discovery use case: letting users filter/search specifically for 'good but less known' titles. Keeping Hidden Gem permanent even after a title becomes popular preserves the accuracy of that discovery signal — it marks titles that were genuinely under-the-radar quality finds, which remains true information even after the title later gains popularity."
+  },
+  {
+    "id": 16,
+    "date": "2026-08-14",
+    "title": "Baseline Account Gate on Review Submission",
+    "type": "Decision",
+    "status": "Resolved — specific threshold values still TBD, see Entry 17",
+    "relatesTo": "Resolves Open Item 'Baseline gating on review submission itself' from Entry 10",
+    "summary": "Decided whether a baseline account gate (independent of any seal-related gating) should restrict who can submit a review at all, from launch.",
+    "context": "Original Open Question #3 (minimum account age/reputation before seal-awarding) had been largely superseded by the admin/vote seal-verification workflow (Entry 6). This left a separate, narrower question open: should there be any minimum bar on submitting a review in the first place, purely as spam/sockpuppet mitigation for the review pipeline itself.",
+    "options": [
+      {"name": "Gate from launch, evolving over time", "description": "A baseline restriction (e.g. minimum account age) applies to review submission from day one. As the platform grows and its user base increases, additional or different restrictions get layered on top."},
+      {"name": "No gate at launch", "description": "Any registered user can submit a review immediately after signup, relying purely on rate limiting and post-hoc moderation; a gate would only be introduced later once real abuse patterns are observed."}
+    ],
+    "decision": "There will be a baseline account gate on review submission from launch. As the platform grows and its user base increases over time, additional or adjusted restrictions will be layered on top of this initial gate.",
+    "rationale": "User's explicit choice. Protects the review pipeline — which everything downstream depends on, including the admin verification queue and the vote-threshold signal for seals — from spam/sockpuppet submissions from day one, rather than waiting for abuse to actually occur before reacting.",
+    "openSubItems": [
+      "Exact gate criteria not yet specified — e.g. minimum account age in days, email verification requirement, or another mechanism.",
+      "What the 'additional restrictions' introduced as the platform grows will specifically be, and what usage/growth signal triggers introducing them."
+    ]
+  },
+  {
+    "id": 17,
+    "date": "2026-08-14",
+    "title": "Consolidated Open Items — Round 2",
+    "type": "Open Question Log",
+    "status": "Resolved — see Entries 29 and 40",
+    "summary": "New unresolved sub-items surfaced while resolving Entry 10's open questions. Entry 10 itself is now fully resolved; these are follow-on questions raised by its resolutions. Maintained here as a single traceable list; each item should be moved into its own resolved Decision entry once settled.",
+    "decision": "The quality-gate threshold value and popularity-gate threshold value were resolved in Entry 29. The baseline review-submission gate's exact criteria, and how that gate evolves over time, were resolved in Entry 40.",
+    "items": [
+      {"topic": "Quality-gate threshold value", "question": "Entry 8 established the seal quality trigger as net score (upvotes − downvotes) ≥ N, with N left as a configurable, unspecified number. What should N actually be for v1 launch?"},
+      {"topic": "Popularity-gate threshold value", "question": "Entry 15 established that popularity (for the Hidden Gem vs. Certified Banger split) is measured by total vote count on a product's highest-voted review. What vote-count threshold should separate 'less known' (Hidden Gem) from 'well known' (also earns Certified Banger)?"},
+      {"topic": "Baseline review-submission gate — exact criteria", "question": "Entry 16 established that a baseline gate exists on review submission from launch. What is the actual gate — minimum account age (how many days), email verification, or some other mechanism?"},
+      {"topic": "Baseline gate evolution over time", "question": "Entry 16 also established that additional/different restrictions get layered on as the platform grows. What specific restrictions, and what growth/usage signal triggers introducing them?"}
+    ]
+  },
+  {
+    "id": 18,
+    "date": "2026-08-14",
+    "title": "User Library Feature — Status Set (Four Statuses)",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "New feature: user library / reading-status tracking, introduced this session",
+    "summary": "Introduced a new v1 feature: registered users can add titles to a personal library on their profile, tagged with a reading status. Decided the full set of statuses to support.",
+    "context": "This is a new feature beyond the original brief, proposed to let users track which titles they've read or are reading, and to later feed a personalized recommendation engine (see Entry 21). It requires a new data model entity — a LibraryEntry linking a user to a title with a status, distinct from the existing Review entity. The user's initial proposal named two statuses: 'finished reading' and 'currently reading.'",
+    "options": [
+      {"name": "Two statuses (Finished, Currently Reading)", "description": "Matches the original feature proposal exactly. Minimal scope, covers the core use case, but offers no way to express intent to read something later or that a title was abandoned."},
+      {"name": "Four statuses (Finished, Currently Reading, Plan to Read, Dropped)", "description": "Adds two additional statuses common on comparable list-tracking platforms (e.g. MyAnimeList, AniList). 'Plan to Read' captures expressed future interest; 'Dropped' captures an explicit negative/abandoned signal. Slightly larger enum and UI surface, but produces richer signal for future features like the recommendation engine."}
+    ],
+    "decision": "Adopt all four statuses: Finished, Currently Reading, Plan to Read, and Dropped.",
+    "rationale": "User's explicit choice. Matches conventions users of comparable platforms already expect, and produces more useful signal for the future recommendation engine — 'Dropped' in particular is a potentially valuable negative signal (see Entry 21's open items), and 'Plan to Read' captures interest that isn't yet backed by a rating. This adds a new entity to the data model (Section 6 of the brief): a LibraryEntry (user_id, title_id, status, added_at, updated_at) — status stored as a data-driven/enumerated value, independent of the Review and ReviewCategoryScore entities."
+  },
+  {
+    "id": 19,
+    "date": "2026-08-14",
+    "title": "Library Entries Are Independent of Reviews",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Follow-on decision for the library feature introduced in Entry 18",
+    "summary": "Decided whether adding a title to a user's library requires that title to already have (or immediately gain) a review from that user, or whether the two actions are fully independent.",
+    "context": "A library entry and a review are two different pieces of user-generated content about the same title. It needed to be settled whether they're tightly coupled (e.g. you can only add a 'Finished' entry if you've also reviewed it) or fully independent actions a user can take separately, in either order, or not at all.",
+    "options": [
+      {"name": "Coupled to a review", "description": "A library entry (at least for 'Finished' status) requires an accompanying review with category scores. Guarantees every finished library entry carries rating data, but adds friction and doesn't fit 'Currently Reading' at all, since the title isn't finished yet."},
+      {"name": "Fully independent of reviews", "description": "A user can add any title to their library, at any status, with or without ever writing a review for it. Reviews remain a separate, optional action. Lower friction, fits every status naturally (especially 'Currently Reading' and 'Plan to Read', which couldn't have a completed review anyway), but means some 'Finished' entries may have no rating data attached."}
+    ],
+    "decision": "Library entries are fully independent of reviews. A user can add a title to their library, at any status, whether or not they have reviewed it.",
+    "rationale": "User's explicit choice. Necessary in practice for 'Currently Reading' and 'Plan to Read' statuses, which by definition can't have a completed review yet, and keeps the library feature low-friction as a lightweight tracking tool distinct from the more effortful act of writing a structured review. The tradeoff — that some 'Finished' entries won't carry category-score data — is carried forward as an open item for how the recommendation engine handles it (see Entry 21's open items)."
+  },
+  {
+    "id": 20,
+    "date": "2026-08-14",
+    "title": "Scope Placement — Library Ships in v1, Recommendation Engine Is Future Scope",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Scope decision for the library and recommendation features introduced in Entries 18–19 and 21",
+    "summary": "Decided which parts of the new library/recommendation feature ship as part of v1 versus which parts are documented now but deferred to a later iteration, consistent with how the brief already treats other post-v1 items (Section 8).",
+    "context": "The library feature (adding titles with a status) and the recommendation engine (suggesting new titles based on a user's library) were proposed together, but differ enormously in build complexity and in how much they depend on having a real, active userbase already using the platform.",
+    "options": [
+      {"name": "Both features in v1", "description": "Ship the library feature and a working recommendation engine together at launch. Delivers the full experience immediately, but the recommendation engine would have little to no real usage data to work from at launch, and its algorithm design isn't yet settled."},
+      {"name": "Library in v1, recommendation engine deferred", "description": "Ship the library/status-tracking feature (a straightforward data-entry feature) as part of v1. Defer the recommendation engine itself to a future iteration, once there's enough real 'Finished' library data across the userbase for recommendations to be meaningful — documented now (Entry 21) so the architecture supports it later without rework."},
+      {"name": "Both features deferred to future scope", "description": "Treat the entire library + recommendation feature as post-v1, alongside the other Section 8 items. Simplest v1 scope, but delays a feature that's cheap to build (the library part) and that starts accumulating useful data the moment it ships."}
+    ],
+    "decision": "The library/status-tracking feature ships as part of v1. The recommendation engine itself is future scope — designed for architecturally now (Entry 21), but not built until a later iteration.",
+    "rationale": "User's explicit choice. The library feature is low-complexity (pure data entry, no algorithm) and starts generating the exact data the future recommendation engine will need the moment it ships, so there's no reason to delay it. The recommendation engine, by contrast, genuinely benefits from waiting — both because a reliable algorithm needs real usage data to validate against, and because the user explicitly wants to design that algorithm 'once we are at the point of developing that usecase' rather than commit to one prematurely. This mirrors how the brief already treats other future-scope items (e.g. token rewards in Section 8): documented and architected for now, built later."
+  },
+  {
+    "id": 21,
+    "date": "2026-08-14",
+    "title": "Recommendation Engine — Input Signal Scope (Future Scope)",
+    "type": "Decision",
+    "status": "Resolved — algorithm design and some input-signal details deferred, see Entry 23",
+    "relatesTo": "Future-scope feature; input data comes from the v1 library feature (Entries 18–20); refines Brief Section 8's 'Personalized recommendations' item",
+    "summary": "Defined what data the future recommendation engine will draw on, even though the engine itself is not being built in v1. Recommendations will be based on the user's own per-category ratings and their inferred genre preferences, both derived only from titles marked 'Finished' in their library.",
+    "context": "The brief's Section 8 already listed 'personalized recommendations based on a user's rating history/taste profile' as a future-scope item, without detail. This session's discussion fleshed it out: recommendations should be based on (a) the user's per-category rating patterns (Art Style, Character, Plot, Pacing, Uniqueness) and (b) the genres they tend to prefer, both inferred from the titles in their library.",
+    "options": [],
+    "decision": "Only titles with a 'Finished' status in a user's library are used as input signal for the future recommendation engine — 'Currently Reading', 'Plan to Read', and 'Dropped' entries are not used as positive input signal. The engine will combine (a) the user's own category-score patterns from reviews of their finished titles and (b) genre frequency/affinity across their finished titles. The exact algorithm (how these two signals are weighted and combined, and whether a collaborative or purely content-based approach is used) is intentionally left undesigned until this feature is actively built, per the user's explicit preference to design a reliable algorithm at that time rather than commit to one now.",
+    "rationale": "'Finished' is the strongest available signal of a settled, informed opinion — 'Currently Reading' and 'Plan to Read' reflect incomplete or aspirational engagement that could mislead a taste profile, and were explicitly excluded by the user. Deferring the algorithm itself avoids locking in a specific recommendation technique before there's real usage data (which requires the v1 library feature to actually be live and used) to validate it against.",
+    "openSubItems": [
+      "Since library entries are independent of reviews (Entry 19), a 'Finished' entry may have no review and therefore no category-score data. Does such an entry still contribute genre-signal (from title metadata alone) while contributing no category-score signal, or is it excluded from the recommendation input entirely until reviewed?",
+      "Should 'Dropped' status act as an explicit negative signal in a future iteration (e.g. deprioritizing similar titles/genres), rather than simply being excluded/ignored?",
+      "Full algorithm design (e.g. weighted content-based filtering, hybrid approaches, or something else) — explicitly deferred until this feature enters active development."
+    ]
+  },
+  {
+    "id": 22,
+    "date": "2026-08-14",
+    "title": "Future Scope Note — Reward for a Well-Received First Review",
+    "type": "Decision",
+    "status": "Resolved as a captured future-scope note — 'first review' definition corrected, see Entry 26; remaining design deferred, see Entry 23",
+    "relatesTo": "Extends Brief Section 8's existing token-reward item; architecture consideration only, not a v1 requirement",
+    "summary": "Captured a future (explicitly not v1) feature: if a user's first-ever review is well received by other users, the review's author receives a reward. Clarified that this reward is the same token-reward system already noted in the brief (Section 8's pump.fun-launched coin), not a separate reputation/points mechanism — flagged now purely so the underlying architecture (vote tracking, user/review history) accommodates it later without rework.",
+    "context": "The user raised this while discussing the library feature, explicitly framing it as 'not essential for V1.0... just a requirement for a future iteration to keep in mind for designing the architecture' rather than something to build or fully specify now.",
+    "options": [],
+    "decision": "Logged as a future-scope architecture consideration, linked to the existing Section 8 token-reward item (not a new, separate reward mechanism). No v1 work is required, but the data needed to support it later — per-user review history (to identify a 'first review') and per-review vote tallies (to determine if it was 'well received') — already exists in the brief's data model (Review, Vote) and in this session's decisions (Entries 6–14's vote-threshold logic), so no architectural changes are needed now to keep this viable later.",
+    "rationale": "Matches the user's own framing: capture the requirement for traceability and architectural awareness without spending design effort on a feature not being built yet. Confirming it reuses the existing token-reward system (rather than introducing a second reward currency/mechanism) keeps the future-scope roadmap from fragmenting into multiple parallel reward systems.",
+    "openSubItems": [
+      "Exact 'well received' threshold for a first review (e.g. a minimum net vote score, similar to the seal vote-threshold concept) — not yet defined.",
+      "Precise definition of 'first review' (first review ever authored by the user, across any title) — presumed but not yet explicitly confirmed.",
+      "Full reward mechanics — deferred along with the rest of the Section 8 token-reward system's design."
+    ]
+  },
+  {
+    "id": 23,
+    "date": "2026-08-14",
+    "title": "Consolidated Open Items — Round 3 (Library & Recommendation Feature)",
+    "type": "Open Question Log",
+    "status": "Resolved — see Entries 24–26; two items intentionally remain open by design",
+    "summary": "Unresolved sub-items surfaced while specifying the new library feature (v1) and the future-scope recommendation engine and first-review reward. Maintained here as a single traceable list; each item should be moved into its own resolved Decision entry once settled.",
+    "decision": "Items 1, 2, and 5 were resolved — see Entries 24, 25, and 26 respectively. Items 3 (recommendation algorithm design) and 4 (first-review reward threshold) were explicitly confirmed to remain open/deferred by design, not oversights — they stay tracked as open sub-items on Entries 21 and 22 respectively until those features enter active development.",
+    "items": [
+      {"topic": "Unreviewed 'Finished' entries in recommendations", "question": "Does a 'Finished' library entry with no review contribute genre-only signal to the future recommendation engine, or is it excluded from recommendation input entirely until reviewed?"},
+      {"topic": "'Dropped' status as negative signal", "question": "Should a 'Dropped' library entry actively deprioritize similar titles/genres in future recommendations, or simply be excluded/ignored?"},
+      {"topic": "Recommendation algorithm design", "question": "What specific algorithm (content-based filtering, hybrid, or another approach) will combine category-score and genre signals? Explicitly deferred until the feature enters active development."},
+      {"topic": "First-review reward threshold", "question": "What vote threshold or criteria defines a first review as 'well received' enough to trigger the token reward?"},
+      {"topic": "Definition of 'first review'", "question": "Does 'first review' mean the user's first review ever (across any title), or could it be interpreted differently (e.g. first review per title, which wouldn't make sense given one-review-per-title-per-user)? Presumed to mean first-ever, but not explicitly confirmed."}
+    ]
+  },
+  {
+    "id": 24,
+    "date": "2026-08-14",
+    "title": "Recommendation Engine — Unreviewed 'Finished' Entries Are Included",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves Round 3 Open Item 'Unreviewed Finished entries in recommendations' from Entry 23; refines Entry 21",
+    "summary": "Decided that a title marked 'Finished' in a user's library counts as recommendation-engine input immediately, whether or not the user has also written a review for it.",
+    "context": "Entry 19 already established that library entries are independent of reviews. Entry 21 left open whether an unreviewed 'Finished' entry (which has no category-score data, since that only exists via a review) still contributes to the future recommendation engine, or is excluded until reviewed.",
+    "options": [
+      {"name": "Include immediately on marking Finished", "description": "As soon as a title is marked 'Finished', it becomes part of the recommendation input — contributing genre signal always, and category-score signal too if a review happens to exist. No extra step required."},
+      {"name": "Require a review first", "description": "Only 'Finished' entries that also have a completed review contribute to recommendation input, guaranteeing every input entry carries full category-score data, but shrinking the effective data pool and adding friction (a user would have to review, not just mark finished, to influence their own recommendations)."}
+    ],
+    "decision": "A 'Finished' library entry is included in the recommendation engine's input as soon as it is marked finished — a review is not required. If the user also reviewed the title, its category-score data is used alongside genre signal; if not, only genre signal is available from that entry.",
+    "rationale": "User's explicit choice. Consistent with Entry 19's principle that the library is a low-friction tracking tool independent of reviewing — requiring a review to 'count' for recommendations would undermine that by making the two features functionally coupled again. Maximizes the size of the data pool the future engine has to work with."
+  },
+  {
+    "id": 25,
+    "date": "2026-08-14",
+    "title": "'Dropped' Status Is Neutral for Recommendations (For Now)",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves Round 3 Open Item ''Dropped' status as negative signal' from Entry 23; refines Entry 21",
+    "summary": "Decided that a 'Dropped' library entry does not currently factor into the future recommendation engine at all — it is neither a positive nor a negative signal, simply excluded from input for now.",
+    "context": "Entry 21 left open whether 'Dropped' should actively work against similar titles being recommended (negative signal) or simply be ignored (neutral).",
+    "options": [
+      {"name": "Neutral / excluded", "description": "'Dropped' entries are ignored entirely by the recommendation engine — no positive or negative influence. Simplest initial design."},
+      {"name": "Negative signal", "description": "'Dropped' entries actively deprioritize similar titles/genres in that user's future recommendations. More sophisticated and arguably more useful, but adds complexity to an engine whose algorithm isn't designed yet."}
+    ],
+    "decision": "For now, 'Dropped' is neutral — it is not included in the recommendation algorithm in either direction. The user explicitly noted this may change in the future, where 'Dropped' could become a metric used to exclude or deprioritize certain titles from recommendations.",
+    "rationale": "User's explicit choice. Keeps the initial input-signal design simple (only clearly positive 'Finished' data is used) while preserving the negative-signal idea as a documented future enhancement rather than discarding it outright.",
+    "openSubItems": [
+      "If/when 'Dropped' becomes a negative signal, define how it should influence exclusion or deprioritization (e.g. a genre-level penalty vs. excluding only very similar titles) — noted as a future idea, not yet designed."
+    ]
+  },
+  {
+    "id": 26,
+    "date": "2026-08-14",
+    "title": "First-Review Reward — Definition Corrected to Per-Title, Not Per-User",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves Round 3 Open Item 'Definition of first review' from Entry 23; corrects an incorrect presumption noted in Entry 22",
+    "summary": "Corrected the definition of 'first review' used in the future first-review reward feature (Entry 22): it refers to the first review ever submitted for a given title, platform-wide — not the reviewing user's personal first review across any title.",
+    "context": "When Entry 22 captured this future-scope feature, the definition of 'first review' was left as an unconfirmed presumption, guessed as 'the user's first review ever.' Confirming the actual intended meaning was necessary because it changes what the reward is actually incentivizing.",
+    "options": [
+      {"name": "User's first review ever (any title)", "description": "The reward triggers the first time a given user writes any review, regardless of the title. Functions as a new-reviewer onboarding incentive."},
+      {"name": "Title's first review ever (any user)", "description": "The reward triggers for whichever user happens to write the very first review of a given title, regardless of how many reviews that user has written before. Functions as a catalog-seeding incentive, rewarding users who review titles nobody has reviewed yet."}
+    ],
+    "decision": "'First review' means the first review ever submitted for a given title, platform-wide — not the reviewing user's first review. If that title's first review is well received (per a vote threshold still to be defined, see Entry 22's remaining open items), its author receives the token reward.",
+    "rationale": "User's explicit correction. This framing directly incentivizes filling in review coverage across the admin-seeded title catalog (Section 9 of the brief notes titles are seeded manually/by admin with no scraping for MVP, meaning many titles will start with zero reviews) — a more useful growth lever than rewarding a user's own personal review count, which wouldn't help spread review coverage across unreviewed titles."
+  },
+  {
+    "id": 27,
+    "date": "2026-08-14",
+    "title": "Admin Review Attribution — \"(admin)\" Label Shown Everywhere",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "New requirement, introduced this session",
+    "summary": "Decided that content authored by an admin account is visually labeled 'username (admin)' instead of just 'username', and settled how broadly that label applies across the platform.",
+    "context": "The user plans to personally write reviews as admin at launch to seed initial content on titles ('At the beginning I will make some reviews myself as the admin'). This creates a need to visibly distinguish admin-authored content from organic community reviews, so users can tell official/curated seed content apart from genuine community opinion. This requires formalizing an admin role/flag on the User entity (the brief's Section 4.6 already anticipates a 'site admin/moderator' concept but hadn't specified it as a concrete data field).",
+    "options": [
+      {"name": "Label only on reviews", "description": "The '(admin)' tag appears only next to an admin's authored reviews specifically — the narrowest possible scope."},
+      {"name": "Label everywhere the username appears", "description": "The '(admin)' tag appears wherever an admin's username is displayed platform-wide — reviews, comments, profile pages, vote/seal attribution, etc. Broader and more consistent, avoiding a confusing gap where an admin looks unlabeled in one context but labeled in another."}
+    ],
+    "decision": "The '(admin)' label is shown everywhere an admin's username appears on the platform, not just next to reviews.",
+    "rationale": "User's explicit choice. Keeps admin identity consistently transparent across every surface, avoiding an inconsistent experience where the same account looks like a regular user in some contexts (e.g. comments) but is flagged in others (e.g. reviews)."
+  },
+  {
+    "id": 28,
+    "date": "2026-08-14",
+    "title": "Admin Role Hierarchy — Main Admin vs. Admin, with a Review-Approval Trust Gate",
+    "type": "Decision",
+    "status": "Resolved — open sub-items resolved in Entries 41–42",
+    "relatesTo": "Resolves the conflict-of-interest question raised alongside Entry 27; refines the admin concept from Brief Section 4.6",
+    "summary": "Introduced a two-tier admin structure: a single 'Main Admin' (the platform founder/owner — initially the user) and additional 'Admin' accounts to be recruited later as trustworthy moderators. Decided that, at launch, admin-authored reviews from any admin other than the Main Admin require the Main Admin's approval before publishing, until that specific admin has earned enough trust for the requirement to be lifted.",
+    "context": "This surfaced while resolving a conflict-of-interest question: since admins manually verify seals on reviews (Entry 6), could an admin approve a seal on their own review? The user's answer revealed a broader mechanism: a review-approval gate specific to the admin tier, layered on top of (and separate from) the existing seal-verification workflow. The question then became whether this approval requirement applies to every review on the platform, or only to admin-authored ones.",
+    "options": [
+      {"name": "Only admin-authored reviews require Main Admin approval", "description": "Regular users' reviews continue to post immediately, exactly as already designed (Entry 6 onward, Entry 16's baseline gate). Only reviews written by an admin account (other than the Main Admin) must be approved by the Main Admin before they go live."},
+      {"name": "All reviews from all users require Main Admin approval", "description": "Every review, from any user, sits in a pre-moderation queue until the Main Admin approves it. Would be a significant change from the already-established design, where the general review pipeline is deliberately low-friction and reviews post immediately."}
+    ],
+    "decision": "Only admin-authored reviews require Main Admin approval before publishing. Regular users' reviews are unaffected and continue to post immediately per the existing design. At launch, since the Main Admin is the only admin account, this creates no friction (the Main Admin's own reviews publish directly — there is no one above them to approve against). Once additional trustworthy admins are recruited later, their reviews are gated behind Main Admin approval until that specific admin has proven reliable enough for the Main Admin to lift the requirement for them individually.",
+    "rationale": "User's explicit choice. Keeps the core community review pipeline exactly as already designed — low-friction, immediate publishing — while adding a narrow, appropriate trust gate specifically on the admin tier, since admin-authored content carries implicit platform endorsement (reinforced visually by the '(admin)' label from Entry 27) and therefore deserves an extra check, especially for admins who aren't the founder. This also resolves the original conflict-of-interest question: the Main Admin's own reviews aren't self-approved through the seal-verification workflow in a problematic way, because at launch they are the only admin and no separate approval step exists above them; once other admins exist, their reviews are checked by the Main Admin rather than themselves, avoiding self-approval for that tier.",
+    "openSubItems": []
+  },
+  {
+    "id": 29,
+    "date": "2026-08-14",
+    "title": "Quality-Gate and Popularity-Gate Threshold Values Set for v1 Launch",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves the two numeric threshold items from Entry 17's Consolidated Open Items — Round 2; refines Entries 8 and 15",
+    "summary": "Set concrete starting values for the two configurable numeric thresholds left open since Entries 8 and 15: the quality-gate net-score threshold that triggers automatic Phase 2 seal candidacy, and the popularity-gate vote-count threshold that splits Hidden Gem from also-earning Certified Banger.",
+    "context": "Entry 8 established that automatic seal candidacy is triggered by a net vote score (upvotes − downvotes) ≥ N, with N left as an unspecified, admin-configurable number. Entry 15 established that popularity (for the Hidden Gem vs. Certified Banger split) is measured by total vote count on a product's highest-voted review, also left as an unspecified, admin-configurable number. Both are pure tuning parameters — not product-philosophy decisions — so a starting proposal was put forward for the user to confirm or adjust, rather than treated as an open-ended question.",
+    "options": [
+      {"name": "Quality-gate N = net +20", "description": "Net score (upvotes − downvotes) must reach at least +20 on a review for it to become an automatic Phase 2 seal candidate. Chosen to be reachable while the userbase is still small at launch — a threshold calibrated for a mature, high-traffic platform would likely never trigger early on."},
+      {"name": "Popularity-gate = 100 total votes", "description": "A product's highest-voted review must accumulate at least 100 total votes for the product to be considered 'well known' enough to also earn Certified Banger (below this, it earns Hidden Gem instead, per Entry 15). Set noticeably higher than the quality threshold since it measures volume/reach rather than rating quality."}
+    ],
+    "decision": "Quality-gate threshold N = net +20 (upvotes − downvotes ≥ 20). Popularity-gate threshold = 100 total votes on the product's highest-voted review. Both remain stored as admin-configurable values (per the brief's non-functional requirement that such parameters live in config/database, not hardcoded), not fixed constants — these are starting points to be tuned once real traffic data exists.",
+    "rationale": "Both values needed to be low enough to be actually reachable by a new platform with a small early userbase, while still representing genuine, non-trivial community engagement rather than a handful of friends upvoting each other. The popularity threshold is set meaningfully higher than the quality threshold to reflect that it's measuring a different dimension (reach/volume) than the quality threshold (rating consensus). User confirmed both proposed values as acceptable starting points for v1 launch."
+  },
+  {
+    "id": 30,
+    "date": "2026-08-14",
+    "title": "Technology Stack — Constraints Gathered Before Evaluation",
+    "type": "Process",
+    "status": "Completed",
+    "relatesTo": "Precedes Entries 31–39, which evaluate and select each layer of the stack",
+    "summary": "Before evaluating specific technology options, gathered the constraints that any recommendation needed to fit: the developer's language/ecosystem background, team size, and hosting budget philosophy.",
+    "context": "Technology stack choice depends heavily on factors outside the product requirements themselves — existing skills, team size, and budget. These were established through direct questions before any specific technology was proposed, so that the evaluation in the following entries is tailored rather than generic.",
+    "options": [],
+    "decision": "Constraints for the stack evaluation: (1) JavaScript/TypeScript ecosystem (Node, React, etc.) is the preferred/existing skillset. (2) Solo developer, at least for v1 — no team to coordinate across. (3) Hosting/infrastructure should be as cheap as possible, ideally free, at launch, with an explicit intent to upgrade infrastructure once the platform gains real users and traction.",
+    "rationale": "Establishing these constraints first avoids proposing a technically 'ideal' stack that doesn't fit how the project will actually be built and paid for — e.g. a microservices split makes little sense for a solo developer, and a stack with per-user pricing traps conflicts with the 'free now, upgrade later' philosophy."
+  },
+  {
+    "id": 31,
+    "date": "2026-08-14",
+    "title": "Application Framework — Next.js (TypeScript, App Router)",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Refines Brief Section 5's 'Responsive web app' non-functional requirement",
+    "summary": "Selected the core application framework that serves both the frontend and the backend API layer.",
+    "context": "The brief requires a responsive web app with strong performance on browse/search pages (Section 5), and the product's growth strategy depends on organic discovery — title pages, reviews, and the Certified Banger showcase need to be indexable by search engines. As a solo developer working in JavaScript/TypeScript (Entry 30), minimizing the number of separately deployed services was also a priority.",
+    "options": [
+      {"name": "Next.js (TypeScript, App Router)", "description": "A single codebase handles both the rendered frontend and backend logic (API routes / server actions) — no separate backend service to build, deploy, or monitor. Provides server-side rendering out of the box, which directly serves the SEO/discoverability need. Large ecosystem and strong solo-developer tooling."},
+      {"name": "Separate Vite/React SPA + Express/Nest API", "description": "Clean separation between frontend and backend, which can be valuable for a larger team with distinct frontend/backend developers. For a solo developer, this roughly doubles deployment and coordination overhead for no corresponding benefit, and a client-only SPA needs significant extra work to achieve the SEO characteristics a discovery-focused platform needs."}
+    ],
+    "decision": "Next.js with TypeScript, using the App Router, as the single framework for both frontend and backend.",
+    "rationale": "Directly serves the SEO requirement (server-side rendering) that a pure client-side SPA would need extra tooling to match, and collapses frontend + backend into one deployable codebase — the right tradeoff for a solo developer (Entry 30) who benefits from minimizing operational surface area more than from strict frontend/backend separation."
+  },
+  {
+    "id": 32,
+    "date": "2026-08-14",
+    "title": "Database & Backend Platform — PostgreSQL via Supabase",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Refines Brief Section 5's implication that structured rating data 'likely' needs a relational database",
+    "summary": "Selected PostgreSQL as the database engine, hosted via Supabase, which also bundles authentication and file storage under one free tier and dashboard.",
+    "context": "The brief's data model (Section 6) is inherently relational — Titles, Reviews, per-category scores, seal awards, and votes all relate through foreign keys, and browse/filter/sort (Section 4.5) depends on efficient joins and indexing. As a solo, cost-conscious developer (Entry 30), the number of separate free-tier services to configure and monitor also matters.",
+    "options": [
+      {"name": "PostgreSQL via Supabase", "description": "Managed Postgres bundled with authentication and S3-compatible file storage under a single free tier and one dashboard. Reduces the number of separate services a solo developer has to configure, monitor, and eventually pay for. Predictable paid tier (~$25/mo) when the free tier is outgrown, not usage-per-user pricing."},
+      {"name": "PostgreSQL via Neon, assembled with separate Auth.js and Cloudflare R2", "description": "Neon offers a Postgres-only managed service with a generous free tier and scale-to-zero billing, paired with Auth.js (free, self-hosted-in-app authentication) and Cloudflare R2 (free-egress object storage) for the pieces Supabase would otherwise bundle. Potentially cheaper and more portable at larger scale since each piece scales (and is paid for) independently, but requires managing three separate free-tier services instead of one."}
+    ],
+    "decision": "PostgreSQL hosted on Supabase, using its bundled Auth and Storage as well (see Entries 34–35).",
+    "rationale": "For a solo developer prioritizing shipping speed and minimal operational overhead (Entry 30), consolidating database, auth, and storage under one provider and one free tier outweighs the marginal cost/portability advantage of assembling three separate best-of-breed services. The Neon-based alternative is recorded as the natural next step to evaluate if/when Supabase's bundled free tier or pricing structure becomes a limiting factor."
+  },
+  {
+    "id": 33,
+    "date": "2026-08-14",
+    "title": "ORM — Prisma",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Follow-on choice from Entry 31 (Next.js/TypeScript) and Entry 32 (PostgreSQL)",
+    "summary": "Selected Prisma as the ORM for type-safe database access from the Next.js/TypeScript application.",
+    "context": "With PostgreSQL selected (Entry 32) and a TypeScript codebase (Entry 31), a type-safe way to query the database was needed. Supabase's auto-generated REST API (PostgREST) was not used, since the application's backend logic already lives in Next.js server actions/API routes, which connect to the underlying Postgres connection string directly.",
+    "options": [
+      {"name": "Prisma", "description": "Type-safe query client generated from a schema file, widely adopted in the TypeScript ecosystem with the largest base of tutorials and community troubleshooting resources — valuable for solo-developer velocity."},
+      {"name": "Drizzle", "description": "A lighter-weight, more SQL-like ORM with faster cold starts, which matters more in edge/serverless runtimes. Smaller ecosystem and fewer learning resources than Prisma."}
+    ],
+    "decision": "Prisma, connecting directly to the Supabase-hosted Postgres instance.",
+    "rationale": "The larger ecosystem and tutorial base reduces the time a solo developer spends troubleshooting ORM-specific issues, which outweighs Drizzle's performance edge at this stage. Recorded as a revisitable choice if serverless cold-start latency becomes a measurable problem later."
+  },
+  {
+    "id": 34,
+    "date": "2026-08-14",
+    "title": "Authentication — Supabase Auth",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Follow-on choice from Entry 32; implements Brief Section 4.4's auth requirement",
+    "summary": "Selected Supabase's bundled authentication service to handle registration/login, rather than a separately configured auth solution.",
+    "context": "The brief requires email+password authentication at minimum, with social login as a nice-to-have (Section 4.4). Having already selected Supabase for the database and storage (Entry 32), using its bundled Auth service avoids introducing a fourth separate service.",
+    "options": [
+      {"name": "Supabase Auth", "description": "Bundled with the already-selected Supabase project. Supports email+password immediately, with social/OAuth providers addable later via configuration rather than new infrastructure."},
+      {"name": "Auth.js (NextAuth)", "description": "A separate, self-hosted, framework-native authentication library for Next.js. Free with no vendor lock-in to Supabase specifically, but reintroduces a separate piece to configure that Supabase's bundle already covers."}
+    ],
+    "decision": "Supabase Auth.",
+    "rationale": "Consolidation was the core reason Supabase was chosen for the database layer (Entry 32) — introducing a separate auth library would undercut that benefit for no clear gain at this stage."
+  },
+  {
+    "id": 35,
+    "date": "2026-08-14",
+    "title": "Cover Image / Asset Storage — Supabase Storage, with a Cloudflare R2 Migration Path",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Follow-on choice from Entry 32; supports Brief Section 4.1's cover image requirement",
+    "summary": "Selected Supabase's bundled file storage for title cover images at launch, with an explicitly noted future migration path to Cloudflare R2 if image bandwidth becomes a meaningful cost driver.",
+    "context": "Titles require cover images (Section 4.1). Cover art is loaded on nearly every browse and title page view, making image bandwidth one of the more likely early cost drivers as traffic grows.",
+    "options": [
+      {"name": "Supabase Storage", "description": "Bundled S3-compatible storage under the same free tier and project as the database/auth (Entry 32). Simplest to set up, consistent with the consolidation rationale used for the rest of the Supabase-based stack."},
+      {"name": "Cloudflare R2 from day one", "description": "Zero-egress-fee object storage, which matters specifically for image-heavy traffic at scale. Cheaper long-term for a media-serving workload, but introduces a separate service/account to manage before there's any actual traffic to justify it."}
+    ],
+    "decision": "Use Supabase Storage for v1. If image bandwidth becomes a significant cost as traffic grows, migrate specifically the storage layer to Cloudflare R2 — the database and auth stay on Supabase regardless.",
+    "rationale": "Matches the 'cheap/free now, upgrade later' philosophy (Entry 30): no need to pay the setup cost of a separate storage provider before there's traffic that would actually benefit from R2's zero-egress pricing. The migration is scoped to one layer, not a full re-platform, keeping the future upgrade cheap in engineering time as well as money."
+  },
+  {
+    "id": 36,
+    "date": "2026-08-14",
+    "title": "Background / Scheduled Jobs — Vercel Cron",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Implements the daily probation-streak check required by Entry 12",
+    "summary": "Selected Vercel's built-in cron job feature to run the daily job that tracks each provisional seal's consecutive-positive-days streak (Entry 12).",
+    "context": "Entry 12 requires a mechanism that checks, at least daily, whether each Phase 2 provisional seal's net vote score has stayed non-negative, incrementing or resetting a streak counter and converting to permanent once 30 consecutive days are reached. This needs some form of scheduled execution outside the normal request/response cycle.",
+    "options": [
+      {"name": "Vercel Cron", "description": "Scheduled invocation of a Next.js API route, built into the same platform already selected for hosting (Entry 37). Free on the Hobby tier for daily-frequency jobs, which matches exactly what the probation check needs. Keeps all business logic in the TypeScript codebase."},
+      {"name": "Supabase pg_cron / Edge Functions", "description": "Runs scheduled logic as a Postgres extension or edge function directly alongside the data. Avoids a network hop between the app and the database for this specific job, but splits business logic between SQL/edge-function code and the main TypeScript codebase."}
+    ],
+    "decision": "Vercel Cron, invoking a Next.js API route that performs the streak check against the Supabase-hosted database.",
+    "rationale": "Keeps all business logic — including the probation streak rules established in Entry 12 — in one TypeScript codebase rather than splitting it between the application and database-side scripts, which matters for a solo developer's ability to reason about and maintain the system. The daily frequency required fits comfortably within Vercel's free-tier cron limits."
+  },
+  {
+    "id": 37,
+    "date": "2026-08-14",
+    "title": "Application Hosting — Vercel",
+    "type": "Decision",
+    "status": "Resolved — commercial-use tier caveat noted",
+    "relatesTo": "Follow-on choice from Entry 31 (Next.js)",
+    "summary": "Selected Vercel to host the Next.js application, using its free Hobby tier at launch with a known future upgrade to a paid tier once the project has commercial intent.",
+    "context": "Next.js (Entry 31) was already selected; Vercel is built by the same team and offers first-party, zero-configuration deployment for it. Cost-consciousness at launch was a stated constraint (Entry 30).",
+    "options": [
+      {"name": "Vercel", "description": "Zero-config git-push deploys, free Hobby tier, native integration with Next.js and with Vercel Cron (Entry 36). Vercel's free Hobby tier is scoped by its terms of service to non-commercial personal use."},
+      {"name": "Self-managed VPS (e.g. Hetzner, DigitalOcean)", "description": "Lower raw compute cost at scale and no ambiguity about commercial-use terms, but requires the solo developer to personally manage server setup, reverse proxying, SSL renewal, backups, and deployment scripts — directly conflicting with the 'keep it simple for a solo developer' constraint (Entry 30)."}
+    ],
+    "decision": "Vercel, on the free Hobby tier at launch.",
+    "rationale": "Lowest-friction path for a solo Next.js developer wanting to minimize both cost and operational burden at launch (Entry 30). Flagged explicitly: because the project has a stated future intent to introduce commercial/monetary elements (the token-reward system, Section 8 of the brief), the Hobby tier's non-commercial scope means budgeting for Vercel Pro (~$20/mo) should be treated as part of the planned 'upgrade later' infrastructure step, not a surprise cost."
+  },
+  {
+    "id": 38,
+    "date": "2026-08-14",
+    "title": "Search — PostgreSQL Native Full-Text Search",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Implements Brief Section 4.5's title/genre/author search requirement",
+    "summary": "Selected PostgreSQL's built-in full-text search capabilities (tsvector/pg_trgm) to implement title/genre/author search, rather than introducing a dedicated search service.",
+    "context": "The brief requires searching titles by name/tag/genre/author (Section 4.5). Dedicated search services (Algolia, Meilisearch, Typesense) offer more advanced relevance ranking and typo tolerance, but add a separate service and, in most cases, a recurring cost.",
+    "options": [
+      {"name": "PostgreSQL native full-text search", "description": "Uses the already-selected database (Entry 32) directly, via tsvector columns and/or the pg_trgm extension for fuzzy matching. No additional service, no additional cost, sufficient for the catalog size expected at launch and for a good while after."},
+      {"name": "Dedicated search service (Algolia, Meilisearch, Typesense)", "description": "Better out-of-the-box relevance ranking, typo tolerance, and search-as-you-type performance, but introduces another service to run/pay for before there's a demonstrated need for it."}
+    ],
+    "decision": "PostgreSQL native full-text search for v1, revisited only if browse/search performance or relevance quality becomes an actual, demonstrated problem.",
+    "rationale": "Consistent with the 'cheap/free now, upgrade later' constraint (Entry 30) — a dedicated search service solves a scale problem the platform does not yet have. Deferring it avoids both the added cost and the added operational surface area until real usage data justifies it."
+  },
+  {
+    "id": 39,
+    "date": "2026-08-14",
+    "title": "Database Schema & Scalability Strategy for Recommendation and Analytics Workloads",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Refines Entry 32; directly supports the future recommendation engine from Entries 20–21 and 24–26",
+    "summary": "Established architectural principles for keeping aggregate-heavy queries (title score aggregation, future recommendation/taste-profile computation) fast as the catalog and userbase grow, without changing the database engine chosen in Entry 32.",
+    "context": "The user raised a requirement that the database be designed to stay scalable and fast when used for recommendation calculations or other aggregate-heavy tasks — not just simple CRUD reads/writes. Rather than requiring a different database engine, this is addressed through schema design and query strategy decisions layered on top of the already-selected PostgreSQL/Supabase stack (Entry 32).",
+    "options": [],
+    "decision": "Four architectural principles adopted: (1) Precomputed aggregate columns — e.g. Title.avg_category_scores, Title.review_count, Title.seal_counts — updated incrementally as reviews/votes/seals occur, rather than recalculated via a live join/scan on every browse-page or recommendation request; the same principle will apply to a future per-user taste-profile aggregate once the recommendation engine (Entry 21) is actually built. (2) Composite indexes matching the platform's real filter/sort access patterns from Brief Section 4.5 (e.g. genre + category-score sort, seal-presence + seal-count sort), not just foreign-key indexes. (3) The `pgvector` Postgres extension (available on Supabase) is the identified path for embedding/similarity-based recommendation math if the eventual algorithm design (still open, Entry 21) calls for it — avoiding the need for a separate dedicated vector database. (4) Postgres read replicas (supported by Supabase at higher paid tiers) are the identified scaling lever if recommendation/analytics-style queries begin competing with normal user-facing traffic — an infrastructure upgrade, not a database migration.",
+    "rationale": "Keeps the future recommendation engine's performance needs addressed at the architecture level now, while correctly avoiding designing the recommendation algorithm itself prematurely (which Entry 21 already deferred intentionally). Precomputed aggregates and targeted indexing are standard, low-risk techniques that also directly benefit the v1 browse/filter/sort experience (Section 4.5), not just the future recommendation feature — so this isn't speculative work done only for a not-yet-built feature. Choosing Postgres extensions and read replicas as the scaling levers means the upgrade path stays within the already-selected database engine (Entry 32) rather than requiring a future re-platform."
+  },
+  {
+    "id": 40,
+    "date": "2026-08-14",
+    "title": "Baseline Review-Submission Gate — Exact Criteria and Evolution Process",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves the remaining Entry 17 items; refines Entry 16",
+    "summary": "Set the exact mechanism for the baseline account gate on review submission (Entry 16), and defined how it evolves over time without pre-committing to specific future restrictions.",
+    "context": "Entry 16 established that a baseline gate exists on review submission from launch, with additional restrictions layered on as the platform grows, but left both the exact gate mechanism and the evolution process unspecified. A starting proposal was put forward for confirmation rather than treated as an open-ended question, consistent with how the numeric thresholds in Entry 29 were resolved.",
+    "options": [
+      {"name": "Minimum account age only", "description": "Require an account to be a minimum number of days old before its first review. Simple, but doesn't verify the account is a real, reachable identity."},
+      {"name": "Email verification only", "description": "Require a confirmed email address before posting a review. Verifies a reachable identity but doesn't slow down a determined spammer who can verify instantly."},
+      {"name": "Email verification + minimum account age (combined)", "description": "Require both a confirmed email address and a minimum account age (e.g. 3 days) before the first review. Combines identity verification with a time delay that blocks the fastest throwaway-signup spam pattern, at low cost to genuine new users."}
+    ],
+    "decision": "The baseline gate requires email verification (mandatory) plus a minimum account age of 3 days before a user can submit their first review. For how the gate evolves over time, no specific future restriction is pre-committed: the Main Admin periodically reviews observed abuse signals (reports-per-day, spam-flagged review rate) and adjusts the gate's parameters through the admin config panel, since these values are stored as admin-configurable data rather than hardcoded.",
+    "rationale": "User confirmed the proposal. The combined email-verification-plus-age gate balances low friction for genuine users against blocking the fastest spam pattern. Leaving the future evolution process open rather than pre-specifying restrictions avoids inventing hypothetical rules without real abuse data to justify them — the same reasoning already applied to deferring the recommendation engine's algorithm design (Entry 21)."
+  },
+  {
+    "id": 41,
+    "date": "2026-08-14",
+    "title": "Admin Trust Criteria for Lifting Review-Approval Requirement — Manual Case-by-Case",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves the first open sub-item from Entry 28",
+    "summary": "Decided how the Main Admin determines when a non-founder admin is trusted enough that their reviews no longer require approval before publishing.",
+    "context": "Entry 28 established the review-approval gate for non-Main-Admin admins but left open what criteria would trigger lifting that requirement for a given admin.",
+    "options": [
+      {"name": "Automatic rule", "description": "E.g. the requirement lifts automatically after a fixed number of consecutive approved reviews. Removes subjectivity and scales without the Main Admin's attention, but an arbitrary numeric threshold doesn't necessarily reflect genuine trust, and requires building extra tracking/automation for a low-volume decision."},
+      {"name": "Manual case-by-case Main Admin judgment", "description": "The Main Admin decides individually, whenever they judge a given admin trustworthy enough, with no fixed rule. Simpler to build (no extra tracking logic), and fits a model where the Main Admin personally recruits and vets a small number of admins early on."}
+    ],
+    "decision": "No automatic rule — the Main Admin lifts the review-approval requirement for a given admin as a manual, case-by-case judgment call.",
+    "rationale": "User confirmed the proposal. Given the Main Admin will likely personally recruit and vet a small number of trusted admins in the early stages, a manual judgment call better reflects genuine, considered trust than an arbitrary numeric threshold, and avoids building tracking/automation infrastructure for what is expected to be an infrequent, low-volume decision."
+  },
+  {
+    "id": 42,
+    "date": "2026-08-14",
+    "title": "Confirmed — Unapproved Admin Reviews Are Not Visible or Votable Until Approved",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Resolves the second open sub-item from Entry 28",
+    "summary": "Confirmed the working assumption that an admin-authored review pending Main Admin approval is fully hidden from the rest of the platform until approved.",
+    "context": "Entry 28 introduced the review-approval gate but left the visibility of a pending review as an unconfirmed working assumption rather than an explicit decision.",
+    "options": [],
+    "decision": "An admin-authored review awaiting Main Admin approval is not published or visible to other users, cannot be voted on or commented on, and does not enter the seal-verification pipeline (Entry 6) until it is approved.",
+    "rationale": "User confirmed. This is the only design consistent with the purpose of the review-approval gate in the first place — an unapproved review appearing publicly, or accumulating votes/seal candidacy, would defeat the requirement entirely."
+  }
+]
