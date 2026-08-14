@@ -758,5 +758,22 @@
     "options": [],
     "decision": "An admin-authored review awaiting Main Admin approval is not published or visible to other users, cannot be voted on or commented on, and does not enter the seal-verification pipeline (Entry 6) until it is approved.",
     "rationale": "User confirmed. This is the only design consistent with the purpose of the review-approval gate in the first place — an unapproved review appearing publicly, or accumulating votes/seal candidacy, would defeat the requirement entirely."
+  },
+  {
+    "id": 43,
+    "date": "2026-08-14",
+    "title": "WP0.1 Implemented — Next.js/Prisma Scaffold, with a Schema Correction and a Prisma 7 Adjustment",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Implements Work Package WP0.1 from the Requirements Engineering doc, Section 8",
+    "summary": "Scaffolded the Next.js/TypeScript app and Prisma schema per the chosen stack (Entries 30–39), and made two implementation-time decisions not previously spelled out: dropping the password_hash field from the User model, and adopting Prisma's driver-adapter pattern.",
+    "context": "WP0.1 covers project scaffolding, the core data model, Supabase project setup, and Vercel's deploy pipeline. This entry covers what was actually completed: Next.js init (TypeScript, App Router, Tailwind, ESLint) at the repo root, Prisma init and a full schema.prisma translating Section 7's data model into models/enums, a seed script for the Category/SealType tables, and env-variable scaffolding (.env.example) for the Supabase variables Section WP0.2 will need. Supabase project creation and Vercel repo import were not completed in this step, since both require an interactive browser login only the user can perform.",
+    "options": [],
+    "decision": "Two implementation-time refinements to the documented design: (1) The `User` model does not store a password_hash field, unlike the brief's original generic sketch — Supabase Auth (Entry 34) owns credentials and sessions entirely; the Prisma `User.id` is set to match the corresponding `auth.users.id` rather than being independently auto-generated, and the table only holds app-profile fields (username, avatar, bio, role, reputation, etc.). (2) Prisma 7's new 'prisma-client' generator (used per Entry 33) requires an explicit driver adapter rather than an implicit DATABASE_URL connection — `@prisma/adapter-pg` (node-postgres) was added and wired into both the app's Prisma singleton (src/lib/prisma.ts) and the seed script, since this wasn't yet known at the time Entry 33 was decided.",
+    "rationale": "Both are corrections forced by details only visible once actually building against the chosen tools, not changes of direction: storing a redundant password_hash would contradict Entry 34's own reasoning (Supabase Auth as the single source of truth for credentials), and the driver-adapter requirement is simply how Prisma 7's client generator works — node-postgres is the standard, well-supported adapter for a plain Postgres connection (as opposed to Neon's or PlanetScale's specialized serverless adapters), so it was the natural choice given Entry 32's Supabase/Postgres decision.",
+    "openSubItems": [
+      "Supabase project creation (WP0.2) — requires the user to sign up and create a project via the Supabase dashboard; connection details then go into .env per .env.example.",
+      "Vercel repo import — the user already has a Vercel account; the GitHub repo (sol-arcadedev/CertifiedBangers) still needs to be imported via the Vercel dashboard to stand up the deploy pipeline and Vercel Cron (Entry 36)."
+    ]
   }
 ]
