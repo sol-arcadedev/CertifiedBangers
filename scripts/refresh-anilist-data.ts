@@ -1,9 +1,9 @@
-// Refreshes anilistAverageScore/anilistPopularity for every already-imported
-// title (matched by anilistId). AniList's numbers drift as more people rate
-// a title, so a one-time import snapshot goes stale — this is meant to be
-// re-run periodically. Only touches those two fields, never anything
-// admin-editable (genres, synopsis, etc.), in case they've been hand-corrected
-// since import.
+// Refreshes the AniList-sourced reference fields for every already-imported
+// title (matched by anilistId): scores/popularity/favourites drift as more
+// people rate a title, and this also backfills fields added after a title
+// was first imported. Only touches fields with no manual-edit UI anywhere
+// (never genres/synopsis/status/etc., and never synonyms — that one's
+// editable via the manual title form, same protection as genres/synopsis).
 //
 // Self-contained rather than importing src/lib/anilist.ts — see
 // scripts/seed-default-titles.ts's header comment for why.
@@ -14,6 +14,20 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const ANILIST_ENDPOINT = "https://graphql.anilist.co";
+
+const QUERY = `
+  query ($id: Int) {
+    Media(id: $id, type: MANGA) {
+      title { romaji english native }
+      startDate { month day }
+      averageScore
+      meanScore
+      popularity
+      favourites
+      source
+    }
+  }
+`;
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -36,10 +50,7 @@ async function main() {
       const res = await fetch(ANILIST_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          query: `query ($id: Int) { Media(id: $id, type: MANGA) { averageScore popularity } }`,
-          variables: { id: title.anilistId },
-        }),
+        body: JSON.stringify({ query: QUERY, variables: { id: title.anilistId } }),
       });
       const json = await res.json();
       if (!res.ok || json.errors?.length || !json.data.Media) {
@@ -48,14 +59,23 @@ async function main() {
         continue;
       }
 
+      const media = json.data.Media;
       await prisma.title.update({
         where: { id: title.id },
         data: {
-          anilistAverageScore: json.data.Media.averageScore,
-          anilistPopularity: json.data.Media.popularity,
+          titleRomaji: media.title.romaji,
+          titleEnglish: media.title.english,
+          titleNative: media.title.native,
+          startMonth: media.startDate.month,
+          startDay: media.startDate.day,
+          anilistAverageScore: media.averageScore,
+          anilistMeanScore: media.meanScore,
+          anilistPopularity: media.popularity,
+          anilistFavourites: media.favourites,
+          anilistSource: media.source,
         },
       });
-      console.log(`  + refreshed: ${title.name} (score=${json.data.Media.averageScore}, popularity=${json.data.Media.popularity})`);
+      console.log(`  + refreshed: ${title.name} (score=${media.averageScore}, popularity=${media.popularity})`);
       updated++;
     } catch (err) {
       console.log(`  x failed for "${title.name}": ${err instanceof Error ? err.message : err}`);

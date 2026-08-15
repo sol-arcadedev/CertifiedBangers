@@ -12,7 +12,7 @@ const labelClass = "flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:t
 export type TitleDefaults = {
   id?: string;
   name: string;
-  altNames: string[];
+  synonyms: string[];
   type: string;
   status: string;
   author: string | null;
@@ -95,11 +95,11 @@ export function TitleForm({
       )}
 
       <label className={labelClass}>
-        Alternate names (comma-separated)
+        Synonyms / alternate names (comma-separated)
         <input
-          name="altNames"
+          name="synonyms"
           type="text"
-          defaultValue={defaults?.altNames.join(", ")}
+          defaultValue={defaults?.synonyms.join(", ")}
           className={inputClass}
         />
       </label>

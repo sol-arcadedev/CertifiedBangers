@@ -108,13 +108,16 @@ const DETAIL_QUERY = `
       synonyms
       countryOfOrigin
       status
-      startDate { year }
+      startDate { year month day }
       genres
       description(asHtml: false)
       coverImage { large }
       siteUrl
       averageScore
+      meanScore
       popularity
+      favourites
+      source
       staff(perPage: 6) { edges { role node { name { full } } } }
     }
   }
@@ -162,13 +165,16 @@ async function main() {
           synonyms: string[];
           countryOfOrigin: string;
           status: string;
-          startDate: { year: number | null };
+          startDate: { year: number | null; month: number | null; day: number | null };
           genres: string[];
           description: string | null;
           coverImage: { large: string | null };
           siteUrl: string | null;
           averageScore: number | null;
+          meanScore: number | null;
           popularity: number | null;
+          favourites: number | null;
+          source: string | null;
           staff: { edges: StaffEdge[] };
         } | null;
       }>(DETAIL_QUERY, { id: best.id });
@@ -181,9 +187,6 @@ async function main() {
       }
 
       const titleName = media.title.english ?? media.title.romaji ?? name;
-      const altNames = [media.title.romaji, media.title.native, ...media.synonyms].filter(
-        (n): n is string => !!n && n !== titleName,
-      );
       const { author, illustrator } = deriveCredits(media.staff.edges);
 
       let coverUrl: string | null = null;
@@ -207,7 +210,10 @@ async function main() {
         data: {
           anilistId: media.id,
           name: titleName,
-          altNames,
+          titleRomaji: media.title.romaji,
+          titleEnglish: media.title.english,
+          titleNative: media.title.native,
+          synonyms: media.synonyms,
           type,
           status: mapAniListStatus(media.status),
           author,
@@ -215,10 +221,15 @@ async function main() {
           genres: media.genres,
           synopsis: media.description ? media.description.replace(/<br\s*\/?>/gi, "\n").trim() : null,
           publicationYear: media.startDate.year,
+          startMonth: media.startDate.month,
+          startDay: media.startDate.day,
           externalLinks: media.siteUrl ? [media.siteUrl] : [],
           coverUrl,
           anilistAverageScore: media.averageScore,
+          anilistMeanScore: media.meanScore,
           anilistPopularity: media.popularity,
+          anilistFavourites: media.favourites,
+          anilistSource: media.source,
         },
       });
       console.log(`  + imported: ${titleName}`);

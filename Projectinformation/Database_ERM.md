@@ -44,9 +44,15 @@ erDiagram
         string id PK
         int anilistId UK "null = manually created, Entry 44"
         int anilistAverageScore "0-100, reference only, not overallScore"
+        int anilistMeanScore "0-100, reference only"
         int anilistPopularity "reference only"
+        int anilistFavourites "reference only"
+        string anilistSource "AniList source enum, e.g. WEB_NOVEL"
         string name
-        string_array altNames
+        string titleRomaji "not admin-editable"
+        string titleEnglish "not admin-editable"
+        string titleNative "not admin-editable"
+        string_array synonyms "admin-editable via manual form"
         TitleType type "MANGA | MANHWA | MANHUA"
         TitleStatus status "ONGOING | COMPLETED | HIATUS | DROPPED"
         string author
@@ -55,6 +61,8 @@ erDiagram
         string coverUrl
         string synopsis
         int publicationYear
+        int startMonth
+        int startDay
         string_array externalLinks
         json avgCategoryScores "precomputed aggregate"
         int reviewCount "precomputed aggregate"

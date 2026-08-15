@@ -6,6 +6,35 @@ import { checkReviewGate } from "@/lib/review-gate";
 import { ReviewForm } from "@/components/review-form";
 import { UsernameLabel } from "@/components/username-label";
 
+function formatStartDate(year: number | null, month: number | null, day: number | null) {
+  if (!year) return null;
+  if (month && day) {
+    return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  }
+  if (month) {
+    return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  }
+  return String(year);
+}
+
+function formatSource(source: string | null) {
+  if (!source) return null;
+  return source
+    .toLowerCase()
+    .split("_")
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 // Bare-bones public title page — hosts review creation (WP2.1). Aggregate
 // score display and precomputed-aggregate wiring are WP2.4's job, not this
 // one; this page deliberately doesn't compute/show a title-level average.
@@ -41,6 +70,21 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
   const gate =
     user && !existingReview ? await checkReviewGate(user.id, user.createdAt) : { allowed: true as const };
 
+  const details: { label: string; value: string }[] = [
+    { label: "Status", value: title.status },
+    { label: "Start Date", value: formatStartDate(title.publicationYear, title.startMonth, title.startDay) },
+    { label: "Average Score", value: title.anilistAverageScore !== null ? `${title.anilistAverageScore}%` : null },
+    { label: "Mean Score", value: title.anilistMeanScore !== null ? `${title.anilistMeanScore}%` : null },
+    { label: "Popularity", value: title.anilistPopularity?.toLocaleString() ?? null },
+    { label: "Favorites", value: title.anilistFavourites?.toLocaleString() ?? null },
+    { label: "Source", value: formatSource(title.anilistSource) },
+    { label: "Genres", value: title.genres.length > 0 ? title.genres.join(", ") : null },
+    { label: "Romaji", value: title.titleRomaji },
+    { label: "English", value: title.titleEnglish },
+    { label: "Native", value: title.titleNative },
+    { label: "Synonyms", value: title.synonyms.length > 0 ? title.synonyms.join(", ") : null },
+  ].filter((d): d is { label: string; value: string } => !!d.value);
+
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <div className="flex gap-6">
@@ -58,14 +102,6 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
             {title.type} · {title.status}
             {title.publicationYear ? ` · ${title.publicationYear}` : ""}
           </p>
-          {(title.anilistAverageScore !== null || title.anilistPopularity !== null) && (
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              {title.anilistAverageScore !== null && `AniList ${title.anilistAverageScore}/100`}
-              {title.anilistAverageScore !== null && title.anilistPopularity !== null && " · "}
-              {title.anilistPopularity !== null &&
-                `${title.anilistPopularity.toLocaleString()} on AniList lists`}
-            </p>
-          )}
           {title.author && (
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               By {title.author}
@@ -79,6 +115,19 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
           )}
         </div>
       </div>
+
+      {details.length > 0 && (
+        <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-md border border-black/[.08] p-4 sm:grid-cols-3 dark:border-white/[.145]">
+          {details.map((d) => (
+            <div key={d.label}>
+              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                {d.label}
+              </div>
+              <div className="text-sm text-black dark:text-zinc-50">{d.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-10 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
         <h2 className="text-lg font-semibold text-black dark:text-zinc-50">

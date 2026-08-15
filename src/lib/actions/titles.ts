@@ -36,7 +36,7 @@ function parseTitleFields(formData: FormData) {
       name,
       type: type as TitleType,
       status: status as TitleStatus,
-      altNames: parseList(formData.get("altNames")),
+      synonyms: parseList(formData.get("synonyms")),
       genres: parseList(formData.get("genres")),
       externalLinks: parseList(formData.get("externalLinks")),
       author: String(formData.get("author") ?? "").trim() || null,
@@ -63,7 +63,13 @@ export async function searchTitles(query: string) {
 
   return prisma.title.findMany({
     where: {
-      OR: [{ name: { contains: q, mode: "insensitive" } }, { altNames: { has: q } }],
+      OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { titleRomaji: { contains: q, mode: "insensitive" } },
+        { titleEnglish: { contains: q, mode: "insensitive" } },
+        { titleNative: { contains: q, mode: "insensitive" } },
+        { synonyms: { has: q } },
+      ],
     },
     select: { id: true, name: true, type: true, publicationYear: true },
     take: 8,

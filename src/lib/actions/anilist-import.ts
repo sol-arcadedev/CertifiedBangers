@@ -67,7 +67,10 @@ export async function importAniListTitle(anilistId: number): Promise<{ error: st
     data: {
       anilistId: media.anilistId,
       name: media.name,
-      altNames: media.altNames,
+      titleRomaji: media.titleRomaji,
+      titleEnglish: media.titleEnglish,
+      titleNative: media.titleNative,
+      synonyms: media.synonyms,
       type: media.type,
       status: media.status,
       author: media.author,
@@ -75,10 +78,15 @@ export async function importAniListTitle(anilistId: number): Promise<{ error: st
       genres: media.genres,
       synopsis: media.synopsis,
       publicationYear: media.publicationYear,
+      startMonth: media.startMonth,
+      startDay: media.startDay,
       externalLinks: media.externalLinks,
       coverUrl,
       anilistAverageScore: media.averageScore,
+      anilistMeanScore: media.meanScore,
       anilistPopularity: media.popularity,
+      anilistFavourites: media.favourites,
+      anilistSource: media.source,
     },
   });
 

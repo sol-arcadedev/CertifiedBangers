@@ -7,7 +7,15 @@ export default async function AdminTitlesPage(props: PageProps<"/admin/titles">)
 
   const titles = await prisma.title.findMany({
     where: q
-      ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { altNames: { has: q } }] }
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { titleRomaji: { contains: q, mode: "insensitive" } },
+            { titleEnglish: { contains: q, mode: "insensitive" } },
+            { titleNative: { contains: q, mode: "insensitive" } },
+            { synonyms: { has: q } },
+          ],
+        }
       : undefined,
     orderBy: { name: "asc" },
     take: 50,

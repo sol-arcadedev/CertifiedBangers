@@ -20,7 +20,7 @@ export default async function EditTitlePage(props: PageProps<"/admin/titles/[id]
         defaults={{
           id: title.id,
           name: title.name,
-          altNames: title.altNames,
+          synonyms: title.synonyms,
           type: title.type,
           status: title.status,
           author: title.author,

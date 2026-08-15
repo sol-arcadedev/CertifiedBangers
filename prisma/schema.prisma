@@ -141,9 +141,18 @@ model Title {
   // pitch). Only set for imported titles; refreshed periodically via
   // scripts/refresh-anilist-data.ts since AniList's numbers drift over time.
   anilistAverageScore Int? // 0-100
+  anilistMeanScore    Int? // 0-100
   anilistPopularity   Int?
+  anilistFavourites   Int?
+  anilistSource       String? // AniList's source enum, e.g. "WEB_NOVEL"
   name                String
-  altNames            String[]
+  // Distinct per-language titles + synonyms, same shape AniList itself
+  // uses. synonyms is admin-editable via the manual form (repurposed from
+  // the old single altNames[] field); the per-language titles are not.
+  titleRomaji         String?
+  titleEnglish        String?
+  titleNative         String?
+  synonyms            String[]
   type                TitleType
   status              TitleStatus
   author              String?
@@ -152,6 +161,8 @@ model Title {
   coverUrl            String?
   synopsis            String?
   publicationYear     Int?
+  startMonth          Int?
+  startDay            Int?
   externalLinks       String[]
   createdAt           DateTime    @default(now())
 

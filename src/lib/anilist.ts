@@ -126,10 +126,28 @@ export async function searchAniListMedia(query: string): Promise<AniListSearchRe
     .filter((m): m is AniListSearchResult => m !== null);
 }
 
-export type AniListTitleImport = {
+// Fields sourced straight from AniList with no manual-edit UI anywhere —
+// safe for scripts/refresh-anilist-data.ts to overwrite periodically.
+// synonyms is deliberately excluded: it's editable via the manual title
+// form (repurposed from the old altNames field), so an auto-refresh could
+// clobber an admin's correction the same way genres/synopsis are protected.
+type AniListRefreshableFields = {
+  averageScore: number | null;
+  meanScore: number | null;
+  popularity: number | null;
+  favourites: number | null;
+  source: string | null;
+  titleRomaji: string | null;
+  titleEnglish: string | null;
+  titleNative: string | null;
+  startMonth: number | null;
+  startDay: number | null;
+};
+
+export type AniListTitleImport = AniListRefreshableFields & {
   anilistId: number;
   name: string;
-  altNames: string[];
+  synonyms: string[];
   type: TitleType;
   status: TitleStatus;
   author: string | null;
@@ -139,50 +157,55 @@ export type AniListTitleImport = {
   publicationYear: number | null;
   externalLinks: string[];
   coverImageUrl: string | null;
-  averageScore: number | null;
-  popularity: number | null;
 };
 
-const DETAIL_QUERY = `
-  query ($id: Int) {
-    Media(id: $id, type: MANGA) {
-      id
-      title { romaji english native }
-      synonyms
-      countryOfOrigin
-      status
-      startDate { year }
-      genres
-      description(asHtml: false)
-      coverImage { large }
-      siteUrl
-      averageScore
-      popularity
-      staff(perPage: 6) {
-        edges { role node { name { full } } }
-      }
-    }
+const DETAIL_FIELDS = `
+  id
+  title { romaji english native }
+  synonyms
+  countryOfOrigin
+  status
+  startDate { year month day }
+  genres
+  description(asHtml: false)
+  coverImage { large }
+  siteUrl
+  averageScore
+  meanScore
+  popularity
+  favourites
+  source
+  staff(perPage: 6) {
+    edges { role node { name { full } } }
   }
 `;
 
+type DetailResponse = {
+  Media: {
+    id: number;
+    title: { romaji: string | null; english: string | null; native: string | null };
+    synonyms: string[];
+    countryOfOrigin: string;
+    status: string;
+    startDate: { year: number | null; month: number | null; day: number | null };
+    genres: string[];
+    description: string | null;
+    coverImage: { large: string | null };
+    siteUrl: string | null;
+    averageScore: number | null;
+    meanScore: number | null;
+    popularity: number | null;
+    favourites: number | null;
+    source: string | null;
+    staff: { edges: StaffEdge[] };
+  } | null;
+};
+
 export async function getAniListMediaById(id: number): Promise<AniListTitleImport | null> {
-  const data = await anilistRequest<{
-    Media: {
-      id: number;
-      title: { romaji: string | null; english: string | null; native: string | null };
-      synonyms: string[];
-      countryOfOrigin: string;
-      status: string;
-      startDate: { year: number | null };
-      genres: string[];
-      description: string | null;
-      coverImage: { large: string | null };
-      siteUrl: string | null;
-      averageScore: number | null;
-      popularity: number | null;
-      staff: { edges: StaffEdge[] };
-    } | null;
-  }>(DETAIL_QUERY, { id });
+  const data = await anilistRequest<DetailResponse>(
+    `query ($id: Int) { Media(id: $id, type: MANGA) { ${DETAIL_FIELDS} } }`,
+    { id },
+  );
 
   const media = data.Media;
   if (!media) return null;
@@ -191,15 +214,15 @@ export async function getAniListMediaById(id: number): Promise<AniListTitleImpor
   if (!type) return null;
 
   const name = media.title.english ?? media.title.romaji ?? "Untitled";
-  const altNames = [media.title.romaji, media.title.native, ...media.synonyms].filter(
-    (n): n is string => !!n && n !== name,
-  );
   const { author, illustrator } = deriveCredits(media.staff.edges);
 
   return {
     anilistId: media.id,
     name,
-    altNames,
+    titleRomaji: media.title.romaji,
+    titleEnglish: media.title.english,
+    titleNative: media.title.native,
+    synonyms: media.synonyms,
     type,
     status: mapAniListStatus(media.status),
     author,
@@ -207,25 +230,61 @@ export async function getAniListMediaById(id: number): Promise<AniListTitleImpor
     genres: media.genres,
     synopsis: media.description ? media.description.replace(/<br\s*\/?>/gi, "\n").trim() : null,
     publicationYear: media.startDate.year,
+    startMonth: media.startDate.month,
+    startDay: media.startDate.day,
     externalLinks: media.siteUrl ? [media.siteUrl] : [],
     coverImageUrl: media.coverImage.large,
     averageScore: media.averageScore,
+    meanScore: media.meanScore,
     popularity: media.popularity,
+    favourites: media.favourites,
+    source: media.source,
   };
 }
 
-// Refreshes just the two AniList-sourced numeric fields for an already-
-// imported title, without touching anything admin-editable (genres,
-// synopsis, etc. might have been hand-corrected since import). Used by
-// scripts/refresh-anilist-data.ts.
-export async function getAniListScoreAndPopularity(
+// Used by scripts/refresh-anilist-data.ts to re-fetch just the
+// AniListRefreshableFields for an already-imported title.
+export async function getAniListRefreshableFields(
   id: number,
-): Promise<{ averageScore: number | null; popularity: number | null } | null> {
+): Promise<AniListRefreshableFields | null> {
   const data = await anilistRequest<{
-    Media: { averageScore: number | null; popularity: number | null } | null;
+    Media: {
+      title: { romaji: string | null; english: string | null; native: string | null };
+      startDate: { month: number | null; day: number | null };
+      averageScore: number | null;
+      meanScore: number | null;
+      popularity: number | null;
+      favourites: number | null;
+      source: string | null;
+    } | null;
   }>(
-    `query ($id: Int) { Media(id: $id, type: MANGA) { averageScore popularity } }`,
+    `query ($id: Int) {
+      Media(id: $id, type: MANGA) {
+        title { romaji english native }
+        startDate { month day }
+        averageScore
+        meanScore
+        popularity
+        favourites
+        source
+      }
+    }`,
     { id },
   );
-  return data.Media;
+
+  const media = data.Media;
+  if (!media) return null;
+
+  return {
+    titleRomaji: media.title.romaji,
+    titleEnglish: media.title.english,
+    titleNative: media.title.native,
+    startMonth: media.startDate.month,
+    startDay: media.startDate.day,
+    averageScore: media.averageScore,
+    meanScore: media.meanScore,
+    popularity: media.popularity,
+    favourites: media.favourites,
+    source: media.source,
+  };
 }
