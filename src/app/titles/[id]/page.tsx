@@ -8,6 +8,7 @@ import { UsernameLabel } from "@/components/username-label";
 import { VoteButtons } from "@/components/vote-buttons";
 import { CommentForm } from "@/components/comment-form";
 import { ReportButton } from "@/components/report-button";
+import { LibraryWidget } from "@/components/library-widget";
 
 function formatStartDate(year: number | null, month: number | null, day: number | null) {
   if (!year) return null;
@@ -69,6 +70,12 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
     ? await prisma.review.findUnique({
         where: { userId_titleId: { userId: user.id, titleId: id } },
         include: { categoryScores: true },
+      })
+    : null;
+
+  const libraryEntry = user
+    ? await prisma.libraryEntry.findUnique({
+        where: { userId_titleId: { userId: user.id, titleId: id } },
       })
     : null;
 
@@ -149,6 +156,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
             >
               {existingReview ? "Edit your review" : "Write a review"}
             </Link>
+            {user && <LibraryWidget titleId={id} currentStatus={libraryEntry?.status ?? null} />}
             {user && <ReportButton targetType="TITLE" targetId={id} />}
           </div>
         </div>

@@ -1,6 +1,15 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { UsernameLabel } from "@/components/username-label";
+import { TitleCardGrid } from "@/components/title-card-grid";
+import type { LibraryStatus } from "@/generated/prisma/enums";
+
+const LIBRARY_STATUS_ORDER: { status: LibraryStatus; label: string }[] = [
+  { status: "CURRENTLY_READING", label: "Currently Reading" },
+  { status: "FINISHED", label: "Finished" },
+  { status: "PLAN_TO_READ", label: "Plan to Read" },
+  { status: "DROPPED", label: "Dropped" },
+];
 
 export default async function ProfilePage(
   props: PageProps<"/profile/[username]">,
@@ -17,6 +26,14 @@ export default async function ProfilePage(
       reputationScore: true,
       createdAt: true,
       _count: { select: { reviews: true } },
+      // Public — library entries aren't restricted to the profile owner,
+      // matching the hybrid browsing model (Entry 3).
+      libraryEntries: {
+        include: {
+          title: { select: { id: true, name: true, type: true, coverUrl: true, anilistAverageScore: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+      },
     },
   });
 
@@ -26,6 +43,11 @@ export default async function ProfilePage(
     year: "numeric",
     month: "long",
   });
+
+  const libraryGroups = LIBRARY_STATUS_ORDER.map(({ status, label }) => ({
+    label,
+    titles: user.libraryEntries.filter((e) => e.status === status).map((e) => e.title),
+  })).filter((g) => g.titles.length > 0);
 
   return (
     <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
@@ -80,6 +102,15 @@ export default async function ProfilePage(
             </div>
           </div>
         </div>
+
+        {libraryGroups.map((group) => (
+          <div key={group.label} className="mt-8 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+            <h2 className="mb-4 text-lg font-semibold text-black dark:text-zinc-50">
+              {group.label} ({group.titles.length})
+            </h2>
+            <TitleCardGrid titles={group.titles} />
+          </div>
+        ))}
       </div>
     </div>
   );
