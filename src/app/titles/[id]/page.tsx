@@ -55,6 +55,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
       include: {
         user: { select: { username: true, role: true } },
         categoryScores: { include: { category: true } },
+        sealAwards: { include: { sealType: true } },
         comments: {
           include: { user: { select: { username: true, role: true } } },
           orderBy: { createdAt: "asc" },
@@ -169,6 +170,14 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               </div>
             ))}
           </div>
+          {(title.certifiedBangerCount > 0 || title.hiddenGemCount > 0) && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+              {title.certifiedBangerCount > 0 && (
+                <div>🏅 {title.certifiedBangerCount} Certified Banger</div>
+              )}
+              {title.hiddenGemCount > 0 && <div>💎 {title.hiddenGemCount} Hidden Gem</div>}
+            </div>
+          )}
         </div>
       )}
 
@@ -251,6 +260,18 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                   {review.overallScore?.toFixed(2)} / {categories[0]?.scaleMax ?? 10}
                 </span>
               </div>
+              {review.sealAwards.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {review.sealAwards.map((award) => (
+                    <span
+                      key={award.id}
+                      className="rounded-full bg-black/[.06] px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-white/[.08] dark:text-zinc-300"
+                    >
+                      {award.sealType.name === "Certified Banger" ? "🏅" : "💎"} {award.sealType.name}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
                 {review.categoryScores.map((s) => (
                   <span key={s.categoryId}>

@@ -33,3 +33,38 @@ export async function recomputeTitleAggregates(
     data: { reviewCount, avgCategoryScores },
   });
 }
+
+// Same precomputed-aggregate pattern, for the two named seal counts Entry
+// 39 explicitly calls out. Matched by SealType.name rather than a generic
+// per-type tally, since the schema only carries these two specific named
+// columns — v1 has exactly two seal types (Entry 14). Counts both
+// PROVISIONAL and PERMANENT SealAward rows: a seal is visible on a review
+// from the moment it's granted, not just once it converts to permanent
+// (Phase 1 admin grants are PERMANENT immediately anyway, Entry 11 — this
+// only starts to matter once WP4.2's Phase 2 provisional grants exist).
+export async function recomputeTitleSealCounts(
+  titleId: string,
+  client: typeof prisma | Prisma.TransactionClient = prisma,
+) {
+  const sealTypes = await client.sealType.findMany({
+    where: { name: { in: ["Certified Banger", "Hidden Gem"] } },
+  });
+  const certifiedBangerType = sealTypes.find((s) => s.name === "Certified Banger");
+  const hiddenGemType = sealTypes.find((s) => s.name === "Hidden Gem");
+
+  const [certifiedBangerCount, hiddenGemCount] = await Promise.all([
+    certifiedBangerType
+      ? client.sealAward.count({
+          where: { sealTypeId: certifiedBangerType.id, review: { titleId } },
+        })
+      : 0,
+    hiddenGemType
+      ? client.sealAward.count({ where: { sealTypeId: hiddenGemType.id, review: { titleId } } })
+      : 0,
+  ]);
+
+  await client.title.update({
+    where: { id: titleId },
+    data: { certifiedBangerCount, hiddenGemCount },
+  });
+}
