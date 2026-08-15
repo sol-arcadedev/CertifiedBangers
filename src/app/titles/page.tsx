@@ -78,17 +78,29 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
 
       <ul className="divide-y divide-black/[.08] dark:divide-white/[.145]">
         {titles.map((title) => (
-          <li key={title.id} className="flex items-center justify-between py-3">
-            <div>
-              <Link
-                href={`/titles/${title.id}`}
-                className="font-medium text-black dark:text-zinc-50"
-              >
-                {title.name}
-              </Link>
-              <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                {title.type} · {title.status}
-                {title.reviewCount > 0 ? ` · ${title.reviewCount} reviews` : ""}
+          <li key={title.id} className="flex items-center justify-between gap-4 py-3">
+            <div className="flex items-center gap-3">
+              {title.coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={title.coverUrl}
+                  alt={title.name}
+                  className="h-16 w-11 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
+              )}
+              <div>
+                <Link
+                  href={`/titles/${title.id}`}
+                  className="font-medium text-black dark:text-zinc-50"
+                >
+                  {title.name}
+                </Link>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {title.type} · {title.status}
+                  {title.reviewCount > 0 ? ` · ${title.reviewCount} reviews` : ""}
+                </div>
               </div>
             </div>
             {(title.anilistAverageScore !== null || title.anilistPopularity !== null) && (
