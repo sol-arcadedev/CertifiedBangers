@@ -6,6 +6,7 @@ import { checkReviewGate } from "@/lib/review-gate";
 import { ReviewForm } from "@/components/review-form";
 import { UsernameLabel } from "@/components/username-label";
 import { VoteButtons } from "@/components/vote-buttons";
+import { CommentForm } from "@/components/comment-form";
 
 function formatStartDate(year: number | null, month: number | null, day: number | null) {
   if (!year) return null;
@@ -53,6 +54,10 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
       include: {
         user: { select: { username: true, role: true } },
         categoryScores: { include: { category: true } },
+        comments: {
+          include: { user: { select: { username: true, role: true } } },
+          orderBy: { createdAt: "asc" },
+        },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -271,6 +276,30 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               ) : (
                 <p className="mt-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
                   {review.bodyText}
+                </p>
+              )}
+
+              {review.comments.length > 0 && (
+                <ul className="mt-3 flex flex-col gap-2 border-l-2 border-black/[.08] pl-3 dark:border-white/[.145]">
+                  {review.comments.map((comment) => (
+                    <li key={comment.id} className="text-sm">
+                      <span className="font-medium text-black dark:text-zinc-50">
+                        <UsernameLabel username={comment.user.username} role={comment.user.role} />
+                      </span>{" "}
+                      <span className="text-zinc-700 dark:text-zinc-300">{comment.bodyText}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {user ? (
+                <CommentForm reviewId={review.id} titleId={id} />
+              ) : (
+                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  <Link href="/login" className="underline">
+                    Log in
+                  </Link>{" "}
+                  to comment.
                 </p>
               )}
             </li>
