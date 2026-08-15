@@ -20,7 +20,11 @@ Vercel (hosting + Cron). Full rationale in the Requirements doc, Section 5.
 2. Install dependencies: `npm install`
 3. Push the schema to your database: `npx prisma db push`
 4. Seed the Category/SealType tables: `npx prisma db seed`
-5. Run the dev server: `npm run dev`, then open [http://localhost:3000](http://localhost:3000)
+5. Create the Storage bucket for title cover images: `npm run setup:storage`
+6. Run the dev server: `npm run dev`, then open [http://localhost:3000](http://localhost:3000)
+7. Register an account in the browser, then promote it to Main Admin (there's no UI for this —
+   bootstrapping the first admin has to happen out of band):
+   `npm run promote-admin -- <your-username> MAIN_ADMIN`
 
 ## Project Structure
 

@@ -17,6 +17,11 @@ export async function Header() {
       <nav className="flex items-center gap-4 text-sm font-medium">
         {user ? (
           <>
+            {(user.role === "ADMIN" || user.role === "MAIN_ADMIN") && (
+              <Link href="/admin/titles" className="text-zinc-700 dark:text-zinc-300">
+                Admin
+              </Link>
+            )}
             <Link
               href={`/profile/${user.username}`}
               className="text-zinc-700 dark:text-zinc-300"

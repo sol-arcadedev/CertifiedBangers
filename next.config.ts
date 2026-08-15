@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      // Default 1MB is too small for cover image uploads (WP1.2).
+      bodySizeLimit: "5mb",
+    },
+  },
 };
 
 export default nextConfig;
