@@ -7,6 +7,7 @@ import { ReviewForm } from "@/components/review-form";
 import { UsernameLabel } from "@/components/username-label";
 import { VoteButtons } from "@/components/vote-buttons";
 import { CommentForm } from "@/components/comment-form";
+import { ReportButton } from "@/components/report-button";
 
 function formatStartDate(year: number | null, month: number | null, day: number | null) {
   if (!year) return null;
@@ -141,12 +142,15 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               {title.synopsis}
             </p>
           )}
-          <Link
-            href="#review"
-            className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
-          >
-            {existingReview ? "Edit your review" : "Write a review"}
-          </Link>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <Link
+              href="#review"
+              className="inline-flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            >
+              {existingReview ? "Edit your review" : "Write a review"}
+            </Link>
+            {user && <ReportButton targetType="TITLE" targetId={id} />}
+          </div>
         </div>
       </div>
 
@@ -254,7 +258,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                   </span>
                 ))}
               </div>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-wrap items-center gap-3">
                 <VoteButtons
                   reviewId={review.id}
                   titleId={id}
@@ -263,6 +267,9 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                   userVote={(userVotes[review.id] as "UP" | "DOWN" | undefined) ?? null}
                   canVote={!!user && review.userId !== user.id}
                 />
+                {user && review.userId !== user.id && (
+                  <ReportButton targetType="REVIEW" targetId={review.id} />
+                )}
               </div>
               {review.spoilerFlag ? (
                 <details className="mt-2">
@@ -287,6 +294,11 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                         <UsernameLabel username={comment.user.username} role={comment.user.role} />
                       </span>{" "}
                       <span className="text-zinc-700 dark:text-zinc-300">{comment.bodyText}</span>
+                      {user && comment.userId !== user.id && (
+                        <span className="ml-2">
+                          <ReportButton targetType="COMMENT" targetId={comment.id} />
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
