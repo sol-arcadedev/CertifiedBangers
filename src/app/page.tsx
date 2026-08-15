@@ -2,11 +2,18 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
 
-// "Certified Bangers" / "Hidden Gems" sections deliberately aren't here yet —
-// seal-awarding (WP4.1-4.3) doesn't exist in the app at all, so there's
-// nothing to show. Add them once seals are actually built.
 export default async function Home() {
-  const [mostPopular, highestRated] = await Promise.all([
+  const [certifiedBangers, hiddenGems, mostPopular, highestRated] = await Promise.all([
+    prisma.title.findMany({
+      where: { certifiedBangerCount: { gt: 0 } },
+      orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
+      take: 8,
+    }),
+    prisma.title.findMany({
+      where: { hiddenGemCount: { gt: 0 } },
+      orderBy: [{ hiddenGemCount: "desc" }, { reviewCount: "desc" }],
+      take: 8,
+    }),
     prisma.title.findMany({
       orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } },
       take: 8,
@@ -17,9 +24,13 @@ export default async function Home() {
     }),
   ]);
 
+  // Certified Bangers/Hidden Gems lead — the brief calls the seal showcase
+  // out explicitly as "your differentiator — make it prominent" (Section 4.5).
   const sections = [
-    { heading: "Most Popular", titles: mostPopular },
-    { heading: "Highest Rated", titles: highestRated },
+    { heading: "🏅 Certified Bangers", titles: certifiedBangers, browseHref: "/seals" },
+    { heading: "💎 Hidden Gems", titles: hiddenGems, browseHref: "/seals" },
+    { heading: "Most Popular", titles: mostPopular, browseHref: "/titles" },
+    { heading: "Highest Rated", titles: highestRated, browseHref: "/titles" },
   ].filter((section) => section.titles.length > 0);
 
   return (
@@ -39,7 +50,10 @@ export default async function Home() {
             <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
               {section.heading}
             </h2>
-            <Link href="/titles" className="text-sm text-zinc-600 underline dark:text-zinc-400">
+            <Link
+              href={section.browseHref}
+              className="text-sm text-zinc-600 underline dark:text-zinc-400"
+            >
               Browse all
             </Link>
           </div>

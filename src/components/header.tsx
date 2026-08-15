@@ -19,6 +19,9 @@ export async function Header() {
         <Link href="/titles" className="text-zinc-700 dark:text-zinc-300">
           Titles
         </Link>
+        <Link href="/seals" className="text-zinc-700 dark:text-zinc-300">
+          Seals
+        </Link>
         {user ? (
           <>
             {(user.role === "ADMIN" || user.role === "MAIN_ADMIN") && (
