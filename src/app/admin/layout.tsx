@@ -14,6 +14,12 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <Link href="/admin/seals" className="text-zinc-700 dark:text-zinc-300">
           Seals
         </Link>
+        <Link href="/admin/reports" className="text-zinc-700 dark:text-zinc-300">
+          Reports
+        </Link>
+        <Link href="/admin/users" className="text-zinc-700 dark:text-zinc-300">
+          Users
+        </Link>
         {user.role === "MAIN_ADMIN" && (
           <>
             <Link href="/admin/reviews" className="text-zinc-700 dark:text-zinc-300">
@@ -21,6 +27,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             </Link>
             <Link href="/admin/admins" className="text-zinc-700 dark:text-zinc-300">
               Admins
+            </Link>
+            <Link href="/admin/config" className="text-zinc-700 dark:text-zinc-300">
+              Config
             </Link>
             <Link href="/admin/settings" className="text-zinc-700 dark:text-zinc-300">
               Settings

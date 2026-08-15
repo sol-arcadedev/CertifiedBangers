@@ -35,6 +35,7 @@ erDiagram
         string avatarUrl
         string bio
         Role role "USER | ADMIN | MAIN_ADMIN"
+        UserStatus status "ACTIVE | SUSPENDED | BANNED (WP6.1)"
         bool adminReviewsRequireApproval
         int reputationScore
         datetime createdAt

@@ -22,6 +22,17 @@ enum Role {
   MAIN_ADMIN
 }
 
+// WP6.1 moderation: an account's platform-wide standing, independent of
+// role. Checked once in requireUser() so every write action (review,
+// comment, vote, report, library) is blocked in one place rather than
+// re-implemented per action. Existing content isn't retroactively hidden
+// when a user is suspended/banned — only future actions are blocked.
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
 enum TitleType {
   MANGA
   MANHWA
@@ -120,6 +131,7 @@ model User {
   avatarUrl                   String?
   bio                         String?
   role                        Role     @default(USER)
+  status                      UserStatus @default(ACTIVE)
   // Entry 28/41: only meaningful when role = ADMIN; the Main Admin lifts this
   // per-admin, by manual judgment, not an automatic rule.
   adminReviewsRequireApproval Boolean  @default(true)
