@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "setup:storage": "tsx scripts/setup-storage.ts",
-    "promote-admin": "tsx scripts/promote-admin.ts"
+    "promote-admin": "tsx scripts/promote-admin.ts",
+    "seed:titles": "tsx scripts/seed-default-titles.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

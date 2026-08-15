@@ -25,6 +25,8 @@ Vercel (hosting + Cron). Full rationale in the Requirements doc, Section 5.
 7. Register an account in the browser, then promote it to Main Admin (there's no UI for this —
    bootstrapping the first admin has to happen out of band):
    `npm run promote-admin -- <your-username> MAIN_ADMIN`
+8. Optional: populate the catalog with a curated set of well-known titles imported from AniList
+   (Journal Entry 44), so the site isn't empty by default: `npm run seed:titles`
 
 ## Project Structure
 
