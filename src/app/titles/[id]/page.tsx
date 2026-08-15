@@ -58,6 +58,14 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
             {title.type} · {title.status}
             {title.publicationYear ? ` · ${title.publicationYear}` : ""}
           </p>
+          {(title.anilistAverageScore !== null || title.anilistPopularity !== null) && (
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              {title.anilistAverageScore !== null && `AniList ${title.anilistAverageScore}/100`}
+              {title.anilistAverageScore !== null && title.anilistPopularity !== null && " · "}
+              {title.anilistPopularity !== null &&
+                `${title.anilistPopularity.toLocaleString()} on AniList lists`}
+            </p>
+          )}
           {title.author && (
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               By {title.author}

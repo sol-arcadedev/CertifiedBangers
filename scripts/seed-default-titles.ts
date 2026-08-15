@@ -113,6 +113,8 @@ const DETAIL_QUERY = `
       description(asHtml: false)
       coverImage { large }
       siteUrl
+      averageScore
+      popularity
       staff(perPage: 6) { edges { role node { name { full } } } }
     }
   }
@@ -165,6 +167,8 @@ async function main() {
           description: string | null;
           coverImage: { large: string | null };
           siteUrl: string | null;
+          averageScore: number | null;
+          popularity: number | null;
           staff: { edges: StaffEdge[] };
         } | null;
       }>(DETAIL_QUERY, { id: best.id });
@@ -213,6 +217,8 @@ async function main() {
           publicationYear: media.startDate.year,
           externalLinks: media.siteUrl ? [media.siteUrl] : [],
           coverUrl,
+          anilistAverageScore: media.averageScore,
+          anilistPopularity: media.popularity,
         },
       });
       console.log(`  + imported: ${titleName}`);

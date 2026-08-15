@@ -77,6 +77,8 @@ export async function importAniListTitle(anilistId: number): Promise<{ error: st
       publicationYear: media.publicationYear,
       externalLinks: media.externalLinks,
       coverUrl,
+      anilistAverageScore: media.averageScore,
+      anilistPopularity: media.popularity,
     },
   });
 

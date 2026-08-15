@@ -74,6 +74,8 @@ export type AniListSearchResult = {
   type: TitleType;
   publicationYear: number | null;
   coverImageUrl: string | null;
+  averageScore: number | null;
+  popularity: number | null;
 };
 
 const SEARCH_QUERY = `
@@ -85,6 +87,8 @@ const SEARCH_QUERY = `
         countryOfOrigin
         startDate { year }
         coverImage { medium }
+        averageScore
+        popularity
       }
     }
   }
@@ -99,6 +103,8 @@ export async function searchAniListMedia(query: string): Promise<AniListSearchRe
         countryOfOrigin: string;
         startDate: { year: number | null };
         coverImage: { medium: string | null };
+        averageScore: number | null;
+        popularity: number | null;
       }[];
     };
   }>(SEARCH_QUERY, { search: query });
@@ -113,6 +119,8 @@ export async function searchAniListMedia(query: string): Promise<AniListSearchRe
         type,
         publicationYear: m.startDate.year,
         coverImageUrl: m.coverImage.medium,
+        averageScore: m.averageScore,
+        popularity: m.popularity,
       };
     })
     .filter((m): m is AniListSearchResult => m !== null);
@@ -131,6 +139,8 @@ export type AniListTitleImport = {
   publicationYear: number | null;
   externalLinks: string[];
   coverImageUrl: string | null;
+  averageScore: number | null;
+  popularity: number | null;
 };
 
 const DETAIL_QUERY = `
@@ -146,6 +156,8 @@ const DETAIL_QUERY = `
       description(asHtml: false)
       coverImage { large }
       siteUrl
+      averageScore
+      popularity
       staff(perPage: 6) {
         edges { role node { name { full } } }
       }
@@ -166,6 +178,8 @@ export async function getAniListMediaById(id: number): Promise<AniListTitleImpor
       description: string | null;
       coverImage: { large: string | null };
       siteUrl: string | null;
+      averageScore: number | null;
+      popularity: number | null;
       staff: { edges: StaffEdge[] };
     } | null;
   }>(DETAIL_QUERY, { id });
@@ -195,5 +209,23 @@ export async function getAniListMediaById(id: number): Promise<AniListTitleImpor
     publicationYear: media.startDate.year,
     externalLinks: media.siteUrl ? [media.siteUrl] : [],
     coverImageUrl: media.coverImage.large,
+    averageScore: media.averageScore,
+    popularity: media.popularity,
   };
+}
+
+// Refreshes just the two AniList-sourced numeric fields for an already-
+// imported title, without touching anything admin-editable (genres,
+// synopsis, etc. might have been hand-corrected since import). Used by
+// scripts/refresh-anilist-data.ts.
+export async function getAniListScoreAndPopularity(
+  id: number,
+): Promise<{ averageScore: number | null; popularity: number | null } | null> {
+  const data = await anilistRequest<{
+    Media: { averageScore: number | null; popularity: number | null } | null;
+  }>(
+    `query ($id: Int) { Media(id: $id, type: MANGA) { averageScore popularity } }`,
+    { id },
+  );
+  return data.Media;
 }

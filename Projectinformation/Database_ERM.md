@@ -43,6 +43,8 @@ erDiagram
     TITLE {
         string id PK
         int anilistId UK "null = manually created, Entry 44"
+        int anilistAverageScore "0-100, reference only, not overallScore"
+        int anilistPopularity "reference only"
         string name
         string_array altNames
         TitleType type "MANGA | MANHWA | MANHUA"

@@ -49,4 +49,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# pasted screenshots saved to disk by the harness, not project assets
+/screenshots
+
 /src/generated/prisma
