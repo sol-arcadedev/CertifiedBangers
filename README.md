@@ -6,6 +6,8 @@ A community-curated review platform for manga/manhwa. See
 for the consolidated requirements spec, architecture, data model, work packages, and user stories.
 Every product/architecture decision behind this app is traced in
 [`Projectinformation/Development_Journal.docx`](./Projectinformation/Development_Journal.docx).
+The current database schema is diagrammed in
+[`Projectinformation/Database_ERM.md`](./Projectinformation/Database_ERM.md).
 
 ## Stack
 
