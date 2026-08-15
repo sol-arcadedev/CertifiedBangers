@@ -22,10 +22,20 @@ export async function updateSettings(
     return { error: "Seal quality-gate threshold must be a whole number, at least 1." };
   }
 
+  const sealPopularityGateThreshold = Number(formData.get("sealPopularityGateThreshold"));
+  if (!Number.isInteger(sealPopularityGateThreshold) || sealPopularityGateThreshold < 1) {
+    return { error: "Seal popularity-gate threshold must be a whole number, at least 1." };
+  }
+
   await prisma.platformSettings.upsert({
     where: { id: "singleton" },
-    update: { minAccountAgeDays, sealQualityGateThreshold },
-    create: { id: "singleton", minAccountAgeDays, sealQualityGateThreshold },
+    update: { minAccountAgeDays, sealQualityGateThreshold, sealPopularityGateThreshold },
+    create: {
+      id: "singleton",
+      minAccountAgeDays,
+      sealQualityGateThreshold,
+      sealPopularityGateThreshold,
+    },
   });
 
   revalidatePath("/admin/settings");

@@ -14,6 +14,7 @@ export default async function AdminSettingsPage() {
       <SettingsForm
         minAccountAgeDays={settings.minAccountAgeDays}
         sealQualityGateThreshold={settings.sealQualityGateThreshold}
+        sealPopularityGateThreshold={settings.sealPopularityGateThreshold}
       />
     </div>
   );

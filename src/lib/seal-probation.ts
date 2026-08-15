@@ -4,42 +4,75 @@ import { recomputeTitleSealCounts } from "@/lib/title-aggregates";
 
 const PROBATION_STREAK_DAYS = 30; // Entry 12
 
-// Called after every vote (src/lib/actions/votes.ts). Phase 2 candidacy —
-// no admin/justification involved, hence the auto-generated justification
-// text, which the required-String justificationText column still needs
-// something in. No-ops if this review already has Certified Banger from
-// any source (admin grant, WP4.1, or an earlier auto-grant) — the
-// reviewId+sealTypeId unique constraint would also catch this, but
-// checking first avoids a pointless failed insert.
-export async function checkAutoSealCandidacy(reviewId: string) {
-  const review = await prisma.review.findUnique({ where: { id: reviewId } });
-  if (!review || review.approvalStatus !== "PUBLISHED") return;
-
-  const certifiedBanger = await prisma.sealType.findUnique({
-    where: { name: "Certified Banger" },
-  });
-  if (!certifiedBanger) return;
-
-  const existing = await prisma.sealAward.findUnique({
-    where: { reviewId_sealTypeId: { reviewId, sealTypeId: certifiedBanger.id } },
-  });
-  if (existing) return;
-
-  const netScore = review.upvoteCount - review.downvoteCount;
-  const { sealQualityGateThreshold } = await getPlatformSettings();
-  if (netScore < sealQualityGateThreshold) return;
-
+async function grantAutoSeal(reviewId: string, sealTypeId: string, justificationText: string) {
   await prisma.sealAward.create({
     data: {
       reviewId,
-      sealTypeId: certifiedBanger.id,
-      justificationText: `Automatically certified: this review's community vote score reached +${netScore} (threshold: +${sealQualityGateThreshold}).`,
+      sealTypeId,
+      justificationText,
       grantedVia: "VOTE_THRESHOLD",
       status: "PROVISIONAL",
       positiveStreakDays: 0,
       lastStreakResetAt: new Date(),
     },
   });
+}
+
+// Called after every vote (src/lib/actions/votes.ts). Phase 2 candidacy —
+// no admin/justification involved, hence the auto-generated justification
+// text, which the required-String justificationText column still needs
+// something in.
+//
+// Entry 15's popularity gate: crossing the quality gate earns Hidden Gem
+// if the TITLE's popularity (total votes on its highest-voted review, not
+// this review specifically) is below the popularity threshold, or
+// Certified Banger if at/above it. Earning Certified Banger is additive —
+// it does NOT remove an already-held Hidden Gem (rule 3/4) — so this only
+// skips entirely once the review holds Certified Banger itself; an
+// existing Hidden Gem doesn't block a later Certified Banger upgrade.
+export async function checkAutoSealCandidacy(reviewId: string) {
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
+  if (!review || review.approvalStatus !== "PUBLISHED") return;
+
+  const netScore = review.upvoteCount - review.downvoteCount;
+  const settings = await getPlatformSettings();
+  if (netScore < settings.sealQualityGateThreshold) return;
+
+  const [certifiedBanger, hiddenGem] = await Promise.all([
+    prisma.sealType.findUnique({ where: { name: "Certified Banger" } }),
+    prisma.sealType.findUnique({ where: { name: "Hidden Gem" } }),
+  ]);
+  if (!certifiedBanger || !hiddenGem) return;
+
+  const existingCB = await prisma.sealAward.findUnique({
+    where: { reviewId_sealTypeId: { reviewId, sealTypeId: certifiedBanger.id } },
+  });
+  if (existingCB) return;
+
+  const titleReviews = await prisma.review.findMany({
+    where: { titleId: review.titleId, approvalStatus: "PUBLISHED" },
+    select: { upvoteCount: true, downvoteCount: true },
+  });
+  const popularity = Math.max(0, ...titleReviews.map((r) => r.upvoteCount + r.downvoteCount));
+
+  if (popularity >= settings.sealPopularityGateThreshold) {
+    await grantAutoSeal(
+      reviewId,
+      certifiedBanger.id,
+      `Automatically certified as Certified Banger: net vote score +${netScore} (threshold +${settings.sealQualityGateThreshold}), and the title's most-voted review has ${popularity} total votes (popularity threshold ${settings.sealPopularityGateThreshold}).`,
+    );
+  } else {
+    const existingHG = await prisma.sealAward.findUnique({
+      where: { reviewId_sealTypeId: { reviewId, sealTypeId: hiddenGem.id } },
+    });
+    if (!existingHG) {
+      await grantAutoSeal(
+        reviewId,
+        hiddenGem.id,
+        `Automatically certified as Hidden Gem: net vote score +${netScore} (threshold +${settings.sealQualityGateThreshold}), and the title's most-voted review has only ${popularity} total votes (below the ${settings.sealPopularityGateThreshold}-vote popularity threshold for Certified Banger).`,
+      );
+    }
+  }
 
   await recomputeTitleSealCounts(review.titleId);
 }

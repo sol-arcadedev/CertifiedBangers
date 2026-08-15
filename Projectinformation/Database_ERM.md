@@ -83,6 +83,7 @@ erDiagram
         string id PK "fixed at literal singleton"
         int minAccountAgeDays "review-gate threshold, Entry 40"
         int sealQualityGateThreshold "Phase 2 seal candidacy net-vote threshold, Entry 8/29"
+        int sealPopularityGateThreshold "Hidden Gem vs Certified Banger split, Entry 15/29"
         datetime updatedAt
     }
 

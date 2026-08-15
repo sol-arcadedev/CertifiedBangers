@@ -96,12 +96,16 @@ enum ReportStatus {
 // home for future knobs of the same kind (e.g. the seal probation streak
 // length hardcoded today, Entry 12) rather than a new singleton table each time.
 model PlatformSettings {
-  id                       String   @id @default("singleton")
-  minAccountAgeDays        Int      @default(3)
+  id                          String   @id @default("singleton")
+  minAccountAgeDays           Int      @default(3)
   // Net vote score (upvotes - downvotes) a review must reach to become an
   // automatic Phase 2 seal candidate (Entry 8/29 — starting value +20).
-  sealQualityGateThreshold Int      @default(20)
-  updatedAt                DateTime @updatedAt
+  sealQualityGateThreshold    Int      @default(20)
+  // Total votes (up+down) on a title's highest-voted review. Below this, a
+  // quality-gate-crossing review earns Hidden Gem; at/above it, Certified
+  // Banger instead (Entry 15/29 — starting value 100).
+  sealPopularityGateThreshold Int      @default(100)
+  updatedAt                   DateTime @updatedAt
 
   @@map("platform_settings")
 }
