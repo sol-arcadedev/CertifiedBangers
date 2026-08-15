@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
+import { recomputeTitleDiscussionCount } from "@/lib/title-aggregates";
 
 export type CommentActionState = { error?: string } | undefined;
 
@@ -27,6 +28,7 @@ export async function submitComment(
   if (!bodyText) return { error: "Comment can't be empty." };
 
   await prisma.comment.create({ data: { userId: user.id, reviewId, bodyText } });
+  await recomputeTitleDiscussionCount(titleId);
 
   revalidatePath(`/titles/${titleId}`);
 }

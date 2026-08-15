@@ -104,16 +104,15 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
     { label: "Synonyms", value: title.synonyms.length > 0 ? title.synonyms.join(", ") : null },
   ].filter((d): d is { label: string; value: string } => !!d.value);
 
-  // Reads the precomputed aggregate (Journal Entry 39) — never recalculated
-  // live here, always whatever recomputeTitleAggregates last wrote.
+  // Per-category breakdown still reads the JSON blob (no separate scalar
+  // per category); the combined figure now reads the precomputed
+  // communityScore directly instead of re-averaging it here (Journal
+  // Entry 39 — never recalculated live).
   const avgScores = (title.avgCategoryScores as Record<string, number> | null) ?? {};
   const scoreEntries = categories
     .map((c) => ({ name: c.name, score: avgScores[c.id] }))
     .filter((e): e is { name: string; score: number } => typeof e.score === "number");
-  const overallAvg =
-    scoreEntries.length > 0
-      ? Math.round((scoreEntries.reduce((sum, e) => sum + e.score, 0) / scoreEntries.length) * 100) / 100
-      : null;
+  const overallAvg = title.communityScore;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">

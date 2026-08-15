@@ -12,12 +12,17 @@ export async function recomputeTitleAggregates(
   titleId: string,
   client: typeof prisma | Prisma.TransactionClient = prisma,
 ) {
-  const [reviewCount, grouped] = await Promise.all([
+  const [reviewCount, grouped, latest] = await Promise.all([
     client.review.count({ where: { titleId, approvalStatus: "PUBLISHED" } }),
     client.reviewCategoryScore.groupBy({
       by: ["categoryId"],
       where: { review: { titleId, approvalStatus: "PUBLISHED" } },
       _avg: { score: true },
+    }),
+    client.review.findFirst({
+      where: { titleId, approvalStatus: "PUBLISHED" },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
     }),
   ]);
 
@@ -28,9 +33,24 @@ export async function recomputeTitleAggregates(
     ]),
   );
 
+  // WP5.1's "highest overall score" sort reads this directly instead of
+  // recomputing from the avgCategoryScores JSON blob on every page render.
+  const scoreValues = Object.values(avgCategoryScores).filter(
+    (v): v is number => typeof v === "number",
+  );
+  const communityScore =
+    scoreValues.length > 0
+      ? Math.round((scoreValues.reduce((sum, v) => sum + v, 0) / scoreValues.length) * 100) / 100
+      : null;
+
   await client.title.update({
     where: { id: titleId },
-    data: { reviewCount, avgCategoryScores },
+    data: {
+      reviewCount,
+      avgCategoryScores,
+      communityScore,
+      lastReviewedAt: latest?.createdAt ?? null,
+    },
   });
 }
 
@@ -65,6 +85,24 @@ export async function recomputeTitleSealCounts(
 
   await client.title.update({
     where: { id: titleId },
-    data: { certifiedBangerCount, hiddenGemCount },
+    data: {
+      certifiedBangerCount,
+      hiddenGemCount,
+      totalSealCount: certifiedBangerCount + hiddenGemCount, // WP5.1 "most seals" sort
+    },
   });
+}
+
+// WP5.1's "most discussed" sort. Called from src/lib/actions/comments.ts
+// after a comment is created — comments have no approval gate of their
+// own (Comment has no approvalStatus field), but still only count toward
+// a title's discussion total while the parent review is PUBLISHED.
+export async function recomputeTitleDiscussionCount(
+  titleId: string,
+  client: typeof prisma | Prisma.TransactionClient = prisma,
+) {
+  const discussionCount = await client.comment.count({
+    where: { review: { titleId, approvalStatus: "PUBLISHED" } },
+  });
+  await client.title.update({ where: { id: titleId }, data: { discussionCount } });
 }

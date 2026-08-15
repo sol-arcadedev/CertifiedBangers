@@ -68,6 +68,10 @@ erDiagram
         int reviewCount "precomputed aggregate"
         int certifiedBangerCount "precomputed aggregate"
         int hiddenGemCount "precomputed aggregate"
+        float communityScore "WP5.1: mean of avgCategoryScores, sort field"
+        int totalSealCount "WP5.1: certifiedBangerCount+hiddenGemCount, sort field"
+        datetime lastReviewedAt "WP5.1: max PUBLISHED review createdAt, sort field"
+        int discussionCount "WP5.1: total comments on the title's reviews, sort field"
         datetime createdAt
     }
 

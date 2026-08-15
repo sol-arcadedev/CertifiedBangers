@@ -174,11 +174,16 @@ model Title {
   createdAt           DateTime    @default(now())
 
   // Precomputed aggregates (Entry 39) — updated incrementally on
-  // review/vote/seal events, never recalculated live on read.
+  // review/vote/seal/comment events, never recalculated live on read.
   avgCategoryScores    Json? // { [categoryId]: avgScore }
-  reviewCount          Int   @default(0)
-  certifiedBangerCount Int   @default(0)
-  hiddenGemCount       Int   @default(0)
+  reviewCount          Int       @default(0)
+  certifiedBangerCount Int       @default(0)
+  hiddenGemCount       Int       @default(0)
+  // WP5.1 browse/sort fields, same precompute pattern as the above.
+  communityScore       Float? // mean of avgCategoryScores' values — "highest overall score" sort
+  totalSealCount       Int       @default(0) // certifiedBangerCount + hiddenGemCount — "most seals" sort
+  lastReviewedAt       DateTime? // max createdAt of PUBLISHED reviews — "most recent reviews" sort
+  discussionCount      Int       @default(0) // total comments across the title's reviews — "most discussed" sort
 
   reviews        Review[]
   libraryEntries LibraryEntry[]

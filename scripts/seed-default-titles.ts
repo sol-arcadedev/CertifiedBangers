@@ -162,7 +162,9 @@ async function main() {
         Media: {
           id: number;
           title: { romaji: string | null; english: string | null; native: string | null };
-          synonyms: string[];
+          // AniList's synonyms field is a nullable list of nullable strings
+          // — it has genuinely come back as null for real titles, not [].
+          synonyms: (string | null)[] | null;
           countryOfOrigin: string;
           status: string;
           startDate: { year: number | null; month: number | null; day: number | null };
@@ -213,7 +215,7 @@ async function main() {
           titleRomaji: media.title.romaji,
           titleEnglish: media.title.english,
           titleNative: media.title.native,
-          synonyms: media.synonyms,
+          synonyms: (media.synonyms ?? []).filter((s): s is string => !!s),
           type,
           status: mapAniListStatus(media.status),
           author,
