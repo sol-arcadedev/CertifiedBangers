@@ -116,6 +116,16 @@ model PlatformSettings {
   // quality-gate-crossing review earns Hidden Gem; at/above it, Certified
   // Banger instead (Entry 15/29 — starting value 100).
   sealPopularityGateThreshold Int      @default(100)
+  // WP6.2 spam mitigation — each is a per-user cap over a fixed 1-hour
+  // window (the window itself isn't configurable, same as the review
+  // gate's account-age-only tunability). Reviews count new submissions
+  // only, not edits of an existing one (edit-replace doesn't grow content
+  // volume); votes count new Vote rows only, not toggle-off/switch (an
+  // "undo" shouldn't burn the same budget as a new vote).
+  reviewRateLimitPerHour      Int      @default(10)
+  commentRateLimitPerHour     Int      @default(20)
+  voteRateLimitPerHour        Int      @default(60)
+  reportRateLimitPerHour      Int      @default(10)
   updatedAt                   DateTime @updatedAt
 
   @@map("platform_settings")

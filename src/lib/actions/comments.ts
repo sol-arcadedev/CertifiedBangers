@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { recomputeTitleDiscussionCount } from "@/lib/title-aggregates";
+import { checkCommentRateLimit } from "@/lib/rate-limit";
 
 export type CommentActionState = { error?: string } | undefined;
 
@@ -18,6 +19,9 @@ export async function submitComment(
   formData: FormData,
 ): Promise<CommentActionState> {
   const user = await requireUser();
+
+  const rateLimit = await checkCommentRateLimit(user.id);
+  if (!rateLimit.allowed) return { error: rateLimit.reason };
 
   const review = await prisma.review.findUnique({ where: { id: reviewId } });
   if (!review || review.approvalStatus !== "PUBLISHED") {

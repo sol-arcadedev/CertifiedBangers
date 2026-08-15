@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { ReportTargetType } from "@/generated/prisma/enums";
+import { checkReportRateLimit } from "@/lib/rate-limit";
 
 export type ReportActionState = { error?: string; message?: string } | undefined;
 
@@ -16,6 +17,9 @@ export async function submitReport(
   formData: FormData,
 ): Promise<ReportActionState> {
   const user = await requireUser();
+
+  const rateLimit = await checkReportRateLimit(user.id);
+  if (!rateLimit.allowed) return { error: rateLimit.reason };
 
   const reason = String(formData.get("reason") ?? "").trim();
   if (!reason) return { error: "Please explain why you're reporting this." };

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { checkReviewGate } from "@/lib/review-gate";
+import { checkReviewRateLimit } from "@/lib/rate-limit";
 import { recomputeTitleAggregates } from "@/lib/title-aggregates";
 
 export type ReviewActionState = { error?: string } | undefined;
@@ -38,6 +39,16 @@ export async function submitReview(
 
   const gate = await checkReviewGate(user.id, user.createdAt);
   if (!gate.allowed) return { error: gate.reason };
+
+  // Rate-limit new reviews only — editing an existing one (edit-replace)
+  // doesn't grow content volume, so it isn't gated here.
+  const isNewReview =
+    (await prisma.review.findUnique({ where: { userId_titleId: { userId: user.id, titleId } } })) ===
+    null;
+  if (isNewReview) {
+    const rateLimit = await checkReviewRateLimit(user.id);
+    if (!rateLimit.allowed) return { error: rateLimit.reason };
+  }
 
   const title = await prisma.title.findUnique({ where: { id: titleId } });
   if (!title) return { error: "Title not found." };

@@ -15,6 +15,10 @@ export default async function AdminSettingsPage() {
         minAccountAgeDays={settings.minAccountAgeDays}
         sealQualityGateThreshold={settings.sealQualityGateThreshold}
         sealPopularityGateThreshold={settings.sealPopularityGateThreshold}
+        reviewRateLimitPerHour={settings.reviewRateLimitPerHour}
+        commentRateLimitPerHour={settings.commentRateLimitPerHour}
+        voteRateLimitPerHour={settings.voteRateLimitPerHour}
+        reportRateLimitPerHour={settings.reportRateLimitPerHour}
       />
     </div>
   );

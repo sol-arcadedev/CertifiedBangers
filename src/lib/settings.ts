@@ -3,8 +3,12 @@ import { prisma } from "@/lib/prisma";
 const DEFAULT_MIN_ACCOUNT_AGE_DAYS = 3;
 const DEFAULT_SEAL_QUALITY_GATE_THRESHOLD = 20;
 const DEFAULT_SEAL_POPULARITY_GATE_THRESHOLD = 100;
+const DEFAULT_REVIEW_RATE_LIMIT_PER_HOUR = 10;
+const DEFAULT_COMMENT_RATE_LIMIT_PER_HOUR = 20;
+const DEFAULT_VOTE_RATE_LIMIT_PER_HOUR = 60;
+const DEFAULT_REPORT_RATE_LIMIT_PER_HOUR = 10;
 
-// Falls back to the documented defaults (Entry 40, Entry 29) if the
+// Falls back to the documented defaults (Entry 40, Entry 29, WP6.2) if the
 // singleton row is somehow missing — e.g. a fresh DB where
 // `prisma db seed` hasn't run yet — rather than letting the gates
 // silently pass everyone/everything.
@@ -15,6 +19,10 @@ export async function getPlatformSettings() {
       minAccountAgeDays: DEFAULT_MIN_ACCOUNT_AGE_DAYS,
       sealQualityGateThreshold: DEFAULT_SEAL_QUALITY_GATE_THRESHOLD,
       sealPopularityGateThreshold: DEFAULT_SEAL_POPULARITY_GATE_THRESHOLD,
+      reviewRateLimitPerHour: DEFAULT_REVIEW_RATE_LIMIT_PER_HOUR,
+      commentRateLimitPerHour: DEFAULT_COMMENT_RATE_LIMIT_PER_HOUR,
+      voteRateLimitPerHour: DEFAULT_VOTE_RATE_LIMIT_PER_HOUR,
+      reportRateLimitPerHour: DEFAULT_REPORT_RATE_LIMIT_PER_HOUR,
     }
   );
 }

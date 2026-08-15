@@ -27,14 +27,35 @@ export async function updateSettings(
     return { error: "Seal popularity-gate threshold must be a whole number, at least 1." };
   }
 
+  const rateLimitFields = [
+    "reviewRateLimitPerHour",
+    "commentRateLimitPerHour",
+    "voteRateLimitPerHour",
+    "reportRateLimitPerHour",
+  ] as const;
+  const rateLimits: Record<(typeof rateLimitFields)[number], number> = {
+    reviewRateLimitPerHour: 0,
+    commentRateLimitPerHour: 0,
+    voteRateLimitPerHour: 0,
+    reportRateLimitPerHour: 0,
+  };
+  for (const field of rateLimitFields) {
+    const value = Number(formData.get(field));
+    if (!Number.isInteger(value) || value < 1) {
+      return { error: "Rate limits must be whole numbers, at least 1 per hour." };
+    }
+    rateLimits[field] = value;
+  }
+
   await prisma.platformSettings.upsert({
     where: { id: "singleton" },
-    update: { minAccountAgeDays, sealQualityGateThreshold, sealPopularityGateThreshold },
+    update: { minAccountAgeDays, sealQualityGateThreshold, sealPopularityGateThreshold, ...rateLimits },
     create: {
       id: "singleton",
       minAccountAgeDays,
       sealQualityGateThreshold,
       sealPopularityGateThreshold,
+      ...rateLimits,
     },
   });
 

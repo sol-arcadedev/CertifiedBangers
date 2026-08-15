@@ -7,10 +7,18 @@ export function SettingsForm({
   minAccountAgeDays,
   sealQualityGateThreshold,
   sealPopularityGateThreshold,
+  reviewRateLimitPerHour,
+  commentRateLimitPerHour,
+  voteRateLimitPerHour,
+  reportRateLimitPerHour,
 }: {
   minAccountAgeDays: number;
   sealQualityGateThreshold: number;
   sealPopularityGateThreshold: number;
+  reviewRateLimitPerHour: number;
+  commentRateLimitPerHour: number;
+  voteRateLimitPerHour: number;
+  reportRateLimitPerHour: number;
 }) {
   const [state, formAction, pending] = useActionState(updateSettings, undefined);
 
@@ -66,6 +74,62 @@ export function SettingsForm({
         (Journal Entry 15/29 — starting value 100). Certified Banger doesn&apos;t remove an
         already-earned Hidden Gem.
       </p>
+
+      <h2 className="mt-2 text-base font-semibold text-black dark:text-zinc-50">
+        Rate limits (WP6.2 spam mitigation)
+      </h2>
+      <p className="-mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+        Per-user cap over a fixed 1-hour window. Reviews count new submissions only (not edits);
+        votes count new votes only (not undoing/switching an existing one).
+      </p>
+
+      <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        New reviews per hour
+        <input
+          name="reviewRateLimitPerHour"
+          type="number"
+          min={1}
+          required
+          defaultValue={reviewRateLimitPerHour}
+          className="w-32 rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        Comments per hour
+        <input
+          name="commentRateLimitPerHour"
+          type="number"
+          min={1}
+          required
+          defaultValue={commentRateLimitPerHour}
+          className="w-32 rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        Votes per hour
+        <input
+          name="voteRateLimitPerHour"
+          type="number"
+          min={1}
+          required
+          defaultValue={voteRateLimitPerHour}
+          className="w-32 rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        Reports per hour
+        <input
+          name="reportRateLimitPerHour"
+          type="number"
+          min={1}
+          required
+          defaultValue={reportRateLimitPerHour}
+          className="w-32 rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        />
+      </label>
 
       {state?.error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
