@@ -524,7 +524,7 @@ WORK_PACKAGES = [
     ("WP0.1", "Project scaffolding", "Next.js + TypeScript project init, Prisma setup, Supabase project (DB/Auth/Storage), Vercel deploy pipeline, environment/secrets configuration.", "—", "S"),
     ("WP0.2", "Core data model & migrations", "Implement all entities from Section 7; seed the Category table (5 rows) and SealType table (2 rows).", "WP0.1", "M"),
     ("WP1.1", "Authentication & user profiles", "Supabase Auth integration, registration/login, public profile page, role field (user/admin/main_admin).", "WP0.2", "M"),
-    ("WP1.2", "Title catalog & admin seeding tools", "Admin panel to create/edit titles, search-before-create de-dup UX, cover upload, admin merge tooling.", "WP0.2", "M"),
+    ("WP1.2", "Title catalog & admin seeding tools", "Admin panel to search/import titles from AniList (primary path, Entry 44) with cover art re-hosted on this project's own storage; manual create/edit form kept as a fallback; search-before-create de-dup UX; admin merge tooling.", "WP0.2", "M"),
     ("WP2.1", "Review creation", "5-category rating form, free-text body, computed overall score, spoiler flag, one-review-per-user-per-title with edit-replace.", "WP1.1, WP1.2", "M"),
     ("WP2.2", "Baseline review-submission gate", "Enforce email verification plus a minimum 3-day account age before first review submission; gate parameters admin-configurable for future tuning.", "WP2.1", "S"),
     ("WP2.3", "Admin review-approval workflow", "'(admin)' label everywhere a username appears; Main Admin approval queue for non-Main-Admin admin-authored reviews.", "WP2.1", "M"),

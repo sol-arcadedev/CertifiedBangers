@@ -1,17 +1,13 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { uploadCoverBuffer, deleteCoverIfOwned } from "@/lib/cover-storage";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 
 export type TitleActionState = { error?: string; message?: string } | undefined;
-
-const COVER_BUCKET = "covers";
-const COVER_URL_MARKER = `/storage/v1/object/public/${COVER_BUCKET}/`;
 
 function parseList(value: FormDataEntryValue | null): string[] {
   return String(value ?? "")
@@ -52,23 +48,9 @@ function parseTitleFields(formData: FormData) {
 }
 
 async function uploadCover(file: File): Promise<string> {
-  const admin = createAdminClient();
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-
-  const { error } = await admin.storage.from(COVER_BUCKET).upload(path, buffer, {
-    contentType: file.type || "image/jpeg",
-  });
-  if (error) throw new Error(`Cover upload failed: ${error.message}`);
-
-  return admin.storage.from(COVER_BUCKET).getPublicUrl(path).data.publicUrl;
-}
-
-async function deleteCoverIfOwned(coverUrl: string | null) {
-  if (!coverUrl?.includes(COVER_URL_MARKER)) return;
-  const path = coverUrl.split(COVER_URL_MARKER)[1];
-  await createAdminClient().storage.from(COVER_BUCKET).remove([path]);
+  return uploadCoverBuffer(buffer, file.type || "image/jpeg", ext);
 }
 
 // Called directly (via startTransition) from the new/edit title forms as

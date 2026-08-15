@@ -17,12 +17,20 @@ export default async function AdminTitlesPage(props: PageProps<"/admin/titles">)
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-black dark:text-zinc-50">Titles</h1>
-        <Link
-          href="/admin/titles/new"
-          className="rounded-full bg-foreground px-4 py-1.5 text-sm text-background"
-        >
-          New title
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/titles/new"
+            className="text-sm text-zinc-700 dark:text-zinc-300"
+          >
+            Add manually
+          </Link>
+          <Link
+            href="/admin/titles/import"
+            className="rounded-full bg-foreground px-4 py-1.5 text-sm text-background"
+          >
+            Import from AniList
+          </Link>
+        </div>
       </div>
 
       <form className="mt-4" action="/admin/titles">

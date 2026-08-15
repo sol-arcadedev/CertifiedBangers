@@ -42,6 +42,7 @@ erDiagram
 
     TITLE {
         string id PK
+        int anilistId UK "null = manually created, Entry 44"
         string name
         string_array altNames
         TitleType type "MANGA | MANHWA | MANHUA"
@@ -66,6 +67,12 @@ erDiagram
         TitleType_array appliesToType
         int scaleMin
         int scaleMax
+    }
+
+    PLATFORM_SETTINGS {
+        string id PK "fixed at literal singleton"
+        int minAccountAgeDays "review-gate threshold, Entry 40"
+        datetime updatedAt
     }
 
     REVIEW {

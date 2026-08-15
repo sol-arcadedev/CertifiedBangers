@@ -131,6 +131,10 @@ model User {
 
 model Title {
   id              String      @id @default(uuid())
+  // Null for a manually-created title (Entry 44's fallback path); set for
+  // one imported from AniList, and used to prevent re-importing the same
+  // title twice.
+  anilistId       Int?        @unique
   name            String
   altNames        String[]
   type            TitleType
