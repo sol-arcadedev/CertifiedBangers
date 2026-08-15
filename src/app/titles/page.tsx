@@ -16,6 +16,19 @@ const SORT_OPTIONS = {
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
+// Reads the precomputed aggregate (Journal Entry 39) — never recalculated
+// live here, always whatever recomputeTitleAggregates last wrote.
+function communityAverage(avgCategoryScores: Prisma.JsonValue): number | null {
+  if (!avgCategoryScores || typeof avgCategoryScores !== "object" || Array.isArray(avgCategoryScores)) {
+    return null;
+  }
+  const values = Object.values(avgCategoryScores as Record<string, number>).filter(
+    (v): v is number => typeof v === "number",
+  );
+  if (values.length === 0) return null;
+  return Math.round((values.reduce((sum, v) => sum + v, 0) / values.length) * 100) / 100;
+}
+
 // Sort/filter here is intentionally narrow — just the two AniList reference
 // fields the user asked for. The fuller genre/status/full-text-search
 // browse experience is still WP5.1's job.
@@ -77,44 +90,52 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       </form>
 
       <ul className="divide-y divide-black/[.08] dark:divide-white/[.145]">
-        {titles.map((title) => (
-          <li key={title.id} className="flex items-center justify-between gap-4 py-3">
-            <div className="flex items-center gap-3">
-              {title.coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={title.coverUrl}
-                  alt={title.name}
-                  className="h-16 w-11 shrink-0 rounded object-cover"
-                />
-              ) : (
-                <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
-              )}
-              <div>
-                <Link
-                  href={`/titles/${title.id}`}
-                  className="font-medium text-black dark:text-zinc-50"
-                >
-                  {title.name}
-                </Link>
-                <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {title.type} · {title.status}
-                  {title.reviewCount > 0 ? ` · ${title.reviewCount} reviews` : ""}
+        {titles.map((title) => {
+          const communityAvg = communityAverage(title.avgCategoryScores);
+          return (
+            <li key={title.id} className="flex items-center justify-between gap-4 py-3">
+              <div className="flex items-center gap-3">
+                {title.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={title.coverUrl}
+                    alt={title.name}
+                    className="h-16 w-11 shrink-0 rounded object-cover"
+                  />
+                ) : (
+                  <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
+                )}
+                <div>
+                  <Link
+                    href={`/titles/${title.id}`}
+                    className="font-medium text-black dark:text-zinc-50"
+                  >
+                    {title.name}
+                  </Link>
+                  <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                    {title.type} · {title.status}
+                    {title.reviewCount > 0 ? ` · ${title.reviewCount} reviews` : ""}
+                  </div>
+                  {communityAvg !== null && (
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                      CertifiedBanger rating: {communityAvg}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-            {(title.anilistAverageScore !== null || title.anilistPopularity !== null) && (
-              <div className="text-right text-sm text-zinc-500 dark:text-zinc-400">
-                {title.anilistAverageScore !== null && (
-                  <div>AniList {title.anilistAverageScore}/100</div>
-                )}
-                {title.anilistPopularity !== null && (
-                  <div>{title.anilistPopularity.toLocaleString()} on AniList lists</div>
-                )}
-              </div>
-            )}
-          </li>
-        ))}
+              {(title.anilistAverageScore !== null || title.anilistPopularity !== null) && (
+                <div className="text-right text-sm text-zinc-500 dark:text-zinc-400">
+                  {title.anilistAverageScore !== null && (
+                    <div>AniList {title.anilistAverageScore}/100</div>
+                  )}
+                  {title.anilistPopularity !== null && (
+                    <div>{title.anilistPopularity.toLocaleString()} on AniList lists</div>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
         {titles.length === 0 && (
           <li className="py-6 text-sm text-zinc-500 dark:text-zinc-400">
             No titles match these filters.

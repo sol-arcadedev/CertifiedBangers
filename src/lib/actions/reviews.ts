@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { checkReviewGate } from "@/lib/review-gate";
+import { recomputeTitleAggregates } from "@/lib/title-aggregates";
 
 export type ReviewActionState = { error?: string } | undefined;
 
@@ -114,6 +115,10 @@ export async function submitReview(
         score: s.score,
       })),
     });
+
+    // Cheap to always recompute rather than branch on whether this
+    // submission actually changed a PUBLISHED review's scores.
+    await recomputeTitleAggregates(titleId, tx);
   });
 
   revalidatePath(`/titles/${titleId}`);

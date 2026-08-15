@@ -35,9 +35,6 @@ function formatSource(source: string | null) {
     .join(" ");
 }
 
-// Bare-bones public title page — hosts review creation (WP2.1). Aggregate
-// score display and precomputed-aggregate wiring are WP2.4's job, not this
-// one; this page deliberately doesn't compute/show a title-level average.
 export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) {
   const { id } = await props.params;
 
@@ -85,6 +82,17 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
     { label: "Synonyms", value: title.synonyms.length > 0 ? title.synonyms.join(", ") : null },
   ].filter((d): d is { label: string; value: string } => !!d.value);
 
+  // Reads the precomputed aggregate (Journal Entry 39) — never recalculated
+  // live here, always whatever recomputeTitleAggregates last wrote.
+  const avgScores = (title.avgCategoryScores as Record<string, number> | null) ?? {};
+  const scoreEntries = categories
+    .map((c) => ({ name: c.name, score: avgScores[c.id] }))
+    .filter((e): e is { name: string; score: number } => typeof e.score === "number");
+  const overallAvg =
+    scoreEntries.length > 0
+      ? Math.round((scoreEntries.reduce((sum, e) => sum + e.score, 0) / scoreEntries.length) * 100) / 100
+      : null;
+
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <div className="flex gap-6">
@@ -115,6 +123,24 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
           )}
         </div>
       </div>
+
+      {overallAvg !== null && (
+        <div className="mt-6 flex flex-wrap items-center gap-6 rounded-md border border-black/[.08] p-4 dark:border-white/[.145]">
+          <div>
+            <div className="text-3xl font-bold text-black dark:text-zinc-50">{overallAvg}</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+              {title.reviewCount} review{title.reviewCount === 1 ? "" : "s"}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+            {scoreEntries.map((e) => (
+              <div key={e.name}>
+                {e.name}: {e.score}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {details.length > 0 && (
         <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-md border border-black/[.08] p-4 sm:grid-cols-3 dark:border-white/[.145]">

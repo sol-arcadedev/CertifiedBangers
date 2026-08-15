@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { uploadCoverBuffer, deleteCoverIfOwned } from "@/lib/cover-storage";
+import { recomputeTitleAggregates } from "@/lib/title-aggregates";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 
 export type TitleActionState = { error?: string; message?: string } | undefined;
@@ -208,10 +209,13 @@ export async function mergeTitles(
       }
     }
 
-    const reviewCount = await tx.review.count({ where: { titleId: targetId } });
-    await tx.title.update({ where: { id: targetId }, data: { reviewCount } });
-
     await tx.title.delete({ where: { id: sourceId } });
+
+    // Recount + recompute avgCategoryScores now that the surviving title
+    // owns whichever reviews moved over — the old code only recounted
+    // reviewCount (and didn't filter to PUBLISHED), leaving
+    // avgCategoryScores stale after every merge.
+    await recomputeTitleAggregates(targetId, tx);
   });
 
   await deleteCoverIfOwned(source.coverUrl);
