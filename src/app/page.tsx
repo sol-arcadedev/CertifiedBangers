@@ -1,11 +1,26 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { TitleCardGrid } from "@/components/title-card-grid";
 
+// "Certified Bangers" / "Hidden Gems" sections deliberately aren't here yet —
+// seal-awarding (WP4.1-4.3) doesn't exist in the app at all, so there's
+// nothing to show. Add them once seals are actually built.
 export default async function Home() {
-  const popularTitles = await prisma.title.findMany({
-    orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } },
-    take: 8,
-  });
+  const [mostPopular, highestRated] = await Promise.all([
+    prisma.title.findMany({
+      orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } },
+      take: 8,
+    }),
+    prisma.title.findMany({
+      orderBy: { anilistAverageScore: { sort: "desc", nulls: "last" } },
+      take: 8,
+    }),
+  ]);
+
+  const sections = [
+    { heading: "Most Popular", titles: mostPopular },
+    { heading: "Highest Rated", titles: highestRated },
+  ].filter((section) => section.titles.length > 0);
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
@@ -18,44 +33,21 @@ export default async function Home() {
         </p>
       </div>
 
-      {popularTitles.length > 0 && (
-        <div className="mx-auto w-full max-w-4xl px-6 pb-16">
+      {sections.map((section) => (
+        <div key={section.heading} className="mx-auto w-full max-w-4xl px-6 pb-12">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-              Popular titles
+              {section.heading}
             </h2>
             <Link href="/titles" className="text-sm text-zinc-600 underline dark:text-zinc-400">
               Browse all
             </Link>
           </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {popularTitles.map((title) => (
-              <Link key={title.id} href={`/titles/${title.id}`} className="group">
-                {title.coverUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={title.coverUrl}
-                    alt={title.name}
-                    className="aspect-[2/3] w-full rounded object-cover"
-                  />
-                ) : (
-                  <div className="flex aspect-[2/3] w-full items-center justify-center rounded bg-zinc-200 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                    No cover
-                  </div>
-                )}
-                <div className="mt-2 text-sm font-medium text-black group-hover:underline dark:text-zinc-50">
-                  {title.name}
-                </div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {title.type}
-                  {title.anilistAverageScore !== null && ` · ${title.anilistAverageScore}/100`}
-                </div>
-              </Link>
-            ))}
+          <div className="mt-4">
+            <TitleCardGrid titles={section.titles} />
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
