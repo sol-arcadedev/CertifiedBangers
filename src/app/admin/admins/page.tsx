@@ -22,7 +22,7 @@ export default async function AdminAdminsPage() {
 
       <ul className="divide-y divide-black/[.08] dark:divide-white/[.145]">
         {admins.map((admin) => (
-          <li key={admin.id} className="flex items-center justify-between py-3">
+          <li key={admin.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
             <span className="text-black dark:text-zinc-50">{admin.username}</span>
             {admin.adminReviewsRequireApproval ? (
               <form action={setAdminTrust.bind(null, admin.id, false)}>

@@ -6,7 +6,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
-      <div className="flex items-center gap-6 border-b border-black/[.08] bg-white px-6 py-3 text-sm font-medium dark:border-white/[.145] dark:bg-zinc-950">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-black/[.08] bg-white px-4 py-3 sm:px-6 text-sm font-medium dark:border-white/[.145] dark:bg-zinc-950">
         <span className="text-zinc-500 dark:text-zinc-400">Admin</span>
         <Link href="/admin/titles" className="text-zinc-700 dark:text-zinc-300">
           Titles

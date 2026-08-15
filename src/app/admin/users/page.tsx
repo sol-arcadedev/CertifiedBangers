@@ -46,7 +46,7 @@ export default async function AdminUsersPage(props: PageProps<"/admin/users">) {
           const canModerate =
             user.id !== actor.id && (user.role === "USER" || actor.role === "MAIN_ADMIN");
           return (
-            <li key={user.id} className="flex items-center justify-between gap-4 py-3">
+            <li key={user.id} className="flex flex-wrap items-center justify-between gap-4 py-3">
               <div>
                 <UsernameLabel username={user.username} role={user.role} />
                 <div className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -54,7 +54,7 @@ export default async function AdminUsersPage(props: PageProps<"/admin/users">) {
                 </div>
               </div>
               {canModerate && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {STATUS_ACTIONS.filter((a) => a.status !== user.status).map((a) => (
                     <form key={a.status} action={setUserStatus.bind(null, user.id, a.status)}>
                       <button

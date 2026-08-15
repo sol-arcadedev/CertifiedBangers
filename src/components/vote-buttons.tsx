@@ -60,11 +60,11 @@ export function VoteButtons({
         type="button"
         onClick={() => vote("UP")}
         aria-label="Upvote"
-        className={
+        className={`-m-1.5 p-1.5 ${
           optimistic.userVote === "UP"
             ? "text-green-600 dark:text-green-400"
             : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
-        }
+        }`}
       >
         ▲
       </button>
@@ -73,11 +73,11 @@ export function VoteButtons({
         type="button"
         onClick={() => vote("DOWN")}
         aria-label="Downvote"
-        className={
+        className={`-m-1.5 p-1.5 ${
           optimistic.userVote === "DOWN"
             ? "text-red-600 dark:text-red-400"
             : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
-        }
+        }`}
       >
         ▼
       </button>

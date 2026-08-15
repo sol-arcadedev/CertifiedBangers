@@ -199,7 +199,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       <ul className="divide-y divide-black/[.08] dark:divide-white/[.145]">
         {titles.map((title) => (
           <li key={title.id} className="flex items-center justify-between gap-4 py-3">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               {title.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -210,10 +210,10 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
               ) : (
                 <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
               )}
-              <div>
+              <div className="min-w-0">
                 <Link
                   href={`/titles/${title.id}`}
-                  className="font-medium text-black dark:text-zinc-50"
+                  className="block truncate font-medium text-black dark:text-zinc-50"
                 >
                   {title.name}
                   {(title.certifiedBangerCount > 0 || title.hiddenGemCount > 0) && (
@@ -243,7 +243,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
               </div>
             </div>
             {(title.anilistAverageScore !== null || title.anilistPopularity !== null) && (
-              <div className="text-right text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="shrink-0 text-right text-sm text-zinc-500 dark:text-zinc-400">
                 {title.anilistAverageScore !== null && (
                   <div>AniList {title.anilistAverageScore}/100</div>
                 )}

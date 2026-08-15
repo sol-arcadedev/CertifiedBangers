@@ -123,7 +123,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6 sm:flex-row">
         {title.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
