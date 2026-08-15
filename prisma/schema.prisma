@@ -207,6 +207,12 @@ model Review {
   approvalStatus       ReviewApprovalStatus @default(PUBLISHED)
   // Derived flag used by the future first-review reward (Entry 22/26).
   isFirstReviewOfTitle Boolean              @default(false)
+  // Precomputed from the Vote table (WP3.1), same incremental-aggregate
+  // pattern as Title's scores (Entry 39) — never recalculated live on
+  // read. Net score for display is upvoteCount - downvoteCount, not a
+  // separately stored field.
+  upvoteCount          Int                  @default(0)
+  downvoteCount        Int                  @default(0)
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 

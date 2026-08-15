@@ -95,6 +95,8 @@ erDiagram
         bool isAdminAuthored
         ReviewApprovalStatus approvalStatus "PUBLISHED | PENDING_APPROVAL | REJECTED"
         bool isFirstReviewOfTitle
+        int upvoteCount "precomputed from Vote, WP3.1"
+        int downvoteCount "precomputed from Vote, WP3.1"
         datetime createdAt
         datetime updatedAt
     }

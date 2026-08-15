@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { checkReviewGate } from "@/lib/review-gate";
 import { ReviewForm } from "@/components/review-form";
 import { UsernameLabel } from "@/components/username-label";
+import { VoteButtons } from "@/components/vote-buttons";
 
 function formatStartDate(year: number | null, month: number | null, day: number | null) {
   if (!year) return null;
@@ -66,6 +67,20 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
 
   const gate =
     user && !existingReview ? await checkReviewGate(user.id, user.createdAt) : { allowed: true as const };
+
+  const userVotes = user
+    ? Object.fromEntries(
+        (
+          await prisma.vote.findMany({
+            where: {
+              userId: user.id,
+              targetType: "REVIEW",
+              targetId: { in: reviews.map((r) => r.id) },
+            },
+          })
+        ).map((v) => [v.targetId, v.value]),
+      )
+    : {};
 
   const details: { label: string; value: string }[] = [
     { label: "Status", value: title.status },
@@ -227,6 +242,16 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                     {s.category.name}: {s.score}
                   </span>
                 ))}
+              </div>
+              <div className="mt-2">
+                <VoteButtons
+                  reviewId={review.id}
+                  titleId={id}
+                  upvoteCount={review.upvoteCount}
+                  downvoteCount={review.downvoteCount}
+                  userVote={(userVotes[review.id] as "UP" | "DOWN" | undefined) ?? null}
+                  canVote={!!user && review.userId !== user.id}
+                />
               </div>
               {review.spoilerFlag ? (
                 <details className="mt-2">
