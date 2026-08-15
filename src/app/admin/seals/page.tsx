@@ -79,7 +79,9 @@ export default async function AdminSealsPage(props: PageProps<"/admin/seals">) {
                         title="Click to revoke"
                         className="rounded-full bg-foreground px-3 py-1 text-xs text-background"
                       >
-                        {award.sealType.name} ✕
+                        {award.sealType.name}
+                        {award.status === "PROVISIONAL" ? ` (provisional, ${award.positiveStreakDays}d streak)` : ""}{" "}
+                        ✕
                       </button>
                     </form>
                   ))}

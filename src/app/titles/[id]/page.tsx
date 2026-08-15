@@ -268,6 +268,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                       className="rounded-full bg-black/[.06] px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-white/[.08] dark:text-zinc-300"
                     >
                       {award.sealType.name === "Certified Banger" ? "🏅" : "💎"} {award.sealType.name}
+                      {award.status === "PROVISIONAL" && " (provisional)"}
                     </span>
                   ))}
                 </div>

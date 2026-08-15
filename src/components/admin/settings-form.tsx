@@ -3,7 +3,13 @@
 import { useActionState } from "react";
 import { updateSettings } from "@/lib/actions/settings";
 
-export function SettingsForm({ minAccountAgeDays }: { minAccountAgeDays: number }) {
+export function SettingsForm({
+  minAccountAgeDays,
+  sealQualityGateThreshold,
+}: {
+  minAccountAgeDays: number;
+  sealQualityGateThreshold: number;
+}) {
   const [state, formAction, pending] = useActionState(updateSettings, undefined);
 
   return (
@@ -22,6 +28,22 @@ export function SettingsForm({ minAccountAgeDays }: { minAccountAgeDays: number 
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
         Email verification is always required before a first review and isn&apos;t configurable
         (Journal Entry 40). This only tunes the account-age part of the gate.
+      </p>
+
+      <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        Seal quality-gate threshold (net votes)
+        <input
+          name="sealQualityGateThreshold"
+          type="number"
+          min={1}
+          required
+          defaultValue={sealQualityGateThreshold}
+          className="w-32 rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        />
+      </label>
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        Net vote score (upvotes minus downvotes) a review needs to automatically become a
+        Certified Banger candidate (Journal Entry 8/29 — starting value +20).
       </p>
 
       {state?.error && (

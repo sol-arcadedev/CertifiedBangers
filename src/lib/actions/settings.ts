@@ -17,10 +17,15 @@ export async function updateSettings(
     return { error: "Minimum account age must be a whole number of days, 0 or more." };
   }
 
+  const sealQualityGateThreshold = Number(formData.get("sealQualityGateThreshold"));
+  if (!Number.isInteger(sealQualityGateThreshold) || sealQualityGateThreshold < 1) {
+    return { error: "Seal quality-gate threshold must be a whole number, at least 1." };
+  }
+
   await prisma.platformSettings.upsert({
     where: { id: "singleton" },
-    update: { minAccountAgeDays },
-    create: { id: "singleton", minAccountAgeDays },
+    update: { minAccountAgeDays, sealQualityGateThreshold },
+    create: { id: "singleton", minAccountAgeDays, sealQualityGateThreshold },
   });
 
   revalidatePath("/admin/settings");

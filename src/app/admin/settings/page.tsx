@@ -11,7 +11,10 @@ export default async function AdminSettingsPage() {
       <h1 className="mb-6 text-xl font-semibold text-black dark:text-zinc-50">
         Platform settings
       </h1>
-      <SettingsForm minAccountAgeDays={settings.minAccountAgeDays} />
+      <SettingsForm
+        minAccountAgeDays={settings.minAccountAgeDays}
+        sealQualityGateThreshold={settings.sealQualityGateThreshold}
+      />
     </div>
   );
 }

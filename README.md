@@ -16,7 +16,10 @@ Vercel (hosting + Cron). Full rationale in the Requirements doc, Section 5.
 
 ## Getting Started
 
-1. Copy `.env.example` to `.env` and fill in your Supabase project's connection string and API keys.
+1. Copy `.env.example` to `.env` and fill in your Supabase project's connection string and API
+   keys, plus a random `CRON_SECRET` (e.g. `openssl rand -hex 32`) — set the same value in your
+   Vercel project's environment variables once deployed, so Vercel Cron can call
+   `/api/cron/seal-probation` (Entry 12/36).
 2. Install dependencies: `npm install`
 3. Push the schema to your database: `npx prisma db push`
 4. Seed the Category/SealType tables: `npx prisma db seed`

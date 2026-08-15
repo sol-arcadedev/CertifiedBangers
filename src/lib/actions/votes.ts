@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
+import { checkAutoSealCandidacy } from "@/lib/seal-probation";
 import { VoteValue } from "@/generated/prisma/enums";
 
 // Precomputed from the Vote table (same incremental-aggregate pattern as
@@ -43,5 +44,6 @@ export async function voteOnReview(reviewId: string, titleId: string, value: Vot
   }
 
   await recomputeReviewVoteCounts(reviewId);
+  await checkAutoSealCandidacy(reviewId);
   revalidatePath(`/titles/${titleId}`);
 }
