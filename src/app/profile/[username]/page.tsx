@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN: "Admin",
-  MAIN_ADMIN: "Main Admin",
-};
+import { UsernameLabel } from "@/components/username-label";
 
 export default async function ProfilePage(
   props: PageProps<"/profile/[username]">,
@@ -26,7 +22,6 @@ export default async function ProfilePage(
 
   if (!user) notFound();
 
-  const roleLabel = ROLE_LABEL[user.role];
   const joined = user.createdAt.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -52,16 +47,9 @@ export default async function ProfilePage(
           )}
 
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
-                {user.username}
-              </h1>
-              {roleLabel && (
-                <span className="rounded-full bg-black/[.06] px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-white/[.08] dark:text-zinc-300">
-                  {roleLabel}
-                </span>
-              )}
-            </div>
+            <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
+              <UsernameLabel username={user.username} role={user.role} />
+            </h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Joined {joined}
             </p>

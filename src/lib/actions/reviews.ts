@@ -9,6 +9,20 @@ export type ReviewActionState = { error?: string } | undefined;
 
 const MIN_BODY_LENGTH = 50;
 
+// Entry 28: only non-Main-Admin admin reviews are gated; Main Admin (no one
+// above them to approve against) and regular users are unaffected. Entry 41:
+// the per-admin exemption (adminReviewsRequireApproval=false) is a manual
+// trust call, not automatic.
+function computeApprovalStatus(user: { role: string; adminReviewsRequireApproval: boolean }) {
+  return {
+    isAdminAuthored: user.role !== "USER",
+    approvalStatus:
+      user.role === "ADMIN" && user.adminReviewsRequireApproval
+        ? ("PENDING_APPROVAL" as const)
+        : ("PUBLISHED" as const),
+  };
+}
+
 // Submits or replaces the current user's review for a title — one review
 // per user per title (schema unique constraint), editing replaces rather
 // than duplicating. Category scores are data-driven per Category's own
@@ -63,10 +77,21 @@ export async function submitReview(
     const isFirstReviewOfTitle =
       !existing && (await tx.review.count({ where: { titleId } })) === 0;
 
+    const { isAdminAuthored, approvalStatus } = computeApprovalStatus(user);
+
     const review = existing
       ? await tx.review.update({
           where: { id: existing.id },
-          data: { bodyText, spoilerFlag, overallScore },
+          data: {
+            bodyText,
+            spoilerFlag,
+            overallScore,
+            isAdminAuthored,
+            // Entry 42's approval gate only needs to re-run on resubmission
+            // after a rejection — an already-published or already-pending
+            // review shouldn't flip state just because it was edited.
+            approvalStatus: existing.approvalStatus === "REJECTED" ? approvalStatus : existing.approvalStatus,
+          },
         })
       : await tx.review.create({
           data: {
@@ -76,6 +101,8 @@ export async function submitReview(
             spoilerFlag,
             overallScore,
             isFirstReviewOfTitle,
+            isAdminAuthored,
+            approvalStatus,
           },
         });
 

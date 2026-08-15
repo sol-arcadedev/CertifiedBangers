@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { signOut } from "@/lib/actions/auth";
+import { UsernameLabel } from "@/components/username-label";
 
 export async function Header() {
   const user = await getCurrentUser();
@@ -29,7 +30,7 @@ export async function Header() {
               href={`/profile/${user.username}`}
               className="text-zinc-700 dark:text-zinc-300"
             >
-              {user.username}
+              <UsernameLabel username={user.username} role={user.role} />
             </Link>
             <form action={signOut}>
               <button

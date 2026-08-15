@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { checkReviewGate } from "@/lib/review-gate";
 import { ReviewForm } from "@/components/review-form";
+import { UsernameLabel } from "@/components/username-label";
 
 // Bare-bones public title page — hosts review creation (WP2.1). Aggregate
 // score display and precomputed-aggregate wiring are WP2.4's job, not this
@@ -23,7 +24,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
     prisma.review.findMany({
       where: { titleId: id, approvalStatus: "PUBLISHED" },
       include: {
-        user: { select: { username: true } },
+        user: { select: { username: true, role: true } },
         categoryScores: { include: { category: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -78,6 +79,17 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
         {user && !gate.allowed && (
           <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">{gate.reason}</p>
         )}
+        {existingReview?.approvalStatus === "PENDING_APPROVAL" && (
+          <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">
+            Awaiting Main Admin approval — not visible to others yet.
+          </p>
+        )}
+        {existingReview?.approvalStatus === "REJECTED" && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+            This review was rejected by the Main Admin. Editing and resubmitting sends it back
+            for review.
+          </p>
+        )}
         {user ? (
           gate.allowed && (
             <div className="mt-4">
@@ -120,7 +132,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                   href={`/profile/${review.user.username}`}
                   className="font-medium text-black dark:text-zinc-50"
                 >
-                  {review.user.username}
+                  <UsernameLabel username={review.user.username} role={review.user.role} />
                 </Link>
                 <span className="text-sm text-zinc-500 dark:text-zinc-400">
                   {review.overallScore?.toFixed(2)} / {categories[0]?.scaleMax ?? 10}
