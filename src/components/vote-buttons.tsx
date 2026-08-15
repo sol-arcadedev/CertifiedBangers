@@ -63,7 +63,7 @@ export function VoteButtons({
         className={
           optimistic.userVote === "UP"
             ? "text-green-600 dark:text-green-400"
-            : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+            : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
         }
       >
         ▲
@@ -76,7 +76,7 @@ export function VoteButtons({
         className={
           optimistic.userVote === "DOWN"
             ? "text-red-600 dark:text-red-400"
-            : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+            : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
         }
       >
         ▼

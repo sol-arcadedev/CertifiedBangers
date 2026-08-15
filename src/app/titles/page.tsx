@@ -217,9 +217,17 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
                 >
                   {title.name}
                   {(title.certifiedBangerCount > 0 || title.hiddenGemCount > 0) && (
-                    <span className="ml-1">
-                      {title.certifiedBangerCount > 0 && "🏅"}
-                      {title.hiddenGemCount > 0 && "💎"}
+                    <span
+                      className="ml-1"
+                      aria-label={[
+                        title.certifiedBangerCount > 0 && "Certified Banger",
+                        title.hiddenGemCount > 0 && "Hidden Gem",
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    >
+                      {title.certifiedBangerCount > 0 && <span aria-hidden="true">🏅</span>}
+                      {title.hiddenGemCount > 0 && <span aria-hidden="true">💎</span>}
                     </span>
                   )}
                 </Link>
