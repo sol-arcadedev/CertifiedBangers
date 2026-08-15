@@ -136,6 +136,12 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               {title.synopsis}
             </p>
           )}
+          <Link
+            href="#review"
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+          >
+            {existingReview ? "Edit your review" : "Write a review"}
+          </Link>
         </div>
       </div>
 
@@ -170,7 +176,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
         </div>
       )}
 
-      <div className="mt-10 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+      <div id="review" className="mt-10 scroll-mt-6 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
         <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
           {existingReview ? "Your review" : "Write a review"}
         </h2>
