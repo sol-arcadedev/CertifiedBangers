@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/require-admin";
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
-  await requireAdmin();
+  const user = await requireAdmin();
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
@@ -11,6 +11,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <Link href="/admin/titles" className="text-zinc-700 dark:text-zinc-300">
           Titles
         </Link>
+        {user.role === "MAIN_ADMIN" && (
+          <Link href="/admin/settings" className="text-zinc-700 dark:text-zinc-300">
+            Settings
+          </Link>
+        )}
       </div>
       {children}
     </div>

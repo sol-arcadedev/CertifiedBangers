@@ -52,7 +52,15 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${CATEGORIES.length} categories and ${SEAL_TYPES.length} seal types.`);
+  await prisma.platformSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton" },
+  });
+
+  console.log(
+    `Seeded ${CATEGORIES.length} categories, ${SEAL_TYPES.length} seal types, and platform settings.`,
+  );
 }
 
 main()

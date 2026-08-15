@@ -89,6 +89,20 @@ enum ReportStatus {
 // Models
 // ---------------------------------------------------------------------------
 
+// Singleton row (fixed id) for platform-wide config the Main Admin can tune
+// without a code deploy — starts with just the review-submission gate
+// (Entry 40: email verification is mandatory/not configurable, but the
+// minimum account age is meant to be admin-adjustable), but is the natural
+// home for future knobs of the same kind (e.g. the seal probation streak
+// length hardcoded today, Entry 12) rather than a new singleton table each time.
+model PlatformSettings {
+  id                String   @id @default("singleton")
+  minAccountAgeDays Int      @default(3)
+  updatedAt         DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
 // App-profile row for a Supabase Auth user. `id` is NOT auto-generated here —
 // it is set to the same UUID as the corresponding auth.users.id (Entry 34:
 // Supabase Auth owns credentials/sessions; this table only owns profile data).

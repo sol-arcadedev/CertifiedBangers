@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
+import { checkReviewGate } from "@/lib/review-gate";
 
 export type ReviewActionState = { error?: string } | undefined;
 
@@ -19,6 +20,9 @@ export async function submitReview(
   formData: FormData,
 ): Promise<ReviewActionState> {
   const user = await requireUser();
+
+  const gate = await checkReviewGate(user.id, user.createdAt);
+  if (!gate.allowed) return { error: gate.reason };
 
   const title = await prisma.title.findUnique({ where: { id: titleId } });
   if (!title) return { error: "Title not found." };

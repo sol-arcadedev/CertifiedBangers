@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { checkReviewGate } from "@/lib/review-gate";
 import { ReviewForm } from "@/components/review-form";
 
 // Bare-bones public title page — hosts review creation (WP2.1). Aggregate
@@ -35,6 +36,9 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
         include: { categoryScores: true },
       })
     : null;
+
+  const gate =
+    user && !existingReview ? await checkReviewGate(user.id, user.createdAt) : { allowed: true as const };
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
@@ -71,24 +75,29 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
         <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
           {existingReview ? "Your review" : "Write a review"}
         </h2>
+        {user && !gate.allowed && (
+          <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">{gate.reason}</p>
+        )}
         {user ? (
-          <div className="mt-4">
-            <ReviewForm
-              titleId={id}
-              categories={categories}
-              existingReview={
-                existingReview
-                  ? {
-                      bodyText: existingReview.bodyText,
-                      spoilerFlag: existingReview.spoilerFlag,
-                      scores: Object.fromEntries(
-                        existingReview.categoryScores.map((s) => [s.categoryId, s.score]),
-                      ),
-                    }
-                  : undefined
-              }
-            />
-          </div>
+          gate.allowed && (
+            <div className="mt-4">
+              <ReviewForm
+                titleId={id}
+                categories={categories}
+                existingReview={
+                  existingReview
+                    ? {
+                        bodyText: existingReview.bodyText,
+                        spoilerFlag: existingReview.spoilerFlag,
+                        scores: Object.fromEntries(
+                          existingReview.categoryScores.map((s) => [s.categoryId, s.score]),
+                        ),
+                      }
+                    : undefined
+                }
+              />
+            </div>
+          )
         ) : (
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             <Link href="/login" className="underline">
