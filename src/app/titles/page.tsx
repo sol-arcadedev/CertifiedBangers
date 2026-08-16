@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { TitleStatus } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
+import { getCurrentUser } from "@/lib/auth";
+import { searchAniListMedia, type AniListSearchResult } from "@/lib/anilist";
+import { importAniListTitleFromBrowse } from "@/lib/actions/anilist-import";
 
 const SORT_OPTIONS = {
   name: { label: "Name", orderBy: { name: "asc" } },
@@ -100,6 +103,32 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
     orderBy: SORT_OPTIONS[sort].orderBy,
     take: 100,
   });
+
+  // On-demand catalog growth: rather than mirroring AniList's whole ~60k+
+  // manga database up front (real rate-limit/storage cost for no product
+  // benefit — most would sit unreviewed forever), only hit AniList's
+  // search when a query comes up completely empty locally. Any signed-in
+  // admin sees an inline "Import" button; everyone else just sees the
+  // title exists on AniList (title creation stays an admin action, same
+  // as everywhere else — Entry 44).
+  let aniListFallback: AniListSearchResult[] = [];
+  if (q.length >= 2 && titles.length === 0) {
+    try {
+      const results = await searchAniListMedia(q);
+      const alreadyImported = await prisma.title.findMany({
+        where: { anilistId: { in: results.map((r) => r.anilistId) } },
+        select: { anilistId: true },
+      });
+      const importedIds = new Set(alreadyImported.map((t) => t.anilistId));
+      aniListFallback = results.filter((r) => !importedIds.has(r.anilistId));
+    } catch {
+      // AniList being slow/unreachable shouldn't break the browse page —
+      // it just falls back to the plain "no titles matching" state.
+      aniListFallback = [];
+    }
+  }
+  const user = aniListFallback.length > 0 ? await getCurrentUser() : null;
+  const isAdmin = user?.role === "ADMIN" || user?.role === "MAIN_ADMIN";
 
   const inputClass =
     "rounded-md border border-black/[.08] px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50";
@@ -249,12 +278,66 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
             )}
           </li>
         ))}
-        {titles.length === 0 && (
+        {titles.length === 0 && aniListFallback.length === 0 && (
           <li className="py-6 text-sm text-zinc-500 dark:text-zinc-400">
             No titles match these filters.
           </li>
         )}
       </ul>
+
+      {aniListFallback.length > 0 && (
+        <div className="mt-8 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+          <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
+            Not in our catalog yet
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Found on AniList{isAdmin ? " — import one to add it here" : ""}:
+          </p>
+          <ul className="mt-4 divide-y divide-black/[.08] dark:divide-white/[.145]">
+            {aniListFallback.map((result) => (
+              <li key={result.anilistId} className="flex items-center justify-between gap-4 py-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  {result.coverImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={result.coverImageUrl}
+                      alt={result.name}
+                      className="h-16 w-11 shrink-0 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-black dark:text-zinc-50">
+                      {result.name}
+                    </div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                      {result.type}
+                      {result.publicationYear ? ` · ${result.publicationYear}` : ""}
+                      {result.averageScore !== null ? ` · AniList ${result.averageScore}/100` : ""}
+                    </div>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <form
+                    action={async () => {
+                      "use server";
+                      await importAniListTitleFromBrowse(result.anilistId);
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-full border border-black/[.08] px-3 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+                    >
+                      Import
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

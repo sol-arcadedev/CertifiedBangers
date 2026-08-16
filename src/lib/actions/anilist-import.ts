@@ -42,11 +42,13 @@ async function downloadCover(url: string): Promise<{ buffer: Buffer; contentType
   return { buffer, contentType, ext };
 }
 
-export async function importAniListTitle(anilistId: number): Promise<{ error: string } | never> {
-  await requireAdmin();
-
+// Shared by both entry points below — the admin import page and the
+// public /titles search's "not in our catalog yet" fallback (Entry 44
+// stays the source of truth for title creation: only an admin can
+// actually trigger this, regardless of which page it's called from).
+async function performAniListImport(anilistId: number): Promise<{ error: string } | { titleId: string }> {
   const existing = await prisma.title.findUnique({ where: { anilistId } });
-  if (existing) redirect(`/admin/titles/${existing.id}`);
+  if (existing) return { titleId: existing.id };
 
   const media = await getAniListMediaById(anilistId);
   if (!media) return { error: "That title could not be found on AniList." };
@@ -90,6 +92,29 @@ export async function importAniListTitle(anilistId: number): Promise<{ error: st
     },
   });
 
+  return { titleId: title.id };
+}
+
+export async function importAniListTitle(anilistId: number): Promise<{ error: string } | never> {
+  await requireAdmin();
+
+  const result = await performAniListImport(anilistId);
+  if ("error" in result) return result;
+
   revalidatePath("/admin/titles");
-  redirect(`/admin/titles/${title.id}`);
+  redirect(`/admin/titles/${result.titleId}`);
+}
+
+// Entry point for the /titles browse page's AniList fallback (a search
+// with no local matches) — same import logic, but lands the admin on the
+// public title page instead of the admin edit page, matching where they
+// triggered it from.
+export async function importAniListTitleFromBrowse(anilistId: number): Promise<{ error: string } | never> {
+  await requireAdmin();
+
+  const result = await performAniListImport(anilistId);
+  if ("error" in result) return result;
+
+  revalidatePath("/titles");
+  redirect(`/titles/${result.titleId}`);
 }
