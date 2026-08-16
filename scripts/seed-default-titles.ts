@@ -18,6 +18,7 @@ import { PrismaClient } from "../src/generated/prisma/client";
 const DEFAULT_TITLES = [
   // Manga (Japan)
   "One Piece",
+  "Naruto",
   "Attack on Titan",
   "Jujutsu Kaisen",
   "Chainsaw Man",
