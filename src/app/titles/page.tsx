@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { TitleStatus } from "@/generated/prisma/enums";
+import { LiveSearchInput } from "@/components/live-search-input";
 
 const SORT_OPTIONS = {
   name: { label: "Name", orderBy: { name: "asc" } },
@@ -111,13 +112,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       <form className="mb-6 flex flex-wrap items-end gap-4" action="/titles">
         <label className={`${labelClass} min-w-[200px] flex-1`}>
           Search
-          <input
-            name="q"
-            type="search"
-            defaultValue={q}
-            placeholder="Name, genre, author…"
-            className={inputClass}
-          />
+          <LiveSearchInput defaultValue={q} className={inputClass} />
         </label>
 
         <label className={labelClass}>
