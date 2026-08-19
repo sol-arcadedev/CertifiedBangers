@@ -11,6 +11,7 @@ import { CommentForm } from "@/components/comment-form";
 import { ReportButton } from "@/components/report-button";
 import { LibraryWidget } from "@/components/library-widget";
 import { formatStartDate, formatSource } from "@/lib/title-format";
+import { BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
 
 export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) {
   const { id } = await props.params;
@@ -102,31 +103,26 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
           <img
             src={title.coverUrl}
             alt={title.name}
-            className="h-48 w-32 shrink-0 rounded object-cover"
+            className="h-48 w-32 shrink-0 rounded-xl object-cover shadow-lg shadow-black/30"
           />
         )}
         <div>
-          <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">{title.name}</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="text-2xl font-semibold text-foreground">{title.name}</h1>
+          <p className="text-sm text-muted">
             {title.type} · {title.status}
             {title.publicationYear ? ` · ${title.publicationYear}` : ""}
           </p>
           {title.author && (
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-muted">
               By {title.author}
               {title.illustrator ? ` (art: ${title.illustrator})` : ""}
             </p>
           )}
           {title.synopsis && (
-            <p className="mt-3 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-              {title.synopsis}
-            </p>
+            <p className="mt-3 text-sm leading-6 text-foreground/90">{title.synopsis}</p>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-4">
-            <Link
-              href="#review"
-              className="inline-flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
-            >
+            <Link href="#review" className={BUTTON_PRIMARY}>
               {existingReview ? "Edit your review" : "Write a review"}
             </Link>
             {user && <LibraryWidget titleId={id} currentStatus={libraryEntry?.status ?? null} />}
@@ -136,22 +132,22 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
       </div>
 
       {overallAvg !== null && (
-        <div className="mt-6 flex flex-wrap items-center gap-6 rounded-md border border-black/[.08] p-4 dark:border-white/[.145]">
+        <div className={`mt-6 flex flex-wrap items-center gap-6 ${CARD} p-4`}>
           <div>
-            <div className="text-3xl font-bold text-black dark:text-zinc-50">{overallAvg}</div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="text-3xl font-bold text-accent">{overallAvg}</div>
+            <div className="text-xs text-muted">
               {title.reviewCount} review{title.reviewCount === 1 ? "" : "s"}
             </div>
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
             {scoreEntries.map((e) => (
               <div key={e.name}>
-                {e.name}: {e.score}
+                {e.name}: <span className="text-foreground">{e.score}</span>
               </div>
             ))}
           </div>
           {(title.certifiedBangerCount > 0 || title.hiddenGemCount > 0) && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
               {title.certifiedBangerCount > 0 && (
                 <div>🏅 {title.certifiedBangerCount} Certified Banger</div>
               )}
@@ -162,32 +158,30 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
       )}
 
       {details.length > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-md border border-black/[.08] p-4 sm:grid-cols-3 dark:border-white/[.145]">
+        <div className={`mt-6 grid grid-cols-2 gap-x-6 gap-y-4 ${CARD} p-4 sm:grid-cols-3`}>
           {details.map((d) => (
             <div key={d.label}>
-              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                {d.label}
-              </div>
-              <div className="text-sm text-black dark:text-zinc-50">{d.value}</div>
+              <div className="text-xs font-medium text-muted">{d.label}</div>
+              <div className="text-sm text-foreground">{d.value}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div id="review" className="mt-10 scroll-mt-6 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
-        <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
+      <div id="review" className="mt-10 scroll-mt-6 border-t border-border pt-6">
+        <h2 className="text-lg font-semibold text-foreground">
           {existingReview ? "Your review" : "Write a review"}
         </h2>
         {user && !gate.allowed && (
-          <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">{gate.reason}</p>
+          <p className="mt-2 text-sm text-amber-400">{gate.reason}</p>
         )}
         {existingReview?.approvalStatus === "PENDING_APPROVAL" && (
-          <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">
+          <p className="mt-2 text-sm text-amber-400">
             Awaiting Main Admin approval — not visible to others yet.
           </p>
         )}
         {existingReview?.approvalStatus === "REJECTED" && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+          <p className="mt-2 text-sm text-red-400">
             This review was rejected by the Main Admin. Editing and resubmitting sends it back
             for review.
           </p>
@@ -213,8 +207,8 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
             </div>
           )
         ) : (
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <Link href="/login" className="underline">
+          <p className="mt-2 text-sm text-muted">
+            <Link href="/login" className={LINK}>
               Log in
             </Link>{" "}
             to write a review.
@@ -222,30 +216,29 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
         )}
       </div>
 
-      <div className="mt-10 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
-        <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-          Reviews ({reviews.length})
-        </h2>
-        <ul className="mt-4 flex flex-col gap-6">
+      <div className="mt-10 border-t border-border pt-6">
+        <h2 className="text-lg font-semibold text-foreground">Reviews ({reviews.length})</h2>
+        <ul className="mt-4 flex flex-col gap-4">
           {reviews.map((review) => (
-            <li key={review.id} className="border-b border-black/[.08] pb-6 dark:border-white/[.145]">
+            <li key={review.id} className={`${CARD} p-4`}>
               <div className="flex items-baseline justify-between">
-                <Link
-                  href={`/profile/${review.user.username}`}
-                  className="font-medium text-black dark:text-zinc-50"
-                >
+                <Link href={`/profile/${review.user.username}`} className="font-medium text-foreground hover:text-accent">
                   <UsernameLabel username={review.user.username} role={review.user.role} />
                 </Link>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                <span className="text-sm font-medium text-accent">
                   {review.overallScore?.toFixed(2)} / {categories[0]?.scaleMax ?? 10}
                 </span>
               </div>
               {review.sealAwards.length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-2">
+                <div className="mt-1.5 flex flex-wrap gap-2">
                   {review.sealAwards.map((award) => (
                     <span
                       key={award.id}
-                      className="rounded-full bg-black/[.06] px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-white/[.08] dark:text-zinc-300"
+                      className={
+                        award.sealType.name === "Certified Banger"
+                          ? "inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent"
+                          : "inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400"
+                      }
                     >
                       {award.sealType.name === "Certified Banger" ? "🏅" : "💎"} {award.sealType.name}
                       {award.status === "PROVISIONAL" && " (provisional)"}
@@ -253,14 +246,14 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                   ))}
                 </div>
               )}
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
                 {review.categoryScores.map((s) => (
                   <span key={s.categoryId}>
                     {s.category.name}: {s.score}
                   </span>
                 ))}
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <VoteButtons
                   reviewId={review.id}
                   titleId={id}
@@ -275,27 +268,23 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               </div>
               {review.spoilerFlag ? (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-sm text-zinc-500 dark:text-zinc-400">
+                  <summary className="cursor-pointer text-sm text-muted">
                     Contains spoilers — click to show
                   </summary>
-                  <p className="mt-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-                    {review.bodyText}
-                  </p>
+                  <p className="mt-2 text-sm leading-6 text-foreground/90">{review.bodyText}</p>
                 </details>
               ) : (
-                <p className="mt-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-                  {review.bodyText}
-                </p>
+                <p className="mt-2 text-sm leading-6 text-foreground/90">{review.bodyText}</p>
               )}
 
               {review.comments.length > 0 && (
-                <ul className="mt-3 flex flex-col gap-2 border-l-2 border-black/[.08] pl-3 dark:border-white/[.145]">
+                <ul className="mt-3 flex flex-col gap-2 border-l-2 border-border pl-3">
                   {review.comments.map((comment) => (
                     <li key={comment.id} className="text-sm">
-                      <span className="font-medium text-black dark:text-zinc-50">
+                      <span className="font-medium text-foreground">
                         <UsernameLabel username={comment.user.username} role={comment.user.role} />
                       </span>{" "}
-                      <span className="text-zinc-700 dark:text-zinc-300">{comment.bodyText}</span>
+                      <span className="text-foreground/80">{comment.bodyText}</span>
                       {user && comment.userId !== user.id && (
                         <span className="ml-2">
                           <ReportButton targetType="COMMENT" targetId={comment.id} />
@@ -309,8 +298,8 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               {user ? (
                 <CommentForm reviewId={review.id} titleId={id} />
               ) : (
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  <Link href="/login" className="underline">
+                <p className="mt-2 text-sm text-muted">
+                  <Link href="/login" className={LINK}>
                     Log in
                   </Link>{" "}
                   to comment.
@@ -318,9 +307,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               )}
             </li>
           ))}
-          {reviews.length === 0 && (
-            <li className="text-sm text-zinc-500 dark:text-zinc-400">No reviews yet.</li>
-          )}
+          {reviews.length === 0 && <li className="text-sm text-muted">No reviews yet.</li>}
         </ul>
       </div>
     </div>

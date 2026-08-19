@@ -7,7 +7,7 @@ export function UsernameLabel({ username, role }: { username: string; role: stri
     <>
       {username}
       {role !== "USER" && (
-        <span className="text-zinc-500 dark:text-zinc-400"> (admin)</span>
+        <span className="text-muted"> (admin)</span>
       )}
     </>
   );

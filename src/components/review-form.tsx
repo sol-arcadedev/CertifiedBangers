@@ -2,10 +2,7 @@
 
 import { useActionState } from "react";
 import type { ReviewActionState } from "@/lib/actions/reviews";
-
-const inputClass =
-  "rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50";
-const labelClass = "flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300";
+import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
 type Category = { id: string; name: string; scaleMin: number; scaleMax: number };
 
@@ -31,13 +28,13 @@ export function ReviewForm({
     <form action={formAction} className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {categories.map((category) => (
-          <label key={category.id} className={labelClass}>
+          <label key={category.id} className={LABEL}>
             {category.name}
             <select
               name={`score_${category.id}`}
               required
               defaultValue={existingReview?.scores[category.id] ?? ""}
-              className={inputClass}
+              className={INPUT}
             >
               <option value="" disabled>
                 Rate…
@@ -55,7 +52,7 @@ export function ReviewForm({
         ))}
       </div>
 
-      <label className={labelClass}>
+      <label className={LABEL}>
         Review
         <textarea
           name="bodyText"
@@ -64,11 +61,11 @@ export function ReviewForm({
           rows={6}
           defaultValue={existingReview?.bodyText}
           placeholder="What did you think? (min 50 characters)"
-          className={inputClass}
+          className={INPUT}
         />
       </label>
 
-      <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+      <label className="flex items-center gap-2 text-sm text-foreground">
         <input
           type="checkbox"
           name="spoilerFlag"
@@ -78,16 +75,12 @@ export function ReviewForm({
       </label>
 
       {state?.error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-400">
           {state.error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="self-start rounded-full bg-foreground px-6 py-2 text-sm text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
-      >
+      <button type="submit" disabled={pending} className={`self-start ${BUTTON_PRIMARY}`}>
         {pending ? "Saving…" : existingReview ? "Update review" : "Submit review"}
       </button>
     </form>

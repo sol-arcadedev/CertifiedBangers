@@ -8,6 +8,7 @@ import { submitReviewForAniListTitle } from "@/lib/actions/reviews";
 import { ReviewForm } from "@/components/review-form";
 import { AniListLibraryWidget } from "@/components/anilist-library-widget";
 import { formatStartDate, formatSource } from "@/lib/title-format";
+import { BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
 
 // A dedicated page for any AniList title, whether or not it's been
 // imported into our catalog yet — reachable from /titles' "Found on
@@ -67,31 +68,26 @@ export default async function AniListTitlePreviewPage(
           <img
             src={media.coverImageUrl}
             alt={media.name}
-            className="h-48 w-32 shrink-0 rounded object-cover"
+            className="h-48 w-32 shrink-0 rounded-xl object-cover shadow-lg shadow-black/30"
           />
         )}
         <div>
-          <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">{media.name}</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="text-2xl font-semibold text-foreground">{media.name}</h1>
+          <p className="text-sm text-muted">
             {media.type} · {media.status}
             {media.publicationYear ? ` · ${media.publicationYear}` : ""}
           </p>
           {media.author && (
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-muted">
               By {media.author}
               {media.illustrator ? ` (art: ${media.illustrator})` : ""}
             </p>
           )}
           {media.synopsis && (
-            <p className="mt-3 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-              {media.synopsis}
-            </p>
+            <p className="mt-3 text-sm leading-6 text-foreground/90">{media.synopsis}</p>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-4">
-            <Link
-              href="#review"
-              className="inline-flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
-            >
+            <Link href="#review" className={BUTTON_PRIMARY}>
               Write a review
             </Link>
             {user && <AniListLibraryWidget anilistId={anilistId} />}
@@ -99,28 +95,24 @@ export default async function AniListTitlePreviewPage(
         </div>
       </div>
 
-      <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mt-6 text-sm text-muted">
         Not in our catalog yet — no reviews here so far. Be the first.
       </p>
 
       {details.length > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-md border border-black/[.08] p-4 sm:grid-cols-3 dark:border-white/[.145]">
+        <div className={`mt-6 grid grid-cols-2 gap-x-6 gap-y-4 ${CARD} p-4 sm:grid-cols-3`}>
           {details.map((d) => (
             <div key={d.label}>
-              <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                {d.label}
-              </div>
-              <div className="text-sm text-black dark:text-zinc-50">{d.value}</div>
+              <div className="text-xs font-medium text-muted">{d.label}</div>
+              <div className="text-sm text-foreground">{d.value}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div id="review" className="mt-10 scroll-mt-6 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
-        <h2 className="text-lg font-semibold text-black dark:text-zinc-50">Write a review</h2>
-        {user && !gate.allowed && (
-          <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">{gate.reason}</p>
-        )}
+      <div id="review" className="mt-10 scroll-mt-6 border-t border-border pt-6">
+        <h2 className="text-lg font-semibold text-foreground">Write a review</h2>
+        {user && !gate.allowed && <p className="mt-2 text-sm text-amber-400">{gate.reason}</p>}
         {user ? (
           gate.allowed && (
             <div className="mt-4">
@@ -131,8 +123,8 @@ export default async function AniListTitlePreviewPage(
             </div>
           )
         ) : (
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <Link href="/login" className="underline">
+          <p className="mt-2 text-sm text-muted">
+            <Link href="/login" className={LINK}>
               Log in
             </Link>{" "}
             to write a review — doing so adds this title to our catalog.

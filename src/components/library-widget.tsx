@@ -31,13 +31,13 @@ export function LibraryWidget({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+    <label className="flex items-center gap-2 text-sm text-foreground">
       Library
       <select
         defaultValue={currentStatus ?? ""}
         onChange={(e) => handleChange(e.target.value)}
         disabled={pending}
-        className="rounded-md border border-black/[.08] px-2 py-1 text-sm text-black disabled:opacity-50 dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        className="rounded-lg border border-border bg-panel px-2 py-1 text-sm text-foreground disabled:opacity-50"
       >
         <option value="">Not in library</option>
         {(Object.entries(STATUS_LABELS) as [LibraryStatus, string][]).map(([value, label]) => (

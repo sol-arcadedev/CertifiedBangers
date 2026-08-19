@@ -17,7 +17,7 @@ export function ReportButton({
   );
 
   if (state?.message) {
-    return <span className="text-xs text-zinc-500 dark:text-zinc-400">{state.message}</span>;
+    return <span className="text-xs text-muted">{state.message}</span>;
   }
 
   if (!open) {
@@ -25,7 +25,7 @@ export function ReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+        className="text-xs text-muted underline hover:text-foreground"
       >
         Report
       </button>
@@ -39,10 +39,10 @@ export function ReportButton({
         required
         rows={2}
         placeholder="Why are you reporting this?"
-        className="rounded-md border border-black/[.08] px-2 py-1 text-xs text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        className="rounded-lg border border-border bg-panel px-2 py-1 text-xs text-foreground"
       />
       {state?.error && (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="text-xs text-red-400">
           {state.error}
         </p>
       )}
@@ -50,14 +50,14 @@ export function ReportButton({
         <button
           type="submit"
           disabled={pending}
-          className="text-xs text-zinc-700 underline disabled:opacity-50 dark:text-zinc-300"
+          className="text-xs text-accent underline disabled:opacity-50"
         >
           {pending ? "Submitting…" : "Submit report"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+          className="text-xs text-muted hover:text-foreground"
         >
           Cancel
         </button>

@@ -51,7 +51,7 @@ export function VoteButtons({
   const netScore = optimistic.upvoteCount - optimistic.downvoteCount;
 
   if (!canVote) {
-    return <span className="text-sm text-zinc-500 dark:text-zinc-400">{netScore >= 0 ? `+${netScore}` : netScore}</span>;
+    return <span className="text-sm text-muted">{netScore >= 0 ? `+${netScore}` : netScore}</span>;
   }
 
   return (
@@ -61,22 +61,18 @@ export function VoteButtons({
         onClick={() => vote("UP")}
         aria-label="Upvote"
         className={`-m-1.5 p-1.5 ${
-          optimistic.userVote === "UP"
-            ? "text-green-600 dark:text-green-400"
-            : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+          optimistic.userVote === "UP" ? "text-emerald-400" : "text-muted hover:text-foreground"
         }`}
       >
         ▲
       </button>
-      <span className="text-zinc-600 dark:text-zinc-400">{netScore >= 0 ? `+${netScore}` : netScore}</span>
+      <span className="text-muted">{netScore >= 0 ? `+${netScore}` : netScore}</span>
       <button
         type="button"
         onClick={() => vote("DOWN")}
         aria-label="Downvote"
         className={`-m-1.5 p-1.5 ${
-          optimistic.userVote === "DOWN"
-            ? "text-red-600 dark:text-red-400"
-            : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+          optimistic.userVote === "DOWN" ? "text-red-400" : "text-muted hover:text-foreground"
         }`}
       >
         ▼
