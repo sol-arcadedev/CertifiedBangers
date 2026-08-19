@@ -29,6 +29,58 @@ const SORT_OPTIONS = {
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
+// Not imported yet, so there's no local /titles/[id] to link to — links
+// out to the title's real AniList page instead, so "see more information"
+// works before (or without) deciding to import it.
+function AniListResultSummary({ result }: { result: AniListSearchResult }) {
+  const cover = result.coverImageUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={result.coverImageUrl}
+      alt={result.name}
+      className="h-16 w-11 shrink-0 rounded object-cover"
+    />
+  ) : (
+    <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
+  );
+  const meta = (
+    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+      {result.type}
+      {result.publicationYear ? ` · ${result.publicationYear}` : ""}
+      {result.averageScore !== null ? ` · AniList ${result.averageScore}/100` : ""}
+    </div>
+  );
+
+  if (!result.siteUrl) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {cover}
+        <div className="min-w-0">
+          <div className="truncate font-medium text-black dark:text-zinc-50">{result.name}</div>
+          {meta}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={result.siteUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80"
+    >
+      {cover}
+      <div className="min-w-0">
+        <div className="truncate font-medium text-black underline-offset-2 hover:underline dark:text-zinc-50">
+          {result.name} <span className="text-zinc-400 dark:text-zinc-500">↗</span>
+        </div>
+        {meta}
+      </div>
+    </a>
+  );
+}
+
 // PostgreSQL native full-text search (Journal Entry 38 — not a dedicated
 // search service). Computes to_tsvector at query time rather than a
 // persisted/indexed generated column + GIN index; at the catalog sizes
@@ -310,28 +362,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
           <ul className="mt-4 divide-y divide-black/[.08] dark:divide-white/[.145]">
             {aniListFallback.map((result) => (
               <li key={result.anilistId} className="flex items-center justify-between gap-4 py-3">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  {result.coverImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={result.coverImageUrl}
-                      alt={result.name}
-                      className="h-16 w-11 shrink-0 rounded object-cover"
-                    />
-                  ) : (
-                    <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
-                  )}
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-black dark:text-zinc-50">
-                      {result.name}
-                    </div>
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {result.type}
-                      {result.publicationYear ? ` · ${result.publicationYear}` : ""}
-                      {result.averageScore !== null ? ` · AniList ${result.averageScore}/100` : ""}
-                    </div>
-                  </div>
-                </div>
+                <AniListResultSummary result={result} />
                 {isAdmin && (
                   <form
                     action={async () => {
