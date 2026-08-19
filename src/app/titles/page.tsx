@@ -106,13 +106,16 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
 
   // On-demand catalog growth: rather than mirroring AniList's whole ~60k+
   // manga database up front (real rate-limit/storage cost for no product
-  // benefit — most would sit unreviewed forever), only hit AniList's
-  // search when a query comes up completely empty locally. Any signed-in
-  // admin sees an inline "Import" button; everyone else just sees the
-  // title exists on AniList (title creation stays an admin action, same
-  // as everywhere else — Entry 44).
+  // benefit — most would sit unreviewed forever), every search still also
+  // queries AniList live and shows the results in a separate section —
+  // this runs regardless of whether local results exist, since a small
+  // local catalog otherwise makes search feel much thinner than AniList's
+  // own (e.g. "one" only matching the one locally-seeded "One Piece").
+  // Any signed-in admin sees an inline "Import" button; everyone else
+  // just sees the title exists on AniList (title creation stays an admin
+  // action everywhere else too — Entry 44).
   let aniListFallback: AniListSearchResult[] = [];
-  if (q.length >= 2 && titles.length === 0) {
+  if (q.length >= 2) {
     try {
       const results = await searchAniListMedia(q);
       const alreadyImported = await prisma.title.findMany({
@@ -288,7 +291,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       {aniListFallback.length > 0 && (
         <div className="mt-8 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
           <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-            Not in our catalog yet
+            {titles.length > 0 ? "More from AniList" : "Not in our catalog yet"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Found on AniList{isAdmin ? " — import one to add it here" : ""}:
