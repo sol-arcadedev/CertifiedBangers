@@ -3,9 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
-import { getCurrentUser } from "@/lib/auth";
 import { searchAniListMedia, type AniListSearchResult } from "@/lib/anilist";
-import { importAniListTitleFromBrowse } from "@/lib/actions/anilist-import";
 import { getDistinctGenres } from "@/lib/genres";
 
 const SORT_OPTIONS = {
@@ -29,66 +27,38 @@ const SORT_OPTIONS = {
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
-// Not imported yet, so there's no local /titles/[id] to show — for an
-// admin, the whole row doubles as the import trigger (click anywhere ->
-// import -> land on the real title page here on our own site, never
-// AniList's). Everyone else just sees the summary, since only an admin
-// can actually add it to the catalog.
-function AniListResultSummary({
-  result,
-  isAdmin,
-}: {
-  result: AniListSearchResult;
-  isAdmin: boolean;
-}) {
-  const cover = result.coverImageUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={result.coverImageUrl}
-      alt={result.name}
-      className="h-16 w-11 shrink-0 rounded object-cover"
-    />
-  ) : (
-    <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
-  );
-  const meta = (
-    <div className="text-sm text-zinc-500 dark:text-zinc-400">
-      {result.type}
-      {result.publicationYear ? ` · ${result.publicationYear}` : ""}
-      {result.averageScore !== null ? ` · AniList ${result.averageScore}/100` : ""}
-    </div>
-  );
-
-  if (!isAdmin) {
-    return (
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        {cover}
-        <div className="min-w-0">
-          <div className="truncate font-medium text-black dark:text-zinc-50">{result.name}</div>
-          {meta}
+// Not imported yet, so there's no /titles/[id] for it — links to the
+// dedicated AniList preview page instead (src/app/titles/anilist/
+// [anilistId]/page.tsx), which mirrors the real title page's layout and
+// is where the actual import/write-review action lives (admin-gated
+// there, not here).
+function AniListResultSummary({ result }: { result: AniListSearchResult }) {
+  return (
+    <Link
+      href={`/titles/anilist/${result.anilistId}`}
+      className="flex min-w-0 flex-1 items-center gap-3"
+    >
+      {result.coverImageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={result.coverImageUrl}
+          alt={result.name}
+          className="h-16 w-11 shrink-0 rounded object-cover"
+        />
+      ) : (
+        <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
+      )}
+      <div className="min-w-0">
+        <div className="truncate font-medium text-black hover:underline dark:text-zinc-50">
+          {result.name}
+        </div>
+        <div className="text-sm text-zinc-500 dark:text-zinc-400">
+          {result.type}
+          {result.publicationYear ? ` · ${result.publicationYear}` : ""}
+          {result.averageScore !== null ? ` · AniList ${result.averageScore}/100` : ""}
         </div>
       </div>
-    );
-  }
-
-  return (
-    <form
-      action={async () => {
-        "use server";
-        await importAniListTitleFromBrowse(result.anilistId);
-      }}
-      className="min-w-0 flex-1"
-    >
-      <button type="submit" className="flex w-full min-w-0 items-center gap-3 text-left">
-        {cover}
-        <div className="min-w-0">
-          <div className="truncate font-medium text-black underline-offset-2 hover:underline dark:text-zinc-50">
-            {result.name}
-          </div>
-          {meta}
-        </div>
-      </button>
-    </form>
+    </Link>
   );
 }
 
@@ -192,9 +162,6 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       aniListFallback = [];
     }
   }
-  const user = aniListFallback.length > 0 ? await getCurrentUser() : null;
-  const isAdmin = user?.role === "ADMIN" || user?.role === "MAIN_ADMIN";
-
   const inputClass =
     "rounded-md border border-black/[.08] px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50";
   const labelClass = "flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300";
@@ -367,13 +334,11 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
           <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
             {titles.length > 0 ? "More from AniList" : "Not in our catalog yet"}
           </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Found on AniList{isAdmin ? " — click one to add it to our catalog" : ""}:
-          </p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Found on AniList:</p>
           <ul className="mt-4 divide-y divide-black/[.08] dark:divide-white/[.145]">
             {aniListFallback.map((result) => (
               <li key={result.anilistId} className="flex items-center justify-between gap-4 py-3">
-                <AniListResultSummary result={result} isAdmin={isAdmin} />
+                <AniListResultSummary result={result} />
               </li>
             ))}
           </ul>

@@ -9,35 +9,7 @@ import { VoteButtons } from "@/components/vote-buttons";
 import { CommentForm } from "@/components/comment-form";
 import { ReportButton } from "@/components/report-button";
 import { LibraryWidget } from "@/components/library-widget";
-
-function formatStartDate(year: number | null, month: number | null, day: number | null) {
-  if (!year) return null;
-  if (month && day) {
-    return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-  }
-  if (month) {
-    return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-  }
-  return String(year);
-}
-
-function formatSource(source: string | null) {
-  if (!source) return null;
-  return source
-    .toLowerCase()
-    .split("_")
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join(" ");
-}
+import { formatStartDate, formatSource } from "@/lib/title-format";
 
 export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) {
   const { id } = await props.params;
