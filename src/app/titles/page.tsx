@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
-import { TitleStatus } from "@/generated/prisma/enums";
+import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
 import { getCurrentUser } from "@/lib/auth";
 import { searchAniListMedia, type AniListSearchResult } from "@/lib/anilist";
 import { importAniListTitleFromBrowse } from "@/lib/actions/anilist-import";
+import { getDistinctGenres } from "@/lib/genres";
 
 const SORT_OPTIONS = {
   name: { label: "Name", orderBy: { name: "asc" } },
@@ -56,19 +57,16 @@ async function searchTitleIds(query: string): Promise<string[]> {
   return rows.map((r) => r.id);
 }
 
-async function getDistinctGenres(): Promise<string[]> {
-  const rows = await prisma.$queryRaw<{ genre: string }[]>(
-    Prisma.sql`SELECT DISTINCT unnest(genres) AS genre FROM titles ORDER BY 1`,
-  );
-  return rows.map((r) => r.genre);
-}
-
 export default async function TitlesPage(props: PageProps<"/titles">) {
   const searchParams = await props.searchParams;
   const param = (key: string) => (typeof searchParams[key] === "string" ? searchParams[key] : "");
 
   const q = param("q").trim();
   const genre = param("genre");
+  const typeParam = param("type");
+  const type = Object.values(TitleType).includes(typeParam as TitleType)
+    ? (typeParam as TitleType)
+    : "";
   const statusParam = param("status");
   const status = Object.values(TitleStatus).includes(statusParam as TitleStatus)
     ? (statusParam as TitleStatus)
@@ -88,6 +86,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
   const where: Prisma.TitleWhereInput = {};
   if (matchingIds) where.id = { in: matchingIds };
   if (genre) where.genres = { has: genre };
+  if (type) where.type = type;
   if (status) where.status = status;
   if (hasCertifiedBanger) where.certifiedBangerCount = { gt: 0 };
   if (hasHiddenGem) where.hiddenGemCount = { gt: 0 };
@@ -154,6 +153,18 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
             {genres.map((g) => (
               <option key={g} value={g}>
                 {g}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={labelClass}>
+          Format
+          <select name="type" defaultValue={type} className={inputClass}>
+            <option value="">Any</option>
+            {Object.values(TitleType).map((t) => (
+              <option key={t} value={t}>
+                {t}
               </option>
             ))}
           </select>
