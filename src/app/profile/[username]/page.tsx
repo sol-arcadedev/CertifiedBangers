@@ -50,7 +50,7 @@ export default async function ProfilePage(
   })).filter((g) => g.titles.length > 0);
 
   return (
-    <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
+    <div className="flex flex-1 justify-center bg-background px-4 py-16">
       <div className="w-full max-w-2xl">
         <div className="flex items-center gap-4">
           {user.avatarUrl ? (
@@ -60,52 +60,38 @@ export default async function ProfilePage(
               alt={user.username}
               width={72}
               height={72}
-              className="h-[72px] w-[72px] rounded-full object-cover"
+              className="h-[72px] w-[72px] rounded-full object-cover ring-2 ring-border"
             />
           ) : (
-            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-zinc-200 text-2xl font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-panel text-2xl font-semibold text-accent ring-2 ring-border">
               {user.username.slice(0, 1).toUpperCase()}
             </div>
           )}
 
           <div>
-            <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-semibold text-foreground">
               <UsernameLabel username={user.username} role={user.role} />
             </h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Joined {joined}
-            </p>
+            <p className="text-sm text-muted">Joined {joined}</p>
           </div>
         </div>
 
-        {user.bio && (
-          <p className="mt-6 text-base leading-7 text-zinc-700 dark:text-zinc-300">
-            {user.bio}
-          </p>
-        )}
+        {user.bio && <p className="mt-6 text-base leading-7 text-foreground/90">{user.bio}</p>}
 
-        <div className="mt-8 flex gap-8 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+        <div className="mt-8 flex gap-8 border-t border-border pt-6">
           <div>
-            <div className="text-lg font-semibold text-black dark:text-zinc-50">
-              {user._count.reviews}
-            </div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Reviews
-            </div>
+            <div className="text-lg font-semibold text-foreground">{user._count.reviews}</div>
+            <div className="text-sm text-muted">Reviews</div>
           </div>
           <div>
-            <div className="text-lg font-semibold text-black dark:text-zinc-50">
-              {user.reputationScore}
-            </div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Reputation
-            </div>
+            <div className="text-lg font-semibold text-foreground">{user.reputationScore}</div>
+            <div className="text-sm text-muted">Reputation</div>
           </div>
         </div>
 
         {libraryGroups.map((group) => (
-          <div key={group.label} className="mt-8 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
-            <h2 className="mb-4 text-lg font-semibold text-black dark:text-zinc-50">
+          <div key={group.label} className="mt-8 border-t border-border pt-6">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               {group.label} ({group.titles.length})
             </h2>
             <TitleCardGrid titles={group.titles} />

@@ -13,10 +13,10 @@ export default async function AccountRestrictedPage() {
       : "Your account has been suspended. You can still browse the site, but you can no longer review, comment, vote, report, or manage your library.";
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
+    <div className="flex flex-1 items-center justify-center bg-background px-4 py-16">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-xl font-semibold text-black dark:text-zinc-50">Account restricted</h1>
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">{message}</p>
+        <h1 className="text-xl font-semibold text-foreground">Account restricted</h1>
+        <p className="mt-4 text-sm text-muted">{message}</p>
       </div>
     </div>
   );
