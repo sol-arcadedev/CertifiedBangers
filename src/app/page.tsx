@@ -1,12 +1,23 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
+import { LatestReviews } from "@/components/latest-reviews";
 import { getDistinctGenres } from "@/lib/genres";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 import { INPUT, LABEL, BUTTON_PRIMARY, LINK } from "@/lib/ui-classes";
 
 export default async function Home() {
-  const [certifiedBangers, hiddenGems, mostPopular, highestRated, genres] = await Promise.all([
+  const [
+    certifiedBangers,
+    hiddenGems,
+    mostPopular,
+    highestRated,
+    genres,
+    latestReviews,
+    titleCount,
+    reviewCount,
+    certifiedBangerTitleCount,
+  ] = await Promise.all([
     prisma.title.findMany({
       where: { certifiedBangerCount: { gt: 0 } },
       orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
@@ -26,6 +37,22 @@ export default async function Home() {
       take: 8,
     }),
     getDistinctGenres(),
+    prisma.review.findMany({
+      where: { approvalStatus: "PUBLISHED" },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        id: true,
+        bodyText: true,
+        overallScore: true,
+        title: { select: { id: true, name: true, coverUrl: true } },
+        user: { select: { username: true, role: true } },
+        sealAwards: { select: { sealType: { select: { name: true } } } },
+      },
+    }),
+    prisma.title.count(),
+    prisma.review.count({ where: { approvalStatus: "PUBLISHED" } }),
+    prisma.title.count({ where: { certifiedBangerCount: { gt: 0 } } }),
   ]);
 
   // Certified Bangers/Hidden Gems lead — the brief calls the seal showcase
@@ -51,10 +78,28 @@ export default async function Home() {
           <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
             Certified<span className="text-accent">Banger</span>
           </h1>
-          <p className="mt-3 max-w-md text-lg text-muted">
-            Community-curated manga/manhwa reviews — find the exceptional reads everyone else
-            missed.
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-foreground/90">
+            A community-curated home for honest, detailed manga &amp; manhwa reviews. Every
+            review here comes from someone who actually finished the story and rated it across
+            five real categories — not a single opaque star rating.
           </p>
+          <p className="mt-3 max-w-xl text-sm text-muted">
+            The goal: as reviews add up, the exceptional titles rise to the top — including the
+            ones flying under the radar that deserve a wider audience.
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-muted">
+            <span>
+              <span className="font-semibold text-foreground">{titleCount}</span> titles
+            </span>
+            <span>
+              <span className="font-semibold text-foreground">{reviewCount}</span> reviews
+            </span>
+            <span>
+              <span className="font-semibold text-foreground">{certifiedBangerTitleCount}</span>{" "}
+              🏅 Certified Bangers
+            </span>
+          </div>
 
           <form
             className="mx-auto mt-8 flex w-full max-w-4xl flex-wrap items-end justify-center gap-4"
@@ -107,6 +152,20 @@ export default async function Home() {
           </form>
         </div>
       </div>
+
+      {latestReviews.length > 0 && (
+        <div className="mx-auto w-full max-w-5xl px-6 py-10">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">Latest Reviews</h2>
+            <Link href="/titles?sort=recent" className={`text-sm ${LINK}`}>
+              View all
+            </Link>
+          </div>
+          <div className="mt-4">
+            <LatestReviews reviews={latestReviews} />
+          </div>
+        </div>
+      )}
 
       {sections.map((section) => (
         <div key={section.heading} className="mx-auto w-full max-w-5xl px-6 py-10">
