@@ -19,9 +19,9 @@ export default function GlobalError({
     <html lang="en">
       <body style={{ margin: 0 }}>
         <style>{`
-          :root { --bg: #fafafa; --fg: #111; --muted: #666; --border: #ddd; }
-          @media (prefers-color-scheme: dark) {
-            :root { --bg: #000; --fg: #fafafa; --muted: #999; --border: #333; }
+          :root { --bg: #0b0f17; --fg: #e8ebf0; --muted: #8b93a3; --border: #2a3242; --accent: #e2a33d; }
+          @media (prefers-color-scheme: light) {
+            :root { --bg: #f6f7f9; --fg: #14171c; --muted: #666e7c; --border: #d8dae0; --accent: #b6791f; }
           }
           body { background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; }
         `}</style>
@@ -52,10 +52,11 @@ export default function GlobalError({
                 height: "2.5rem",
                 padding: "0 1.25rem",
                 borderRadius: "9999px",
-                border: `1px solid var(--border)`,
-                background: "transparent",
-                color: "var(--fg)",
+                border: "none",
+                background: "var(--accent)",
+                color: "#1a1206",
                 fontSize: "0.875rem",
+                fontWeight: 500,
                 cursor: "pointer",
               }}
             >

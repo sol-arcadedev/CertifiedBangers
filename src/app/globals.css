@@ -1,26 +1,58 @@
 @import "tailwindcss";
 
+/* Dark-first design tokens. Dark is the default (plain :root, no media
+   query) rather than only-via-OS-preference — a real design decision, not
+   the old default-light-with-a-dark:-escape-hatch setup. Light mode is
+   still available for anyone whose OS explicitly prefers it. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0f17;
+  --panel: #131a26;
+  --panel-hover: #1a2230;
+  --foreground: #e8ebf0;
+  --muted: #8b93a3;
+  --accent: #e2a33d;
+  --accent-hover: #eeb459;
+  --accent-foreground: #1a1206;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-panel: var(--panel);
+  --color-panel-hover: var(--panel-hover);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f6f7f9;
+    --panel: #ffffff;
+    --panel-hover: #f0f1f4;
+    --foreground: #14171c;
+    --muted: #666e7c;
+    --accent: #b6791f;
+    --accent-hover: #a06818;
+    --accent-foreground: #ffffff;
+    --border: rgba(0, 0, 0, 0.09);
+    --border-strong: rgba(0, 0, 0, 0.18);
   }
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }

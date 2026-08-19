@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
+import { TitleCardGrid } from "@/components/title-card-grid";
 import { searchAniListMedia, type AniListSearchResult } from "@/lib/anilist";
 import { getDistinctGenres } from "@/lib/genres";
+import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
 const SORT_OPTIONS = {
   name: { label: "Name", orderBy: { name: "asc" } },
@@ -30,32 +32,38 @@ type SortKey = keyof typeof SORT_OPTIONS;
 // Not imported yet, so there's no /titles/[id] for it — links to the
 // dedicated AniList preview page instead (src/app/titles/anilist/
 // [anilistId]/page.tsx), which mirrors the real title page's layout and
-// is where the actual import/write-review action lives (admin-gated
-// there, not here).
-function AniListResultSummary({ result }: { result: AniListSearchResult }) {
+// is where the actual import/write-review action lives.
+function AniListResultCard({ result }: { result: AniListSearchResult }) {
   return (
     <Link
       href={`/titles/anilist/${result.anilistId}`}
-      className="flex min-w-0 flex-1 items-center gap-3"
+      className="group overflow-hidden rounded-xl border border-border bg-panel transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lg hover:shadow-black/20"
     >
-      {result.coverImageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={result.coverImageUrl}
-          alt={result.name}
-          className="h-16 w-11 shrink-0 rounded object-cover"
-        />
-      ) : (
-        <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
-      )}
-      <div className="min-w-0">
-        <div className="truncate font-medium text-black hover:underline dark:text-zinc-50">
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-panel-hover">
+        {result.coverImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={result.coverImageUrl}
+            alt={result.name}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-sm text-muted">
+            No cover
+          </div>
+        )}
+        <span className="absolute right-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+          AniList
+        </span>
+      </div>
+      <div className="p-2.5">
+        <div className="line-clamp-2 text-sm font-medium leading-snug text-foreground group-hover:text-accent">
           {result.name}
         </div>
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="mt-1 text-xs text-muted">
           {result.type}
           {result.publicationYear ? ` · ${result.publicationYear}` : ""}
-          {result.averageScore !== null ? ` · AniList ${result.averageScore}/100` : ""}
+          {result.averageScore !== null ? ` · ${result.averageScore}%` : ""}
         </div>
       </div>
     </Link>
@@ -143,9 +151,9 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
   // this runs regardless of whether local results exist, since a small
   // local catalog otherwise makes search feel much thinner than AniList's
   // own (e.g. "one" only matching the one locally-seeded "One Piece").
-  // Any signed-in admin sees an inline "Import" button; everyone else
-  // just sees the title exists on AniList (title creation stays an admin
-  // action everywhere else too — Entry 44).
+  // Writing a review or adding to library for one of these imports it on
+  // the fly for any signed-in user (src/app/titles/anilist/[anilistId]) —
+  // title creation isn't gated behind an admin decision anymore.
   let aniListFallback: AniListSearchResult[] = [];
   if (q.length >= 2) {
     try {
@@ -162,23 +170,20 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       aniListFallback = [];
     }
   }
-  const inputClass =
-    "rounded-md border border-black/[.08] px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50";
-  const labelClass = "flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300";
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold text-black dark:text-zinc-50">Titles</h1>
+    <div className="mx-auto w-full max-w-5xl px-6 py-8">
+      <h1 className="mb-6 text-xl font-semibold text-foreground">Titles</h1>
 
-      <form className="mb-6 flex flex-wrap items-end gap-4" action="/titles">
-        <label className={`${labelClass} min-w-[200px] flex-1`}>
+      <form className="mb-8 flex flex-wrap items-end gap-4 rounded-xl border border-border bg-panel p-4" action="/titles">
+        <label className={`${LABEL} min-w-[200px] flex-1`}>
           Search
-          <LiveSearchInput defaultValue={q} className={inputClass} />
+          <LiveSearchInput defaultValue={q} className={INPUT} />
         </label>
 
-        <label className={labelClass}>
+        <label className={LABEL}>
           Genre
-          <select name="genre" defaultValue={genre} className={inputClass}>
+          <select name="genre" defaultValue={genre} className={INPUT}>
             <option value="">Any</option>
             {genres.map((g) => (
               <option key={g} value={g}>
@@ -188,9 +193,9 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
           </select>
         </label>
 
-        <label className={labelClass}>
+        <label className={LABEL}>
           Format
-          <select name="type" defaultValue={type} className={inputClass}>
+          <select name="type" defaultValue={type} className={INPUT}>
             <option value="">Any</option>
             {Object.values(TitleType).map((t) => (
               <option key={t} value={t}>
@@ -200,9 +205,9 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
           </select>
         </label>
 
-        <label className={labelClass}>
+        <label className={LABEL}>
           Status
-          <select name="status" defaultValue={status} className={inputClass}>
+          <select name="status" defaultValue={status} className={INPUT}>
             <option value="">Any</option>
             {Object.values(TitleStatus).map((s) => (
               <option key={s} value={s}>
@@ -212,9 +217,9 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
           </select>
         </label>
 
-        <label className={labelClass}>
+        <label className={LABEL}>
           Sort by
-          <select name="sort" defaultValue={sort} className={inputClass}>
+          <select name="sort" defaultValue={sort} className={INPUT}>
             {Object.entries(SORT_OPTIONS).map(([key, opt]) => (
               <option key={key} value={key}>
                 {opt.label}
@@ -223,7 +228,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
           </select>
         </label>
 
-        <label className={labelClass}>
+        <label className={LABEL}>
           Min. overall score
           <input
             name="minCommunity"
@@ -233,11 +238,11 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
             step="0.1"
             defaultValue={minCommunityRaw}
             placeholder="0-10"
-            className={`w-24 ${inputClass}`}
+            className={`w-24 ${INPUT}`}
           />
         </label>
 
-        <label className={labelClass}>
+        <label className={LABEL}>
           Min. AniList score
           <input
             name="minScore"
@@ -246,102 +251,45 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
             max={100}
             defaultValue={minScoreRaw}
             placeholder="0-100"
-            className={`w-24 ${inputClass}`}
+            className={`w-24 ${INPUT}`}
           />
         </label>
 
-        <label className="flex items-center gap-2 pb-2 text-sm text-zinc-700 dark:text-zinc-300">
+        <label className="flex items-center gap-2 pb-2 text-sm text-foreground">
           <input type="checkbox" name="hasCB" value="1" defaultChecked={hasCertifiedBanger} />
           🏅 Certified Banger
         </label>
-        <label className="flex items-center gap-2 pb-2 text-sm text-zinc-700 dark:text-zinc-300">
+        <label className="flex items-center gap-2 pb-2 text-sm text-foreground">
           <input type="checkbox" name="hasHG" value="1" defaultChecked={hasHiddenGem} />
           💎 Hidden Gem
         </label>
 
-        <button type="submit" className="rounded-full bg-foreground px-4 py-2 text-sm text-background">
+        <button type="submit" className={BUTTON_PRIMARY}>
           Apply
         </button>
       </form>
 
-      <ul className="divide-y divide-black/[.08] dark:divide-white/[.145]">
-        {titles.map((title) => (
-          <li key={title.id} className="flex items-center justify-between gap-4 py-3">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              {title.coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={title.coverUrl}
-                  alt={title.name}
-                  className="h-16 w-11 shrink-0 rounded object-cover"
-                />
-              ) : (
-                <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
-              )}
-              <div className="min-w-0">
-                <Link
-                  href={`/titles/${title.id}`}
-                  className="block truncate font-medium text-black dark:text-zinc-50"
-                >
-                  {title.name}
-                  {(title.certifiedBangerCount > 0 || title.hiddenGemCount > 0) && (
-                    <span
-                      className="ml-1"
-                      aria-label={[
-                        title.certifiedBangerCount > 0 && "Certified Banger",
-                        title.hiddenGemCount > 0 && "Hidden Gem",
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    >
-                      {title.certifiedBangerCount > 0 && <span aria-hidden="true">🏅</span>}
-                      {title.hiddenGemCount > 0 && <span aria-hidden="true">💎</span>}
-                    </span>
-                  )}
-                </Link>
-                <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {title.type} · {title.status}
-                  {title.reviewCount > 0 ? ` · ${title.reviewCount} reviews` : ""}
-                </div>
-                {title.communityScore !== null && (
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                    CertifiedBanger rating: {title.communityScore}
-                  </div>
-                )}
-              </div>
-            </div>
-            {(title.anilistAverageScore !== null || title.anilistPopularity !== null) && (
-              <div className="shrink-0 text-right text-sm text-zinc-500 dark:text-zinc-400">
-                {title.anilistAverageScore !== null && (
-                  <div>AniList {title.anilistAverageScore}/100</div>
-                )}
-                {title.anilistPopularity !== null && (
-                  <div>{title.anilistPopularity.toLocaleString()} on AniList lists</div>
-                )}
-              </div>
-            )}
-          </li>
-        ))}
-        {titles.length === 0 && aniListFallback.length === 0 && (
-          <li className="py-6 text-sm text-zinc-500 dark:text-zinc-400">
-            No titles match these filters.
-          </li>
-        )}
-      </ul>
+      {titles.length > 0 ? (
+        <TitleCardGrid titles={titles} />
+      ) : (
+        aniListFallback.length === 0 && (
+          <p className="py-6 text-sm text-muted">No titles match these filters.</p>
+        )
+      )}
 
       {aniListFallback.length > 0 && (
-        <div className="mt-8 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
-          <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
+        <div className="mt-10 border-t border-border pt-6">
+          <h2 className="text-lg font-semibold text-foreground">
             {titles.length > 0 ? "More from AniList" : "Not in our catalog yet"}
           </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Found on AniList:</p>
-          <ul className="mt-4 divide-y divide-black/[.08] dark:divide-white/[.145]">
-            {aniListFallback.map((result) => (
-              <li key={result.anilistId} className="flex items-center justify-between gap-4 py-3">
-                <AniListResultSummary result={result} />
-              </li>
-            ))}
-          </ul>
+          <p className="mt-1 text-sm text-muted">Found on AniList:</p>
+          <div className="mt-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              {aniListFallback.map((result) => (
+                <AniListResultCard key={result.anilistId} result={result} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

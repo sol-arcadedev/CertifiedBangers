@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY } from "@/lib/ui-classes";
 
 // Catches uncaught exceptions anywhere below the root layout (any
 // page/nested layout) — the Header above it keeps rendering since error.js
@@ -20,27 +21,18 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
+    <div className="flex flex-1 items-center justify-center bg-background px-4 py-16">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-xl font-semibold text-black dark:text-zinc-50">Something went wrong</h1>
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
+        <p className="mt-4 text-sm text-muted">
           An unexpected error occurred. You can try again, or head back to the homepage.
         </p>
-        {error.digest && (
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">Error ID: {error.digest}</p>
-        )}
+        {error.digest && <p className="mt-2 text-xs text-muted">Error ID: {error.digest}</p>}
         <div className="mt-6 flex justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => retry()}
-            className="inline-flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
-          >
+          <button type="button" onClick={() => retry()} className={BUTTON_PRIMARY}>
             Try again
           </button>
-          <Link
-            href="/"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-black/[.08] px-5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
-          >
+          <Link href="/" className={BUTTON_SECONDARY}>
             Back to home
           </Link>
         </div>

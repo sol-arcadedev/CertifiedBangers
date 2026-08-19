@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BUTTON_PRIMARY } from "@/lib/ui-classes";
 
 // Renders inside the root layout (Header, styles, dark mode all still
 // apply) — this is the standard app/not-found.tsx, not the experimental
@@ -9,16 +10,13 @@ import Link from "next/link";
 // unmatched URLs.
 export default function NotFound() {
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
+    <div className="flex flex-1 items-center justify-center bg-background px-4 py-16">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-xl font-semibold text-black dark:text-zinc-50">Page not found</h1>
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="text-xl font-semibold text-foreground">Page not found</h1>
+        <p className="mt-4 text-sm text-muted">
           The page you&apos;re looking for doesn&apos;t exist or isn&apos;t available.
         </p>
-        <Link
-          href="/"
-          className="mt-6 inline-flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
-        >
+        <Link href="/" className={`mt-6 ${BUTTON_PRIMARY}`}>
           Back to home
         </Link>
       </div>

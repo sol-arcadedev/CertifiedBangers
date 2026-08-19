@@ -6,31 +6,66 @@ type TitleCard = {
   type: string;
   coverUrl: string | null;
   anilistAverageScore: number | null;
+  // Optional — the browse page passes these for a richer card; the
+  // homepage's simpler queries don't fetch them, and the card still works
+  // without.
+  reviewCount?: number;
+  certifiedBangerCount?: number;
+  hiddenGemCount?: number;
 };
+
+function scoreColor(score: number) {
+  if (score >= 75) return "bg-emerald-500/90 text-emerald-950";
+  if (score >= 50) return "bg-amber-400/90 text-amber-950";
+  return "bg-rose-500/90 text-rose-950";
+}
 
 export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
       {titles.map((title) => (
-        <Link key={title.id} href={`/titles/${title.id}`} className="group">
-          {title.coverUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={title.coverUrl}
-              alt={title.name}
-              className="aspect-[2/3] w-full rounded object-cover"
-            />
-          ) : (
-            <div className="flex aspect-[2/3] w-full items-center justify-center rounded bg-zinc-200 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-              No cover
-            </div>
-          )}
-          <div className="mt-2 text-sm font-medium text-black group-hover:underline dark:text-zinc-50">
-            {title.name}
+        <Link
+          key={title.id}
+          href={`/titles/${title.id}`}
+          className="group overflow-hidden rounded-xl border border-border bg-panel transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lg hover:shadow-black/20"
+        >
+          <div className="relative aspect-[2/3] w-full overflow-hidden bg-panel-hover">
+            {title.coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={title.coverUrl}
+                alt={title.name}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm text-muted">
+                No cover
+              </div>
+            )}
+            {title.anilistAverageScore !== null && (
+              <span
+                className={`absolute right-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-xs font-semibold ${scoreColor(title.anilistAverageScore)}`}
+              >
+                {title.anilistAverageScore}%
+              </span>
+            )}
+            {((title.certifiedBangerCount ?? 0) > 0 || (title.hiddenGemCount ?? 0) > 0) && (
+              <span className="absolute left-1.5 top-1.5 flex gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5 text-xs backdrop-blur-sm">
+                {(title.certifiedBangerCount ?? 0) > 0 && <span aria-hidden="true">🏅</span>}
+                {(title.hiddenGemCount ?? 0) > 0 && <span aria-hidden="true">💎</span>}
+              </span>
+            )}
           </div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            {title.type}
-            {title.anilistAverageScore !== null && ` · ${title.anilistAverageScore}/100`}
+          <div className="p-2.5">
+            <div className="line-clamp-2 text-sm font-medium leading-snug text-foreground group-hover:text-accent">
+              {title.name}
+            </div>
+            <div className="mt-1 text-xs text-muted">
+              {title.type}
+              {title.reviewCount !== undefined && title.reviewCount > 0
+                ? ` · ${title.reviewCount} review${title.reviewCount === 1 ? "" : "s"}`
+                : ""}
+            </div>
           </div>
         </Link>
       ))}
