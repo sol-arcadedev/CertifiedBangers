@@ -52,16 +52,16 @@ export function AniListImport() {
         placeholder="Search AniList by title…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        className="rounded-lg border border-border bg-panel px-3 py-2 text-base text-foreground"
       />
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <ul className="flex flex-col gap-3">
         {results.map((r) => (
           <li
             key={r.anilistId}
-            className="flex items-center gap-3 rounded-md border border-black/[.08] p-3 dark:border-white/[.145]"
+            className="flex items-center gap-3 rounded-xl border border-border bg-panel p-3"
           >
             {r.coverImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -71,11 +71,11 @@ export function AniListImport() {
                 className="h-16 w-11 shrink-0 rounded object-cover"
               />
             ) : (
-              <div className="h-16 w-11 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-16 w-11 shrink-0 rounded bg-panel-hover" />
             )}
             <div className="flex-1">
-              <div className="font-medium text-black dark:text-zinc-50">{r.name}</div>
-              <div className="text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="font-medium text-foreground">{r.name}</div>
+              <div className="text-sm text-muted">
                 {r.type}
                 {r.publicationYear ? ` · ${r.publicationYear}` : ""}
               </div>
@@ -83,7 +83,7 @@ export function AniListImport() {
             {r.existingTitleId ? (
               <Link
                 href={`/admin/titles/${r.existingTitleId}`}
-                className="rounded-full border border-black/[.08] px-4 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+                className="rounded-full border border-border-strong px-4 py-1.5 text-sm text-foreground"
               >
                 Already imported
               </Link>
@@ -92,7 +92,7 @@ export function AniListImport() {
                 type="button"
                 disabled={isImporting && importingId === r.anilistId}
                 onClick={() => handleImport(r.anilistId)}
-                className="rounded-full bg-foreground px-4 py-1.5 text-sm text-background disabled:opacity-50"
+                className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground disabled:opacity-50"
               >
                 {isImporting && importingId === r.anilistId ? "Importing…" : "Import"}
               </button>
@@ -100,7 +100,7 @@ export function AniListImport() {
           </li>
         ))}
         {results.length === 0 && query.trim().length >= 2 && (
-          <li className="text-sm text-zinc-500 dark:text-zinc-400">No AniList matches.</li>
+          <li className="text-sm text-muted">No AniList matches.</li>
         )}
       </ul>
     </div>

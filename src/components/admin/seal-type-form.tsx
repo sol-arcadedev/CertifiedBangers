@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import type { ConfigActionState } from "@/lib/actions/config";
 
 const inputClass =
-  "rounded-md border border-black/[.08] px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50 disabled:opacity-50";
+  "rounded-lg border border-border bg-panel px-3 py-2 text-sm text-foreground disabled:opacity-50";
 
 export type SealTypeDefaults = {
   name: string;
@@ -26,7 +26,7 @@ export function SealTypeForm({
   const [state, formAction, pending] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 rounded-md border border-black/[.08] p-4 dark:border-white/[.145]">
+    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-panel p-4">
       <div className="flex gap-3">
         <input
           name="name"
@@ -51,18 +51,18 @@ export function SealTypeForm({
         className={inputClass}
       />
       {nameLocked && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-muted">
           Name is locked — the seal system matches on this exact name.
         </p>
       )}
 
-      {state?.error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
-      {state?.message && <p className="text-sm text-green-700 dark:text-green-400">{state.message}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-400">{state.error}</p>}
+      {state?.message && <p className="text-sm text-emerald-400">{state.message}</p>}
 
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-full bg-foreground px-4 py-1.5 text-sm text-background disabled:opacity-50"
+        className="self-start rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground disabled:opacity-50"
       >
         {pending ? "Saving…" : submitLabel}
       </button>

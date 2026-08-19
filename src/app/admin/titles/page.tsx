@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { INPUT, BUTTON_PRIMARY, BUTTON_SECONDARY } from "@/lib/ui-classes";
 
 export default async function AdminTitlesPage(props: PageProps<"/admin/titles">) {
   const searchParams = await props.searchParams;
@@ -36,24 +37,18 @@ export default async function AdminTitlesPage(props: PageProps<"/admin/titles">)
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-black dark:text-zinc-50">Titles</h1>
+        <h1 className="text-xl font-semibold text-foreground">Titles</h1>
         <div className="flex items-center gap-3">
-          <Link
-            href="/admin/titles/new"
-            className="text-sm text-zinc-700 dark:text-zinc-300"
-          >
+          <Link href="/admin/titles/new" className="text-sm text-muted hover:text-foreground">
             Add manually
           </Link>
-          <Link
-            href="/admin/titles/import"
-            className="rounded-full bg-foreground px-4 py-1.5 text-sm text-background"
-          >
+          <Link href="/admin/titles/import" className={`text-sm ${BUTTON_PRIMARY}`}>
             Import from AniList
           </Link>
         </div>
       </div>
 
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mt-1 text-sm text-muted">
         {reviewedCount} of {totalCount} titles have at least one review.
       </p>
 
@@ -63,48 +58,39 @@ export default async function AdminTitlesPage(props: PageProps<"/admin/titles">)
           type="search"
           defaultValue={q}
           placeholder="Search by name…"
-          className="min-w-[200px] flex-1 rounded-md border border-black/[.08] px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-zinc-950 dark:text-zinc-50"
+          className={`min-w-[200px] flex-1 ${INPUT}`}
         />
-        <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input type="checkbox" name="unreviewed" value="1" defaultChecked={unreviewedOnly} />
           Unreviewed only
         </label>
-        <button
-          type="submit"
-          className="rounded-full border border-black/[.08] px-4 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
-        >
+        <button type="submit" className={`text-sm ${BUTTON_SECONDARY}`}>
           Apply
         </button>
       </form>
 
-      <ul className="mt-6 divide-y divide-black/[.08] dark:divide-white/[.145]">
+      <ul className="mt-6 divide-y divide-border">
         {titles.map((title) => (
           <li key={title.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
             <div>
-              <Link
-                href={`/admin/titles/${title.id}`}
-                className="font-medium text-black dark:text-zinc-50"
-              >
+              <Link href={`/admin/titles/${title.id}`} className="font-medium text-foreground hover:text-accent">
                 {title.name}
               </Link>
-              <div className="text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="text-sm text-muted">
                 {title.type} · {title.status}
                 {title.publicationYear ? ` · ${title.publicationYear}` : ""}
                 {` · ${title.reviewCount} review${title.reviewCount === 1 ? "" : "s"}`}
               </div>
             </div>
             {title.reviewCount === 0 && (
-              <Link
-                href={`/titles/${title.id}#review`}
-                className="rounded-full border border-black/[.08] px-3 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
-              >
+              <Link href={`/titles/${title.id}#review`} className={`text-sm ${BUTTON_SECONDARY}`}>
                 Write review
               </Link>
             )}
           </li>
         ))}
         {titles.length === 0 && (
-          <li className="py-6 text-sm text-zinc-500 dark:text-zinc-400">
+          <li className="py-6 text-sm text-muted">
             {q ? `No titles matching "${q}".` : unreviewedOnly ? "Every title has at least one review." : "No titles yet."}
           </li>
         )}

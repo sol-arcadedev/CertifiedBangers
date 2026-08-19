@@ -5,7 +5,7 @@ import type { ConfigActionState } from "@/lib/actions/config";
 import { TitleType } from "@/generated/prisma/enums";
 
 const inputClass =
-  "rounded-md border border-black/[.08] px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50";
+  "rounded-lg border border-border bg-panel px-3 py-2 text-sm text-foreground";
 
 export type CategoryDefaults = {
   name: string;
@@ -26,7 +26,7 @@ export function CategoryForm({
   const [state, formAction, pending] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 rounded-md border border-black/[.08] p-4 dark:border-white/[.145]">
+    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-panel p-4">
       <div className="flex gap-3">
         <input name="name" placeholder="Name" required defaultValue={defaults?.name} className={`${inputClass} flex-1`} />
         <input
@@ -46,7 +46,7 @@ export function CategoryForm({
           className={`${inputClass} w-20`}
         />
       </div>
-      <div className="flex gap-4 text-sm text-zinc-700 dark:text-zinc-300">
+      <div className="flex gap-4 text-sm text-foreground">
         {Object.values(TitleType).map((t) => (
           <label key={t} className="flex items-center gap-1.5">
             <input
@@ -60,13 +60,13 @@ export function CategoryForm({
         ))}
       </div>
 
-      {state?.error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
-      {state?.message && <p className="text-sm text-green-700 dark:text-green-400">{state.message}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-400">{state.error}</p>}
+      {state?.message && <p className="text-sm text-emerald-400">{state.message}</p>}
 
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-full bg-foreground px-4 py-1.5 text-sm text-background disabled:opacity-50"
+        className="self-start rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground disabled:opacity-50"
       >
         {pending ? "Saving…" : submitLabel}
       </button>

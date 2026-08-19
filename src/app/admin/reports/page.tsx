@@ -61,45 +61,45 @@ export default async function AdminReportsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-black dark:text-zinc-50">Reports</h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <h1 className="mb-2 text-xl font-semibold text-foreground">Reports</h1>
+      <p className="mb-6 text-sm text-muted">
         Open reports, oldest first. Dismiss if there&apos;s nothing to act on, or remove the
         reported content directly.
       </p>
 
-      <ul className="divide-y divide-black/[.08] dark:divide-white/[.145]">
+      <ul className="divide-y divide-border">
         {reports.map((report, i) => {
           const preview = previews[i];
           return (
             <li key={report.id} className="py-4">
-              <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center justify-between text-sm text-muted">
                 <span>
                   {report.targetType} reported by {report.reporter.username}
                 </span>
                 <span>{report.createdAt.toLocaleDateString()}</span>
               </div>
 
-              <p className="mt-1 text-black dark:text-zinc-50">
+              <p className="mt-1 text-foreground">
                 <span className="font-medium">Reason: </span>
                 {report.reason}
               </p>
 
               {preview.missing ? (
-                <p className="mt-1 text-sm italic text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-sm italic text-muted">
                   Target no longer exists.
                 </p>
               ) : (
-                <div className="mt-2 rounded-md bg-black/[.03] p-3 text-sm dark:bg-white/[.05]">
+                <div className="mt-2 rounded-md bg-panel-hover p-3 text-sm">
                   {"titleName" in preview && preview.titleName && (
                     <Link
                       href={`/titles/${preview.titleId}`}
-                      className="font-medium text-black hover:underline dark:text-zinc-50"
+                      className="font-medium text-foreground hover:underline"
                     >
                       {preview.titleName}
                     </Link>
                   )}
                   {"author" in preview && preview.author && (
-                    <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-muted">
                       by {preview.author}: &ldquo;{preview.snippet}
                       {preview.snippet && preview.snippet.length >= 160 ? "…" : ""}&rdquo;
                     </p>
@@ -111,7 +111,7 @@ export default async function AdminReportsPage() {
                 <form action={resolveReport.bind(null, report.id, "RESOLVED")}>
                   <button
                     type="submit"
-                    className="rounded-full border border-black/[.08] px-4 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+                    className="rounded-full border border-border-strong px-4 py-1.5 text-sm text-foreground"
                   >
                     Mark resolved
                   </button>
@@ -119,7 +119,7 @@ export default async function AdminReportsPage() {
                 <form action={resolveReport.bind(null, report.id, "DISMISSED")}>
                   <button
                     type="submit"
-                    className="rounded-full border border-black/[.08] px-4 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+                    className="rounded-full border border-border-strong px-4 py-1.5 text-sm text-foreground"
                   >
                     Dismiss
                   </button>
@@ -128,7 +128,7 @@ export default async function AdminReportsPage() {
                   <form action={removeReportedReview.bind(null, report.id, report.targetId)}>
                     <button
                       type="submit"
-                      className="rounded-full border border-red-200 px-4 py-1.5 text-sm text-red-700 dark:border-red-900 dark:text-red-400"
+                      className="rounded-full border border-red-900/40 px-4 py-1.5 text-sm text-red-400"
                     >
                       Remove review
                     </button>
@@ -138,7 +138,7 @@ export default async function AdminReportsPage() {
                   <form action={removeReportedComment.bind(null, report.id, report.targetId)}>
                     <button
                       type="submit"
-                      className="rounded-full border border-red-200 px-4 py-1.5 text-sm text-red-700 dark:border-red-900 dark:text-red-400"
+                      className="rounded-full border border-red-900/40 px-4 py-1.5 text-sm text-red-400"
                     >
                       Remove comment
                     </button>
@@ -149,7 +149,7 @@ export default async function AdminReportsPage() {
           );
         })}
         {reports.length === 0 && (
-          <li className="py-6 text-sm text-zinc-500 dark:text-zinc-400">No open reports.</li>
+          <li className="py-6 text-sm text-muted">No open reports.</li>
         )}
       </ul>
     </div>

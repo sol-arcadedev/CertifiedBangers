@@ -29,10 +29,10 @@ export default async function AdminSealsPage(props: PageProps<"/admin/seals">) {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-black dark:text-zinc-50">
+      <h1 className="mb-2 text-xl font-semibold text-foreground">
         Seal verification
       </h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mb-6 text-sm text-muted">
         Phase 1 admin-verified grants (Journal Entry 6) — grant a seal directly with a
         justification; it&apos;s permanent immediately (Entry 11).
       </p>
@@ -43,7 +43,7 @@ export default async function AdminSealsPage(props: PageProps<"/admin/seals">) {
           type="search"
           defaultValue={q}
           placeholder="Search by title name…"
-          className="w-full rounded-md border border-black/[.08] px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-zinc-950 dark:text-zinc-50"
+          className="w-full rounded-lg border border-border bg-panel px-3 py-2 text-sm text-foreground"
         />
       </form>
 
@@ -53,7 +53,7 @@ export default async function AdminSealsPage(props: PageProps<"/admin/seals">) {
           return (
             <li
               key={review.id}
-              className="rounded-md border border-black/[.08] p-4 dark:border-white/[.145]"
+              className="rounded-xl border border-border bg-panel p-4"
             >
               <div className="flex items-baseline justify-between">
                 <div>
@@ -62,11 +62,11 @@ export default async function AdminSealsPage(props: PageProps<"/admin/seals">) {
                     {review.title.name}
                   </Link>
                 </div>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                <span className="text-sm text-muted">
                   {review.overallScore?.toFixed(2)}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+              <p className="mt-2 text-sm leading-6 text-foreground">
                 {review.bodyText}
               </p>
 
@@ -77,7 +77,7 @@ export default async function AdminSealsPage(props: PageProps<"/admin/seals">) {
                       <button
                         type="submit"
                         title="Click to revoke"
-                        className="rounded-full bg-foreground px-3 py-1 text-xs text-background"
+                        className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground"
                       >
                         {award.sealType.name}
                         {award.status === "PROVISIONAL" ? ` (provisional, ${award.positiveStreakDays}d streak)` : ""}{" "}
@@ -104,7 +104,7 @@ export default async function AdminSealsPage(props: PageProps<"/admin/seals">) {
           );
         })}
         {reviews.length === 0 && (
-          <li className="text-sm text-zinc-500 dark:text-zinc-400">
+          <li className="text-sm text-muted">
             {q ? `No published reviews matching "${q}".` : "No published reviews yet."}
           </li>
         )}

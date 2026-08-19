@@ -7,10 +7,10 @@ export default async function ImportTitlePage() {
 
   return (
     <div className="mx-auto w-full max-w-xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-black dark:text-zinc-50">
+      <h1 className="mb-2 text-xl font-semibold text-foreground">
         Import from AniList
       </h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mb-6 text-sm text-muted">
         Primary way to add titles (Journal Entry 44) — metadata and cover art come from AniList.
         Can&apos;t find it there?{" "}
         <Link href="/admin/titles/new" className="underline">

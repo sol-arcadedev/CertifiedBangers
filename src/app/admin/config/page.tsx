@@ -16,13 +16,13 @@ export default async function AdminConfigPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-black dark:text-zinc-50">Categories & seal types</h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <h1 className="mb-2 text-xl font-semibold text-foreground">Categories & seal types</h1>
+      <p className="mb-6 text-sm text-muted">
         Data-driven (Journal Entries 2, 14) — adding a 6th category or a new seal type is a data
         change, not a deploy.
       </p>
 
-      <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">Categories</h2>
+      <h2 className="mb-3 text-lg font-semibold text-foreground">Categories</h2>
       <div className="flex flex-col gap-4">
         {categories.map((category) => (
           <CategoryForm
@@ -38,12 +38,12 @@ export default async function AdminConfigPage() {
           />
         ))}
         <div>
-          <h3 className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">Add category</h3>
+          <h3 className="mb-2 text-sm font-medium text-muted">Add category</h3>
           <CategoryForm action={createCategory} submitLabel="Create" />
         </div>
       </div>
 
-      <h2 className="mb-3 mt-10 text-lg font-semibold text-black dark:text-zinc-50">Seal types</h2>
+      <h2 className="mb-3 mt-10 text-lg font-semibold text-foreground">Seal types</h2>
       <div className="flex flex-col gap-4">
         {sealTypes.map((sealType) => (
           <SealTypeForm
@@ -55,7 +55,7 @@ export default async function AdminConfigPage() {
           />
         ))}
         <div>
-          <h3 className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">Add seal type</h3>
+          <h3 className="mb-2 text-sm font-medium text-muted">Add seal type</h3>
           <SealTypeForm action={createSealType} submitLabel="Create" />
         </div>
       </div>

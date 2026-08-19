@@ -7,10 +7,10 @@ import { TitleForm } from "@/components/admin/title-form";
 export default function NewTitlePage() {
   return (
     <div className="mx-auto w-full max-w-xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-black dark:text-zinc-50">
+      <h1 className="mb-2 text-xl font-semibold text-foreground">
         Add a title manually
       </h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mb-6 text-sm text-muted">
         Most titles should come from{" "}
         <Link href="/admin/titles/import" className="underline">
           Import from AniList

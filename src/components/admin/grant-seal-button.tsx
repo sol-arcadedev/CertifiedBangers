@@ -23,7 +23,7 @@ export function GrantSealButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-full border border-black/[.08] px-3 py-1 text-xs text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+        className="rounded-full border border-border-strong px-3 py-1 text-xs text-foreground"
       >
         Grant {sealTypeName}
       </button>
@@ -31,16 +31,16 @@ export function GrantSealButton({
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-1 rounded-md border border-black/[.08] p-2 dark:border-white/[.145]">
+    <form action={formAction} className="flex flex-col gap-1 rounded-xl border border-border bg-panel p-2">
       <textarea
         name="justificationText"
         required
         rows={2}
         placeholder={`Why does this review deserve ${sealTypeName}?`}
-        className="rounded-md border border-black/[.08] px-2 py-1 text-xs text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50"
+        className="rounded-lg border border-border bg-panel px-2 py-1 text-xs text-foreground"
       />
       {state?.error && (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="text-xs text-red-400">
           {state.error}
         </p>
       )}
@@ -48,14 +48,14 @@ export function GrantSealButton({
         <button
           type="submit"
           disabled={pending}
-          className="text-xs text-zinc-700 underline disabled:opacity-50 dark:text-zinc-300"
+          className="text-xs text-accent underline disabled:opacity-50"
         >
           {pending ? "Granting…" : `Grant ${sealTypeName}`}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+          className="text-xs text-muted hover:text-foreground"
         >
           Cancel
         </button>

@@ -13,22 +13,22 @@ export default async function AdminAdminsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-black dark:text-zinc-50">Admins</h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <h1 className="mb-2 text-xl font-semibold text-foreground">Admins</h1>
+      <p className="mb-6 text-sm text-muted">
         By default an admin&apos;s reviews wait for {mainAdmin.username}&apos;s approval before
         publishing (Journal Entry 28). Lift that once you trust them — a manual, case-by-case
         call (Entry 41).
       </p>
 
-      <ul className="divide-y divide-black/[.08] dark:divide-white/[.145]">
+      <ul className="divide-y divide-border">
         {admins.map((admin) => (
           <li key={admin.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-            <span className="text-black dark:text-zinc-50">{admin.username}</span>
+            <span className="text-foreground">{admin.username}</span>
             {admin.adminReviewsRequireApproval ? (
               <form action={setAdminTrust.bind(null, admin.id, false)}>
                 <button
                   type="submit"
-                  className="rounded-full border border-black/[.08] px-4 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+                  className="rounded-full border border-border-strong px-4 py-1.5 text-sm text-foreground"
                 >
                   Trust — publish immediately
                 </button>
@@ -37,7 +37,7 @@ export default async function AdminAdminsPage() {
               <form action={setAdminTrust.bind(null, admin.id, true)}>
                 <button
                   type="submit"
-                  className="rounded-full border border-black/[.08] px-4 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
+                  className="rounded-full border border-border-strong px-4 py-1.5 text-sm text-foreground"
                 >
                   Require approval again
                 </button>
@@ -46,9 +46,9 @@ export default async function AdminAdminsPage() {
           </li>
         ))}
         {admins.length === 0 && (
-          <li className="py-6 text-sm text-zinc-500 dark:text-zinc-400">
+          <li className="py-6 text-sm text-muted">
             No admins yet — promote one with{" "}
-            <code className="rounded bg-black/[.06] px-1 py-0.5 dark:bg-white/[.08]">
+            <code className="rounded bg-panel-hover px-1 py-0.5">
               npm run promote-admin
             </code>
             .

@@ -6,8 +6,8 @@ import { searchTitles, type TitleActionState } from "@/lib/actions/titles";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 
 const inputClass =
-  "rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50";
-const labelClass = "flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300";
+  "rounded-lg border border-border bg-panel px-3 py-2 text-base text-foreground";
+const labelClass = "flex flex-col gap-1 text-sm font-medium text-foreground";
 
 export type TitleDefaults = {
   id?: string;
@@ -78,7 +78,7 @@ export function TitleForm({
       </label>
 
       {duplicates.length > 0 && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <div className="rounded-lg border border-amber-900/40 bg-amber-950/30 p-3 text-sm text-amber-300">
           <p className="font-medium">Possible duplicates already in the catalog:</p>
           <ul className="mt-1 list-disc pl-5">
             {duplicates.map((d) => (
@@ -215,18 +215,18 @@ export function TitleForm({
       )}
 
       {state?.error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-400">
           {state.error}
         </p>
       )}
       {state?.message && (
-        <p className="text-sm text-green-700 dark:text-green-400">{state.message}</p>
+        <p className="text-sm text-emerald-400">{state.message}</p>
       )}
 
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-foreground text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+        className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-accent text-accent-foreground font-medium transition-colors hover:bg-accent-hover disabled:opacity-50"
       >
         {pending ? "Saving…" : submitLabel}
       </button>

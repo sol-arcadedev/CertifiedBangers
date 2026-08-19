@@ -19,19 +19,19 @@ export default async function AdminReviewsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold text-black dark:text-zinc-50">
+      <h1 className="mb-6 text-xl font-semibold text-foreground">
         Pending review approvals
       </h1>
 
       {pending.length === 0 && (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Nothing waiting on approval.</p>
+        <p className="text-sm text-muted">Nothing waiting on approval.</p>
       )}
 
       <ul className="flex flex-col gap-6">
         {pending.map((review) => (
           <li
             key={review.id}
-            className="rounded-md border border-black/[.08] p-4 dark:border-white/[.145]"
+            className="rounded-xl border border-border bg-panel p-4"
           >
             <div className="flex items-baseline justify-between">
               <div>
@@ -40,18 +40,18 @@ export default async function AdminReviewsPage() {
                   {review.title.name}
                 </Link>
               </div>
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+              <span className="text-sm text-muted">
                 {review.overallScore?.toFixed(2)}
               </span>
             </div>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
               {review.categoryScores.map((s) => (
                 <span key={s.categoryId}>
                   {s.category.name}: {s.score}
                 </span>
               ))}
             </div>
-            <p className="mt-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+            <p className="mt-2 text-sm leading-6 text-foreground">
               {review.bodyText}
             </p>
 
@@ -59,7 +59,7 @@ export default async function AdminReviewsPage() {
               <form action={approveReview.bind(null, review.id)}>
                 <button
                   type="submit"
-                  className="rounded-full bg-foreground px-4 py-1.5 text-sm text-background"
+                  className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground"
                 >
                   Approve
                 </button>
@@ -67,7 +67,7 @@ export default async function AdminReviewsPage() {
               <form action={rejectReview.bind(null, review.id)}>
                 <button
                   type="submit"
-                  className="rounded-full border border-red-300 px-4 py-1.5 text-sm text-red-700 dark:border-red-900 dark:text-red-400"
+                  className="rounded-full border border-red-900/40 px-4 py-1.5 text-sm text-red-400"
                 >
                   Reject
                 </button>

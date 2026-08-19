@@ -13,7 +13,7 @@ export default async function EditTitlePage(props: PageProps<"/admin/titles/[id]
 
   return (
     <div className="mx-auto w-full max-w-xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold text-black dark:text-zinc-50">{title.name}</h1>
+      <h1 className="mb-6 text-xl font-semibold text-foreground">{title.name}</h1>
 
       <TitleForm
         action={updateTitle.bind(null, id)}
@@ -34,11 +34,11 @@ export default async function EditTitlePage(props: PageProps<"/admin/titles/[id]
         submitLabel="Save changes"
       />
 
-      <div className="mt-10 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
-        <h2 className="text-base font-semibold text-black dark:text-zinc-50">
+      <div className="mt-10 border-t border-border pt-6">
+        <h2 className="text-base font-semibold text-foreground">
           Merge a duplicate into this title
         </h2>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           Search for the duplicate, then confirm — its reviews and library entries move here, and
           it gets deleted.
         </p>
@@ -47,8 +47,8 @@ export default async function EditTitlePage(props: PageProps<"/admin/titles/[id]
         </div>
       </div>
 
-      <div className="mt-10 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
-        <h2 className="text-base font-semibold text-black dark:text-zinc-50">Danger zone</h2>
+      <div className="mt-10 border-t border-border pt-6">
+        <h2 className="text-base font-semibold text-foreground">Danger zone</h2>
         <div className="mt-3">
           <DeleteTitleButton id={id} />
         </div>
