@@ -29,10 +29,18 @@ const SORT_OPTIONS = {
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
-// Not imported yet, so there's no local /titles/[id] to link to — links
-// out to the title's real AniList page instead, so "see more information"
-// works before (or without) deciding to import it.
-function AniListResultSummary({ result }: { result: AniListSearchResult }) {
+// Not imported yet, so there's no local /titles/[id] to show — for an
+// admin, the whole row doubles as the import trigger (click anywhere ->
+// import -> land on the real title page here on our own site, never
+// AniList's). Everyone else just sees the summary, since only an admin
+// can actually add it to the catalog.
+function AniListResultSummary({
+  result,
+  isAdmin,
+}: {
+  result: AniListSearchResult;
+  isAdmin: boolean;
+}) {
   const cover = result.coverImageUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -51,7 +59,7 @@ function AniListResultSummary({ result }: { result: AniListSearchResult }) {
     </div>
   );
 
-  if (!result.siteUrl) {
+  if (!isAdmin) {
     return (
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {cover}
@@ -64,20 +72,23 @@ function AniListResultSummary({ result }: { result: AniListSearchResult }) {
   }
 
   return (
-    <a
-      href={result.siteUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80"
+    <form
+      action={async () => {
+        "use server";
+        await importAniListTitleFromBrowse(result.anilistId);
+      }}
+      className="min-w-0 flex-1"
     >
-      {cover}
-      <div className="min-w-0">
-        <div className="truncate font-medium text-black underline-offset-2 hover:underline dark:text-zinc-50">
-          {result.name} <span className="text-zinc-400 dark:text-zinc-500">↗</span>
+      <button type="submit" className="flex w-full min-w-0 items-center gap-3 text-left">
+        {cover}
+        <div className="min-w-0">
+          <div className="truncate font-medium text-black underline-offset-2 hover:underline dark:text-zinc-50">
+            {result.name}
+          </div>
+          {meta}
         </div>
-        {meta}
-      </div>
-    </a>
+      </button>
+    </form>
   );
 }
 
@@ -357,27 +368,12 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
             {titles.length > 0 ? "More from AniList" : "Not in our catalog yet"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Found on AniList{isAdmin ? " — import one to add it here" : ""}:
+            Found on AniList{isAdmin ? " — click one to add it to our catalog" : ""}:
           </p>
           <ul className="mt-4 divide-y divide-black/[.08] dark:divide-white/[.145]">
             {aniListFallback.map((result) => (
               <li key={result.anilistId} className="flex items-center justify-between gap-4 py-3">
-                <AniListResultSummary result={result} />
-                {isAdmin && (
-                  <form
-                    action={async () => {
-                      "use server";
-                      await importAniListTitleFromBrowse(result.anilistId);
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="shrink-0 rounded-full border border-black/[.08] px-3 py-1.5 text-sm text-zinc-700 dark:border-white/[.145] dark:text-zinc-300"
-                    >
-                      Import
-                    </button>
-                  </form>
-                )}
+                <AniListResultSummary result={result} isAdmin={isAdmin} />
               </li>
             ))}
           </ul>

@@ -76,10 +76,6 @@ export type AniListSearchResult = {
   coverImageUrl: string | null;
   averageScore: number | null;
   popularity: number | null;
-  // Lets an unimported result link out to its real AniList page — there's
-  // no local /titles/[id] to send it to yet, so "see more information"
-  // means AniList's own page until/unless it gets imported.
-  siteUrl: string | null;
 };
 
 const SEARCH_QUERY = `
@@ -93,7 +89,6 @@ const SEARCH_QUERY = `
         coverImage { medium }
         averageScore
         popularity
-        siteUrl
       }
     }
   }
@@ -110,7 +105,6 @@ export async function searchAniListMedia(query: string): Promise<AniListSearchRe
         coverImage: { medium: string | null };
         averageScore: number | null;
         popularity: number | null;
-        siteUrl: string | null;
       }[];
     };
   }>(SEARCH_QUERY, { search: query });
@@ -127,7 +121,6 @@ export async function searchAniListMedia(query: string): Promise<AniListSearchRe
         coverImageUrl: m.coverImage.medium,
         averageScore: m.averageScore,
         popularity: m.popularity,
-        siteUrl: m.siteUrl,
       };
     })
     .filter((m): m is AniListSearchResult => m !== null);
