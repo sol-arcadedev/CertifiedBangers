@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { submitReview, type ReviewActionState } from "@/lib/actions/reviews";
+import type { ReviewActionState } from "@/lib/actions/reviews";
 
 const inputClass =
   "rounded-md border border-black/[.08] px-3 py-2 text-base text-black dark:border-white/[.145] dark:bg-black dark:text-zinc-50";
@@ -10,11 +10,11 @@ const labelClass = "flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:t
 type Category = { id: string; name: string; scaleMin: number; scaleMax: number };
 
 export function ReviewForm({
-  titleId,
+  action,
   categories,
   existingReview,
 }: {
-  titleId: string;
+  action: (state: ReviewActionState, formData: FormData) => Promise<ReviewActionState>;
   categories: Category[];
   existingReview?: {
     bodyText: string;
@@ -23,7 +23,7 @@ export function ReviewForm({
   };
 }) {
   const [state, formAction, pending] = useActionState<ReviewActionState, FormData>(
-    submitReview.bind(null, titleId),
+    action,
     undefined,
   );
 

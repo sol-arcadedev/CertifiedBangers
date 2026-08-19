@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { checkReviewGate } from "@/lib/review-gate";
+import { submitReview } from "@/lib/actions/reviews";
 import { ReviewForm } from "@/components/review-form";
 import { UsernameLabel } from "@/components/username-label";
 import { VoteButtons } from "@/components/vote-buttons";
@@ -195,7 +196,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
           gate.allowed && (
             <div className="mt-4">
               <ReviewForm
-                titleId={id}
+                action={submitReview.bind(null, id)}
                 categories={categories}
                 existingReview={
                   existingReview

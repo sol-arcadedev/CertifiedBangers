@@ -42,11 +42,15 @@ async function downloadCover(url: string): Promise<{ buffer: Buffer; contentType
   return { buffer, contentType, ext };
 }
 
-// Shared by both entry points below — the admin import page and the
-// public /titles search's "not in our catalog yet" fallback (Entry 44
-// stays the source of truth for title creation: only an admin can
-// actually trigger this, regardless of which page it's called from).
-async function performAniListImport(anilistId: number): Promise<{ error: string } | { titleId: string }> {
+// The actual import mechanics (find-or-create), with no gate of its own —
+// each caller applies whatever gate fits its context: requireAdmin() for
+// the two wrappers below, or requireUser() + the review gate/rate limit
+// for src/lib/actions/reviews.ts's submitReviewForAniListTitle (writing a
+// genuine review is itself the appropriate bar for "this title is worth
+// adding to the catalog," not an admin's separate say-so).
+export async function performAniListImport(
+  anilistId: number,
+): Promise<{ error: string } | { titleId: string }> {
   const existing = await prisma.title.findUnique({ where: { anilistId } });
   if (existing) return { titleId: existing.id };
 
@@ -103,18 +107,4 @@ export async function importAniListTitle(anilistId: number): Promise<{ error: st
 
   revalidatePath("/admin/titles");
   redirect(`/admin/titles/${result.titleId}`);
-}
-
-// Entry point for the /titles browse page's AniList fallback (a search
-// with no local matches) — same import logic, but lands the admin on the
-// public title page instead of the admin edit page, matching where they
-// triggered it from.
-export async function importAniListTitleFromBrowse(anilistId: number): Promise<{ error: string } | never> {
-  await requireAdmin();
-
-  const result = await performAniListImport(anilistId);
-  if ("error" in result) return result;
-
-  revalidatePath("/titles");
-  redirect(`/titles/${result.titleId}`);
 }

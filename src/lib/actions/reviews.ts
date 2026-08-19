@@ -1,11 +1,14 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import type { User } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/require-user";
 import { checkReviewGate } from "@/lib/review-gate";
 import { checkReviewRateLimit } from "@/lib/rate-limit";
 import { recomputeTitleAggregates } from "@/lib/title-aggregates";
+import { performAniListImport } from "@/lib/actions/anilist-import";
 
 export type ReviewActionState = { error?: string } | undefined;
 
@@ -25,31 +28,14 @@ function computeApprovalStatus(user: { role: string; adminReviewsRequireApproval
   };
 }
 
-// Submits or replaces the current user's review for a title — one review
-// per user per title (schema unique constraint), editing replaces rather
-// than duplicating. Category scores are data-driven per Category's own
-// scaleMin/scaleMax, restricted to categories that apply to this title's
-// type (Journal Entry 2).
-export async function submitReview(
+// Shared by submitReview (existing title) and submitReviewForAniListTitle
+// (title imported on the fly, below) — everything past "we have a real
+// titleId and a gate/rate-limit-cleared user" is identical.
+async function createOrUpdateReview(
+  user: User,
   titleId: string,
-  _prevState: ReviewActionState,
   formData: FormData,
 ): Promise<ReviewActionState> {
-  const user = await requireUser();
-
-  const gate = await checkReviewGate(user.id, user.createdAt);
-  if (!gate.allowed) return { error: gate.reason };
-
-  // Rate-limit new reviews only — editing an existing one (edit-replace)
-  // doesn't grow content volume, so it isn't gated here.
-  const isNewReview =
-    (await prisma.review.findUnique({ where: { userId_titleId: { userId: user.id, titleId } } })) ===
-    null;
-  if (isNewReview) {
-    const rateLimit = await checkReviewRateLimit(user.id);
-    if (!rateLimit.allowed) return { error: rateLimit.reason };
-  }
-
   const title = await prisma.title.findUnique({ where: { id: titleId } });
   if (!title) return { error: "Title not found." };
 
@@ -133,4 +119,61 @@ export async function submitReview(
   });
 
   revalidatePath(`/titles/${titleId}`);
+}
+
+// Submits or replaces the current user's review for a title already in
+// our catalog — one review per user per title (schema unique constraint),
+// editing replaces rather than duplicating.
+export async function submitReview(
+  titleId: string,
+  _prevState: ReviewActionState,
+  formData: FormData,
+): Promise<ReviewActionState> {
+  const user = await requireUser();
+
+  const gate = await checkReviewGate(user.id, user.createdAt);
+  if (!gate.allowed) return { error: gate.reason };
+
+  // Rate-limit new reviews only — editing an existing one (edit-replace)
+  // doesn't grow content volume, so it isn't gated here.
+  const isNewReview =
+    (await prisma.review.findUnique({ where: { userId_titleId: { userId: user.id, titleId } } })) ===
+    null;
+  if (isNewReview) {
+    const rateLimit = await checkReviewRateLimit(user.id);
+    if (!rateLimit.allowed) return { error: rateLimit.reason };
+  }
+
+  return createOrUpdateReview(user, titleId, formData);
+}
+
+// Entry point for the AniList preview page (src/app/titles/anilist/
+// [anilistId]) — the title isn't in our catalog yet, so writing a review
+// for it imports it first. Deliberately not admin-gated: a genuine,
+// gate-passing, rate-limited review submission is itself the appropriate
+// bar for "this title belongs in the catalog" (the user's own stated
+// vision — community-driven, not admin-curated). Always a brand-new
+// review by construction (the title didn't exist a moment ago, so no
+// prior review of it could exist either), so the rate limit always
+// applies, unlike submitReview's conditional check.
+export async function submitReviewForAniListTitle(
+  anilistId: number,
+  _prevState: ReviewActionState,
+  formData: FormData,
+): Promise<ReviewActionState> {
+  const user = await requireUser();
+
+  const gate = await checkReviewGate(user.id, user.createdAt);
+  if (!gate.allowed) return { error: gate.reason };
+
+  const rateLimit = await checkReviewRateLimit(user.id);
+  if (!rateLimit.allowed) return { error: rateLimit.reason };
+
+  const imported = await performAniListImport(anilistId);
+  if ("error" in imported) return imported;
+
+  const result = await createOrUpdateReview(user, imported.titleId, formData);
+  if (result?.error) return result;
+
+  redirect(`/titles/${imported.titleId}#review`);
 }
