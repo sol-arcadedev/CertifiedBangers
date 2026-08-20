@@ -1,73 +1,66 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
 import { TitleCardGrid } from "@/components/title-card-grid";
-import { browseAniListMedia, type AniListSearchResult } from "@/lib/anilist";
+import { browseAniListMedia } from "@/lib/anilist";
 import { getDistinctGenres } from "@/lib/genres";
 import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
+// Sorting happens in JS on the merged local+AniList array (compareCards,
+// below), not at the DB level — a plain label list is all this needs now.
 const SORT_OPTIONS = {
-  name: { label: "Name", orderBy: { name: "asc" } },
-  score: { label: "AniList score", orderBy: { anilistAverageScore: { sort: "desc", nulls: "last" } } },
-  popularity: {
-    label: "AniList popularity",
-    orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } },
-  },
-  community: {
-    label: "Highest overall score",
-    orderBy: { communityScore: { sort: "desc", nulls: "last" } },
-  },
-  seals: { label: "Most seals", orderBy: { totalSealCount: "desc" } },
-  recent: {
-    label: "Most recent reviews",
-    orderBy: { lastReviewedAt: { sort: "desc", nulls: "last" } },
-  },
-  discussed: { label: "Most discussed", orderBy: { discussionCount: "desc" } },
-} satisfies Record<string, { label: string; orderBy: Prisma.TitleOrderByWithRelationInput }>;
+  name: { label: "Name" },
+  score: { label: "AniList score" },
+  popularity: { label: "AniList popularity" },
+  community: { label: "Highest overall score" },
+  seals: { label: "Most seals" },
+  recent: { label: "Most recent reviews" },
+  discussed: { label: "Most discussed" },
+} satisfies Record<string, { label: string }>;
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
-// Not imported yet, so there's no /titles/[id] for it — links to the
-// dedicated AniList preview page instead (src/app/titles/anilist/
-// [anilistId]/page.tsx), which mirrors the real title page's layout and
-// is where the actual import/write-review action lives.
-function AniListResultCard({ result }: { result: AniListSearchResult }) {
-  return (
-    <Link
-      href={`/titles/anilist/${result.anilistId}`}
-      className="group overflow-hidden rounded-xl border border-border bg-panel transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lg hover:shadow-black/20"
-    >
-      <div className="relative aspect-[2/3] w-full overflow-hidden bg-panel-hover">
-        {result.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={result.coverImageUrl}
-            alt={result.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-muted">
-            No cover
-          </div>
-        )}
-        <span className="absolute right-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-          AniList
-        </span>
-      </div>
-      <div className="p-2.5">
-        <div className="line-clamp-2 text-sm font-medium leading-snug text-foreground group-hover:text-accent">
-          {result.name}
-        </div>
-        <div className="mt-1 text-xs text-muted">
-          {result.type}
-          {result.publicationYear ? ` · ${result.publicationYear}` : ""}
-          {result.averageScore !== null ? ` · ${result.averageScore}%` : ""}
-        </div>
-      </div>
-    </Link>
-  );
+// One unified shape for both "already in our catalog" and "AniList-only"
+// results, so they render in a single grid indistinguishable from each
+// other — no more "our stuff" vs "AniList's stuff" split. AniList-only
+// entries just carry zero/null for every locally-computed field, which
+// naturally sorts them after anything with real review/seal/discussion
+// data without needing special-case logic.
+type UnifiedCard = {
+  id: string;
+  href?: string;
+  name: string;
+  type: string;
+  coverUrl: string | null;
+  anilistAverageScore: number | null;
+  anilistPopularity: number | null;
+  communityScore: number | null;
+  totalSealCount: number;
+  lastReviewedAt: Date | null;
+  discussionCount: number;
+  reviewCount: number;
+  certifiedBangerCount: number;
+  hiddenGemCount: number;
+};
+
+function compareCards(a: UnifiedCard, b: UnifiedCard, sort: SortKey): number {
+  switch (sort) {
+    case "name":
+      return a.name.localeCompare(b.name);
+    case "score":
+      return (b.anilistAverageScore ?? -1) - (a.anilistAverageScore ?? -1);
+    case "popularity":
+      return (b.anilistPopularity ?? -1) - (a.anilistPopularity ?? -1);
+    case "community":
+      return (b.communityScore ?? -1) - (a.communityScore ?? -1);
+    case "seals":
+      return b.totalSealCount - a.totalSealCount;
+    case "recent":
+      return (b.lastReviewedAt?.getTime() ?? 0) - (a.lastReviewedAt?.getTime() ?? 0);
+    case "discussed":
+      return b.discussionCount - a.discussionCount;
+  }
 }
 
 // PostgreSQL native full-text search (Journal Entry 38 — not a dedicated
@@ -138,27 +131,21 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
     where.communityScore = { gte: Number(minCommunityRaw) };
   }
 
-  const titles = await prisma.title.findMany({
-    where,
-    orderBy: SORT_OPTIONS[sort].orderBy,
-    take: 100,
-  });
+  const titles = await prisma.title.findMany({ where, take: 100 });
 
   // On-demand catalog growth: rather than mirroring AniList's whole ~60k+
   // manga database up front (real rate-limit/storage cost for no product
-  // benefit — most would sit unreviewed forever), any search OR genre
-  // filter also queries AniList live and shows the results in a separate
-  // section — this runs regardless of whether local results exist, since
-  // a small local catalog otherwise makes browsing feel much thinner than
-  // AniList's own (e.g. filtering by "Adventure" only turning up a
-  // handful of locally-seeded titles). perPage is bumped well past the
-  // admin-import search's small teaser size, since this is meant to
-  // actually cover "everything matching," not just a few suggestions.
-  // Writing a review or adding to library for one of these imports it on
-  // the fly for any signed-in user (src/app/titles/anilist/[anilistId]) —
-  // title creation isn't gated behind an admin decision anymore.
-  let aniListFallback: AniListSearchResult[] = [];
-  if (q.length >= 2 || genre) {
+  // benefit), any search OR genre filter also pulls in live AniList
+  // results — merged into the exact same grid as local results (below),
+  // not a separate "not really ours" section, since the site's search is
+  // meant to feel like it covers everything AniList has, the same way
+  // AniList's own search does. Skipped when a filter is active that an
+  // unimported title structurally can never satisfy (seal checkboxes,
+  // minimum community score — both are review-driven, and an unimported
+  // title has no reviews).
+  const skipAniList = hasCertifiedBanger || hasHiddenGem || !!minCommunityRaw;
+  let aniListCards: UnifiedCard[] = [];
+  if (!skipAniList && (q.length >= 2 || genre)) {
     try {
       const results = await browseAniListMedia({
         search: q.length >= 2 ? q : undefined,
@@ -170,13 +157,35 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
         select: { anilistId: true },
       });
       const importedIds = new Set(alreadyImported.map((t) => t.anilistId));
-      aniListFallback = results.filter((r) => !importedIds.has(r.anilistId));
+      const minScore = minScoreRaw && !Number.isNaN(Number(minScoreRaw)) ? Number(minScoreRaw) : null;
+
+      aniListCards = results
+        .filter((r) => !importedIds.has(r.anilistId))
+        .filter((r) => minScore === null || (r.averageScore !== null && r.averageScore >= minScore))
+        .map((r) => ({
+          id: `anilist-${r.anilistId}`,
+          href: `/titles/anilist/${r.anilistId}`,
+          name: r.name,
+          type: r.type,
+          coverUrl: r.coverImageUrl,
+          anilistAverageScore: r.averageScore,
+          anilistPopularity: r.popularity,
+          communityScore: null,
+          totalSealCount: 0,
+          lastReviewedAt: null,
+          discussionCount: 0,
+          reviewCount: 0,
+          certifiedBangerCount: 0,
+          hiddenGemCount: 0,
+        }));
     } catch {
       // AniList being slow/unreachable shouldn't break the browse page —
-      // it just falls back to the plain "no titles matching" state.
-      aniListFallback = [];
+      // it just falls back to local-only results.
+      aniListCards = [];
     }
   }
+
+  const cards: UnifiedCard[] = [...titles, ...aniListCards].sort((a, b) => compareCards(a, b, sort));
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
@@ -276,28 +285,10 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
         </button>
       </form>
 
-      {titles.length > 0 ? (
-        <TitleCardGrid titles={titles} />
+      {cards.length > 0 ? (
+        <TitleCardGrid titles={cards} />
       ) : (
-        aniListFallback.length === 0 && (
-          <p className="py-6 text-sm text-muted">No titles match these filters.</p>
-        )
-      )}
-
-      {aniListFallback.length > 0 && (
-        <div className="mt-10 border-t border-border pt-6">
-          <h2 className="text-lg font-semibold text-foreground">
-            {titles.length > 0 ? "More from AniList" : "Not in our catalog yet"}
-          </h2>
-          <p className="mt-1 text-sm text-muted">Found on AniList:</p>
-          <div className="mt-4">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {aniListFallback.map((result) => (
-                <AniListResultCard key={result.anilistId} result={result} />
-              ))}
-            </div>
-          </div>
-        </div>
+        <p className="py-6 text-sm text-muted">No titles match these filters.</p>
       )}
     </div>
   );

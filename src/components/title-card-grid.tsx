@@ -12,6 +12,11 @@ type TitleCard = {
   reviewCount?: number;
   certifiedBangerCount?: number;
   hiddenGemCount?: number;
+  // Overrides the default /titles/{id} link — used for titles that
+  // aren't in our catalog yet, which link to the AniList preview page
+  // instead (src/app/titles/anilist/[anilistId]). Search results look
+  // identical either way; only the destination differs.
+  href?: string;
 };
 
 function scoreColor(score: number) {
@@ -26,7 +31,7 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
       {titles.map((title) => (
         <Link
           key={title.id}
-          href={`/titles/${title.id}`}
+          href={title.href ?? `/titles/${title.id}`}
           className="group overflow-hidden rounded-xl border border-border bg-panel transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lg hover:shadow-black/20"
         >
           <div className="relative aspect-[2/3] w-full overflow-hidden bg-panel-hover">
