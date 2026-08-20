@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
 import { TitleCardGrid } from "@/components/title-card-grid";
-import { searchAniListMedia, type AniListSearchResult } from "@/lib/anilist";
+import { browseAniListMedia, type AniListSearchResult } from "@/lib/anilist";
 import { getDistinctGenres } from "@/lib/genres";
 import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
@@ -146,18 +146,25 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
 
   // On-demand catalog growth: rather than mirroring AniList's whole ~60k+
   // manga database up front (real rate-limit/storage cost for no product
-  // benefit — most would sit unreviewed forever), every search still also
-  // queries AniList live and shows the results in a separate section —
-  // this runs regardless of whether local results exist, since a small
-  // local catalog otherwise makes search feel much thinner than AniList's
-  // own (e.g. "one" only matching the one locally-seeded "One Piece").
+  // benefit — most would sit unreviewed forever), any search OR genre
+  // filter also queries AniList live and shows the results in a separate
+  // section — this runs regardless of whether local results exist, since
+  // a small local catalog otherwise makes browsing feel much thinner than
+  // AniList's own (e.g. filtering by "Adventure" only turning up a
+  // handful of locally-seeded titles). perPage is bumped well past the
+  // admin-import search's small teaser size, since this is meant to
+  // actually cover "everything matching," not just a few suggestions.
   // Writing a review or adding to library for one of these imports it on
   // the fly for any signed-in user (src/app/titles/anilist/[anilistId]) —
   // title creation isn't gated behind an admin decision anymore.
   let aniListFallback: AniListSearchResult[] = [];
-  if (q.length >= 2) {
+  if (q.length >= 2 || genre) {
     try {
-      const results = await searchAniListMedia(q);
+      const results = await browseAniListMedia({
+        search: q.length >= 2 ? q : undefined,
+        genre: genre || undefined,
+        perPage: 30,
+      });
       const alreadyImported = await prisma.title.findMany({
         where: { anilistId: { in: results.map((r) => r.anilistId) } },
         select: { anilistId: true },

@@ -126,6 +126,83 @@ export async function searchAniListMedia(query: string): Promise<AniListSearchRe
     .filter((m): m is AniListSearchResult => m !== null);
 }
 
+// For /titles' "blend in AniList results" fallback — unlike
+// searchAniListMedia (admin import search, text-only, small perPage),
+// this also filters by genre so a genre-only browse (no search text)
+// still reaches AniList, and returns a much larger page so "filter by
+// Adventure" doesn't cap out at 10 results. Builds the query/variable
+// list dynamically since GraphQL has no clean way to make an argument
+// conditionally present — genre/search values are still always passed
+// as variables, never string-interpolated, so this isn't an injection
+// risk despite the dynamic query text.
+export async function browseAniListMedia(filters: {
+  search?: string;
+  genre?: string;
+  perPage?: number;
+}): Promise<AniListSearchResult[]> {
+  const args = ["type: MANGA", "format_in: [MANGA, ONE_SHOT]"];
+  const variableDefs = ["$perPage: Int"];
+  const variables: Record<string, unknown> = { perPage: filters.perPage ?? 30 };
+
+  if (filters.search) {
+    variableDefs.push("$search: String");
+    args.push("search: $search");
+    variables.search = filters.search;
+  }
+  if (filters.genre) {
+    variableDefs.push("$genre: String");
+    args.push("genre_in: [$genre]");
+    variables.genre = filters.genre;
+  }
+  args.push(filters.search ? "sort: SEARCH_MATCH" : "sort: POPULARITY_DESC");
+
+  const query = `
+    query(${variableDefs.join(", ")}) {
+      Page(page: 1, perPage: $perPage) {
+        media(${args.join(", ")}) {
+          id
+          title { romaji english }
+          countryOfOrigin
+          startDate { year }
+          coverImage { medium }
+          averageScore
+          popularity
+        }
+      }
+    }
+  `;
+
+  const data = await anilistRequest<{
+    Page: {
+      media: {
+        id: number;
+        title: { romaji: string | null; english: string | null };
+        countryOfOrigin: string;
+        startDate: { year: number | null };
+        coverImage: { medium: string | null };
+        averageScore: number | null;
+        popularity: number | null;
+      }[];
+    };
+  }>(query, variables);
+
+  return data.Page.media
+    .map((m) => {
+      const type = mapCountryToTitleType(m.countryOfOrigin);
+      if (!type) return null;
+      return {
+        anilistId: m.id,
+        name: m.title.english ?? m.title.romaji ?? "Untitled",
+        type,
+        publicationYear: m.startDate.year,
+        coverImageUrl: m.coverImage.medium,
+        averageScore: m.averageScore,
+        popularity: m.popularity,
+      };
+    })
+    .filter((m): m is AniListSearchResult => m !== null);
+}
+
 // Fields sourced straight from AniList with no manual-edit UI anywhere —
 // safe for scripts/refresh-anilist-data.ts to overwrite periodically.
 // synonyms is deliberately excluded: it's editable via the manual title
