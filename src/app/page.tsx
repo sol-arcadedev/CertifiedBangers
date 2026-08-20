@@ -8,17 +8,8 @@ import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 import { INPUT, LABEL, BUTTON_PRIMARY, LINK } from "@/lib/ui-classes";
 
 export default async function Home() {
-  const [
-    certifiedBangers,
-    hiddenGems,
-    mostPopular,
-    highestRated,
-    genres,
-    latestReviews,
-    titleCount,
-    reviewCount,
-    certifiedBangerTitleCount,
-  ] = await Promise.all([
+  const [certifiedBangers, hiddenGems, mostPopular, highestRated, genres, latestReviews] =
+    await Promise.all([
     prisma.title.findMany({
       where: { certifiedBangerCount: { gt: 0 } },
       orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
@@ -51,9 +42,6 @@ export default async function Home() {
         sealAwards: { select: { sealType: { select: { name: true } } } },
       },
     }),
-    prisma.title.count(),
-    prisma.review.count({ where: { approvalStatus: "PUBLISHED" } }),
-    prisma.title.count({ where: { certifiedBangerCount: { gt: 0 } } }),
   ]);
 
   // Certified Bangers/Hidden Gems lead — the brief calls the seal showcase
@@ -89,19 +77,6 @@ export default async function Home() {
               The goal: as reviews add up, the exceptional titles rise to the top — including the
               ones flying under the radar that deserve a wider audience.
             </p>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-muted lg:justify-start">
-              <span>
-                <span className="font-semibold text-foreground">{titleCount}</span> titles
-              </span>
-              <span>
-                <span className="font-semibold text-foreground">{reviewCount}</span> reviews
-              </span>
-              <span>
-                <span className="font-semibold text-foreground">{certifiedBangerTitleCount}</span>{" "}
-                🏅 Certified Bangers
-              </span>
-            </div>
           </div>
 
           <div className="shrink-0">
