@@ -71,13 +71,14 @@ export default async function Home() {
               Certified<span className="text-accent">Banger</span>
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-foreground/90">
-              A community-curated home for honest, detailed manga &amp; manhwa reviews. Every
-              review here comes from someone who actually finished the story and rated it across
-              five real categories — not a single opaque star rating.
+              CertifiedBanger is a place to write reviews for manga you&apos;d call peak — a
+              certified banger, a genuinely great read. No reviews for mid titles, just
+              recommendations worth reading.
             </p>
             <p className="mt-3 max-w-xl text-sm text-muted">
-              The goal: as reviews add up, the exceptional titles rise to the top — including the
-              ones flying under the radar that deserve a wider audience.
+              Every review is put to a vote. Hold an 80% upvote ratio and the title earns the 🏅
+              Certified Banger badge. The mission: help a great but lesser-known title get
+              discovered by someone willing to give it a chance.
             </p>
           </div>
 
