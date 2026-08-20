@@ -56,13 +56,15 @@ export default async function Home() {
   return (
     <div className="flex flex-1 flex-col bg-background">
       <div className="relative overflow-hidden border-b border-border">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.18]"
-          style={{
-            background:
-              "radial-gradient(ellipse 42% 55% at 80% 20%, var(--accent), transparent 70%)",
-          }}
+        <Image
+          src="/Hero-Background.jpg"
+          alt=""
+          fill
+          priority
+          className="pointer-events-none object-cover"
         />
+        <div className="pointer-events-none absolute inset-0 bg-background/55" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-background/70 to-background" />
         <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 pb-6 pt-16 sm:pt-20 lg:flex-row lg:items-center lg:text-left">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
