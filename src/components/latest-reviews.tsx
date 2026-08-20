@@ -12,47 +12,47 @@ type LatestReview = {
 
 export function LatestReviews({ reviews }: { reviews: LatestReview[] }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {reviews.map((review) => (
         <Link
           key={review.id}
           href={`/titles/${review.title.id}`}
-          className="group flex gap-3 rounded-xl border border-border bg-panel p-3 transition-all hover:border-border-strong hover:bg-panel-hover"
+          className="group flex gap-4 rounded-xl border border-border bg-panel p-4 transition-all hover:-translate-y-0.5 hover:border-border-strong hover:bg-panel-hover hover:shadow-lg hover:shadow-black/20"
         >
           {review.title.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={review.title.coverUrl}
               alt={review.title.name}
-              className="h-20 w-14 shrink-0 rounded-lg object-cover"
+              className="h-24 w-16 shrink-0 rounded-lg object-cover"
             />
           ) : (
-            <div className="h-20 w-14 shrink-0 rounded-lg bg-panel-hover" />
+            <div className="h-24 w-16 shrink-0 rounded-lg bg-panel-hover" />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="truncate text-sm font-medium text-foreground group-hover:text-accent">
-                {review.title.name}
-              </div>
+            <div className="truncate text-sm font-medium text-foreground group-hover:text-accent">
+              {review.title.name}
+            </div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
               {review.overallScore !== null && (
-                <span className="shrink-0 text-sm font-semibold text-accent">
+                <span className="inline-flex items-center rounded-md bg-accent/15 px-1.5 py-0.5 text-xs font-semibold text-accent">
                   {review.overallScore.toFixed(1)}
                 </span>
               )}
+              {review.sealAwards.map((award, i) => (
+                <span
+                  key={i}
+                  aria-hidden="true"
+                  className="inline-flex items-center rounded-md bg-panel-hover px-1.5 py-0.5 text-xs"
+                >
+                  {award.sealType.name === "Certified Banger" ? "🏅" : "💎"}
+                </span>
+              ))}
             </div>
-            <div className="text-xs text-muted">
+            <div className="mt-1.5 text-xs text-muted">
               <UsernameLabel username={review.user.username} role={review.user.role} />
             </div>
-            {review.sealAwards.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                {review.sealAwards.map((award, i) => (
-                  <span key={i} aria-hidden="true" className="text-xs">
-                    {award.sealType.name === "Certified Banger" ? "🏅" : "💎"}
-                  </span>
-                ))}
-              </div>
-            )}
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-foreground/80">
+            <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-foreground/80">
               {review.bodyText}
             </p>
           </div>
