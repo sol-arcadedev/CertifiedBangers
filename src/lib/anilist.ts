@@ -37,6 +37,40 @@ function mapCountryToTitleType(countryOfOrigin: string): TitleType | null {
   }
 }
 
+// Reverse of mapCountryToTitleType, for filtering AniList's browse query
+// by our Format dropdown. MANHUA maps to two AniList country codes (China
+// and Taiwan) since our TitleType collapses both into one bucket — using
+// countryOfOrigin_in (not the singular countryOfOrigin) means both are
+// included rather than arbitrarily picking one and silently dropping the
+// other.
+function mapTitleTypeToCountryCodes(type: TitleType): string[] {
+  switch (type) {
+    case TitleType.MANGA:
+      return ["JP"];
+    case TitleType.MANHWA:
+      return ["KR"];
+    case TitleType.MANHUA:
+      return ["CN", "TW"];
+  }
+}
+
+// Reverse of mapAniListStatus, for filtering by our Status dropdown.
+// ONGOING maps to both RELEASING and NOT_YET_RELEASED since
+// mapAniListStatus's default case folds both of those into ONGOING —
+// keeping the two directions symmetric.
+function mapTitleStatusToAniListStatuses(status: TitleStatus): string[] {
+  switch (status) {
+    case TitleStatus.ONGOING:
+      return ["RELEASING", "NOT_YET_RELEASED"];
+    case TitleStatus.COMPLETED:
+      return ["FINISHED"];
+    case TitleStatus.HIATUS:
+      return ["HIATUS"];
+    case TitleStatus.DROPPED:
+      return ["CANCELLED"];
+  }
+}
+
 function mapAniListStatus(status: string): TitleStatus {
   switch (status) {
     case "FINISHED":
@@ -138,6 +172,8 @@ export async function searchAniListMedia(query: string): Promise<AniListSearchRe
 export async function browseAniListMedia(filters: {
   search?: string;
   genre?: string;
+  type?: TitleType;
+  status?: TitleStatus;
   perPage?: number;
 }): Promise<AniListSearchResult[]> {
   const args = ["type: MANGA", "format_in: [MANGA, ONE_SHOT]"];
@@ -153,6 +189,16 @@ export async function browseAniListMedia(filters: {
     variableDefs.push("$genre: String");
     args.push("genre_in: [$genre]");
     variables.genre = filters.genre;
+  }
+  if (filters.type) {
+    variableDefs.push("$countries: [CountryCode]");
+    args.push("countryOfOrigin_in: $countries");
+    variables.countries = mapTitleTypeToCountryCodes(filters.type);
+  }
+  if (filters.status) {
+    variableDefs.push("$statuses: [MediaStatus]");
+    args.push("status_in: $statuses");
+    variables.statuses = mapTitleStatusToAniListStatuses(filters.status);
   }
   args.push(filters.search ? "sort: SEARCH_MATCH" : "sort: POPULARITY_DESC");
 

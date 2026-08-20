@@ -135,21 +135,23 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
 
   // On-demand catalog growth: rather than mirroring AniList's whole ~60k+
   // manga database up front (real rate-limit/storage cost for no product
-  // benefit), any search OR genre filter also pulls in live AniList
-  // results — merged into the exact same grid as local results (below),
-  // not a separate "not really ours" section, since the site's search is
-  // meant to feel like it covers everything AniList has, the same way
-  // AniList's own search does. Skipped when a filter is active that an
-  // unimported title structurally can never satisfy (seal checkboxes,
-  // minimum community score — both are review-driven, and an unimported
-  // title has no reviews).
+  // benefit), any search, genre, Format, or Status filter also pulls in
+  // live AniList results — merged into the exact same grid as local
+  // results (below), not a separate "not really ours" section, since the
+  // site's search is meant to feel like it covers everything AniList has,
+  // the same way AniList's own search does. Skipped when a filter is
+  // active that an unimported title structurally can never satisfy (seal
+  // checkboxes, minimum community score — both are review-driven, and an
+  // unimported title has no reviews).
   const skipAniList = hasCertifiedBanger || hasHiddenGem || !!minCommunityRaw;
   let aniListCards: UnifiedCard[] = [];
-  if (!skipAniList && (q.length >= 2 || genre)) {
+  if (!skipAniList && (q.length >= 2 || genre || type || status)) {
     try {
       const results = await browseAniListMedia({
         search: q.length >= 2 ? q : undefined,
         genre: genre || undefined,
+        type: type || undefined,
+        status: status || undefined,
         perPage: 30,
       });
       const alreadyImported = await prisma.title.findMany({
