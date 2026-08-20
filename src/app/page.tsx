@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
@@ -74,35 +75,50 @@ export default async function Home() {
               "radial-gradient(ellipse 60% 50% at 50% 0%, var(--accent), transparent)",
           }}
         />
-        <div className="relative flex flex-col items-center px-4 pb-10 pt-16 text-center sm:pt-20">
-          <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            Certified<span className="text-accent">Banger</span>
-          </h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-foreground/90">
-            A community-curated home for honest, detailed manga &amp; manhwa reviews. Every
-            review here comes from someone who actually finished the story and rated it across
-            five real categories — not a single opaque star rating.
-          </p>
-          <p className="mt-3 max-w-xl text-sm text-muted">
-            The goal: as reviews add up, the exceptional titles rise to the top — including the
-            ones flying under the radar that deserve a wider audience.
-          </p>
+        <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 pb-10 pt-16 sm:pt-20 lg:flex-row lg:items-center lg:text-left">
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+              Certified<span className="text-accent">Banger</span>
+            </h1>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-foreground/90">
+              A community-curated home for honest, detailed manga &amp; manhwa reviews. Every
+              review here comes from someone who actually finished the story and rated it across
+              five real categories — not a single opaque star rating.
+            </p>
+            <p className="mt-3 max-w-xl text-sm text-muted">
+              The goal: as reviews add up, the exceptional titles rise to the top — including the
+              ones flying under the radar that deserve a wider audience.
+            </p>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-muted">
-            <span>
-              <span className="font-semibold text-foreground">{titleCount}</span> titles
-            </span>
-            <span>
-              <span className="font-semibold text-foreground">{reviewCount}</span> reviews
-            </span>
-            <span>
-              <span className="font-semibold text-foreground">{certifiedBangerTitleCount}</span>{" "}
-              🏅 Certified Bangers
-            </span>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-muted lg:justify-start">
+              <span>
+                <span className="font-semibold text-foreground">{titleCount}</span> titles
+              </span>
+              <span>
+                <span className="font-semibold text-foreground">{reviewCount}</span> reviews
+              </span>
+              <span>
+                <span className="font-semibold text-foreground">{certifiedBangerTitleCount}</span>{" "}
+                🏅 Certified Bangers
+              </span>
+            </div>
           </div>
 
+          <div className="shrink-0">
+            <Image
+              src="/CB-WAIFU.png"
+              alt=""
+              width={420}
+              height={420}
+              priority
+              className="h-auto w-56 select-none sm:w-72 lg:w-80"
+            />
+          </div>
+        </div>
+
+        <div className="relative px-4 pb-16">
           <form
-            className="mx-auto mt-8 flex w-full max-w-4xl flex-wrap items-end justify-center gap-4"
+            className="mx-auto flex w-full max-w-4xl flex-wrap items-end justify-center gap-4"
             action="/titles"
           >
             <label className={`${LABEL} min-w-[200px] flex-1 text-left`}>
