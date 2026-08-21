@@ -107,26 +107,23 @@ enum ReportStatus {
 // home for future knobs of the same kind (e.g. the seal probation streak
 // length hardcoded today, Entry 12) rather than a new singleton table each time.
 model PlatformSettings {
-  id                          String   @id @default("singleton")
-  minAccountAgeDays           Int      @default(3)
+  id                       String   @id @default("singleton")
+  minAccountAgeDays        Int      @default(3)
   // Net vote score (upvotes - downvotes) a review must reach to become an
-  // automatic Phase 2 seal candidate (Entry 8/29 — starting value +20).
-  sealQualityGateThreshold    Int      @default(20)
-  // Total votes (up+down) on a title's highest-voted review. Below this, a
-  // quality-gate-crossing review earns Hidden Gem; at/above it, Certified
-  // Banger instead (Entry 15/29 — starting value 100).
-  sealPopularityGateThreshold Int      @default(100)
+  // automatic Phase 2 Certified Banger candidate (Entry 8/29 — starting
+  // value +20).
+  sealQualityGateThreshold Int      @default(20)
   // WP6.2 spam mitigation — each is a per-user cap over a fixed 1-hour
   // window (the window itself isn't configurable, same as the review
   // gate's account-age-only tunability). Reviews count new submissions
   // only, not edits of an existing one (edit-replace doesn't grow content
   // volume); votes count new Vote rows only, not toggle-off/switch (an
   // "undo" shouldn't burn the same budget as a new vote).
-  reviewRateLimitPerHour      Int      @default(10)
-  commentRateLimitPerHour     Int      @default(20)
-  voteRateLimitPerHour        Int      @default(60)
-  reportRateLimitPerHour      Int      @default(10)
-  updatedAt                   DateTime @updatedAt
+  reviewRateLimitPerHour   Int      @default(10)
+  commentRateLimitPerHour  Int      @default(20)
+  voteRateLimitPerHour     Int      @default(60)
+  reportRateLimitPerHour   Int      @default(10)
+  updatedAt                DateTime @updatedAt
 
   @@map("platform_settings")
 }
@@ -135,18 +132,18 @@ model PlatformSettings {
 // it is set to the same UUID as the corresponding auth.users.id (Entry 34:
 // Supabase Auth owns credentials/sessions; this table only owns profile data).
 model User {
-  id                          String   @id
-  username                    String   @unique
-  email                       String   @unique
+  id                          String     @id
+  username                    String     @unique
+  email                       String     @unique
   avatarUrl                   String?
   bio                         String?
-  role                        Role     @default(USER)
+  role                        Role       @default(USER)
   status                      UserStatus @default(ACTIVE)
   // Entry 28/41: only meaningful when role = ADMIN; the Main Admin lifts this
   // per-admin, by manual judgment, not an automatic rule.
-  adminReviewsRequireApproval Boolean  @default(true)
-  reputationScore             Int      @default(0)
-  createdAt                   DateTime @default(now())
+  adminReviewsRequireApproval Boolean    @default(true)
+  reputationScore             Int        @default(0)
+  createdAt                   DateTime   @default(now())
 
   reviews           Review[]
   libraryEntries    LibraryEntry[]
@@ -200,10 +197,8 @@ model Title {
   avgCategoryScores    Json? // { [categoryId]: avgScore }
   reviewCount          Int       @default(0)
   certifiedBangerCount Int       @default(0)
-  hiddenGemCount       Int       @default(0)
   // WP5.1 browse/sort fields, same precompute pattern as the above.
   communityScore       Float? // mean of avgCategoryScores' values — "highest overall score" sort
-  totalSealCount       Int       @default(0) // certifiedBangerCount + hiddenGemCount — "most seals" sort
   lastReviewedAt       DateTime? // max createdAt of PUBLISHED reviews — "most recent reviews" sort
   discussionCount      Int       @default(0) // total comments across the title's reviews — "most discussed" sort
 
@@ -276,7 +271,9 @@ model ReviewCategoryScore {
   @@map("review_category_scores")
 }
 
-// Data-driven (Entry 14) — v1 seed rows: "Certified Banger", "Hidden Gem".
+// Data-driven (Entry 14) — v1 seed row: "Certified Banger". Hidden Gem
+// shipped at launch and was removed (Entry 45); the table stays data-driven
+// so a future seal type is a data change, not a deploy.
 model SealType {
   id          String  @id @default(uuid())
   name        String  @unique

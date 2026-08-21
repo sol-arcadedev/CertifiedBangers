@@ -11,7 +11,6 @@ type TitleCard = {
   // without.
   reviewCount?: number;
   certifiedBangerCount?: number;
-  hiddenGemCount?: number;
   // Overrides the default /titles/{id} link — used for titles that
   // aren't in our catalog yet, which link to the AniList preview page
   // instead (src/app/titles/anilist/[anilistId]). Search results look
@@ -54,10 +53,9 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
                 {title.anilistAverageScore}%
               </span>
             )}
-            {((title.certifiedBangerCount ?? 0) > 0 || (title.hiddenGemCount ?? 0) > 0) && (
+            {(title.certifiedBangerCount ?? 0) > 0 && (
               <span className="absolute left-1.5 top-1.5 flex gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5 text-xs backdrop-blur-sm">
-                {(title.certifiedBangerCount ?? 0) > 0 && <span aria-hidden="true">🏅</span>}
-                {(title.hiddenGemCount ?? 0) > 0 && <span aria-hidden="true">💎</span>}
+                <span aria-hidden="true">🏅</span>
               </span>
             )}
           </div>

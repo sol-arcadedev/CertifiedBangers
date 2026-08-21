@@ -89,7 +89,7 @@ export async function createSealType(
   return { message: "Seal type created." };
 }
 
-const LOCKED_SEAL_TYPE_NAMES = ["Certified Banger", "Hidden Gem"];
+const LOCKED_SEAL_TYPE_NAMES = ["Certified Banger"];
 
 export async function updateSealType(
   id: string,
@@ -105,9 +105,9 @@ export async function updateSealType(
   if (!name) return { error: "Name is required." };
 
   // recomputeTitleSealCounts (title-aggregates.ts) and checkAutoSealCandidacy
-  // (seal-probation.ts) both match seal types by these exact name strings —
-  // renaming either would silently break seal-count aggregation and Phase 2
-  // auto-candidacy, so the two v1 seal types' names are locked.
+  // (seal-probation.ts) both match this seal type by its exact name string —
+  // renaming it would silently break seal-count aggregation and Phase 2
+  // auto-candidacy, so the v1 seal type's name is locked.
   if (LOCKED_SEAL_TYPE_NAMES.includes(existing.name) && name !== existing.name) {
     return { error: `"${existing.name}" can't be renamed — the seal system matches on this exact name.` };
   }

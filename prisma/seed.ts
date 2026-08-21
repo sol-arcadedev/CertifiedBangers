@@ -22,12 +22,6 @@ const SEAL_TYPES = [
       "The flagship seal awarded to reviews recognized as exceptional quality, verified via admin review or community vote threshold.",
     icon: "banger",
   },
-  {
-    name: "Hidden Gem",
-    description:
-      "Awarded to reviews of genuinely strong quality on titles that are comparatively low-popularity/under-the-radar.",
-    icon: "gem",
-  },
 ] as const;
 
 async function main() {

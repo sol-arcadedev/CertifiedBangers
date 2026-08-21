@@ -170,7 +170,7 @@ SECTION_1 = [
     ("h", 2, "1.2 Goals (v1)"),
     ("bullets", [
         "Let users write structured reviews with per-category ratings.",
-        "Let the community award a distinct 'seal' (Certified Banger, Hidden Gem) to reviews they believe deserve special recognition, backed by a verification workflow that protects the seal's credibility.",
+        "Let the community award a distinct 'seal' (Certified Banger) to reviews they believe deserve special recognition, backed by a verification workflow that protects the seal's credibility.",
         "Let users rate/comment on other users' reviews, surfacing the best reviews, not just the best titles.",
         "Provide browsing/discovery: search, filter, sort by category score, seal count, etc.",
         "Let users track their own reading progress via a personal library.",
@@ -200,7 +200,7 @@ SECTION_2 = [
     ("bullets", [
         "Fields: name, alternate/original names, type (manga/manhwa/manhua — extensible enum), author(s)/illustrator(s), status (ongoing/completed/hiatus/dropped), genre tags, cover image, publication year, source links (official reading platforms only — never hosted content), short synopsis.",
         "Titles are de-duplicated: search-before-create UX for users/admins, plus admin merge tooling for canonical entries.",
-        "Titles aggregate and display: average score per category, seal counts (Certified Banger, Hidden Gem), review count, and the review list.",
+        "Titles aggregate and display: average score per category, seal count (Certified Banger), review count, and the review list.",
         "For performance at scale, these aggregates are stored as precomputed columns updated incrementally, not recalculated live on every page view (Journal Entry 39).",
         "Admin-seeded at launch — no scraping for v1 (matches the original MVP cut).",
     ]),
@@ -216,13 +216,13 @@ SECTION_2 = [
         "Admin-authored reviews are visually labeled '<username> (admin)' everywhere the username appears on the platform — not just on the review itself (Journal Entry 27).",
         "Reviews written by an admin other than the Main Admin require the Main Admin's approval before they publish. The Main Admin's own reviews publish immediately. This requirement is lifted for a given admin at the Main Admin's manual, case-by-case discretion — no automatic rule (Journal Entries 28, 41). A pending admin review is fully hidden — not visible, votable, commentable, or seal-eligible — until approved (Journal Entry 42).",
     ]),
-    ("h", 2, "2.3 Seals — Certified Banger & Hidden Gem"),
-    ("p", "Seals are data-driven (a SealType table), not hardcoded, so new seal types can be added "
-          "later without a code change. Two seal types ship in v1: Certified Banger (the flagship "
-          "seal for exceptional quality) and Hidden Gem (strong quality, low popularity — a "
-          "discovery tool for under-the-radar titles). A seal attaches to a specific review, not "
-          "the title directly; a title's displayed seal count is the number of its reviews that "
-          "have earned that seal (Journal Entry 7)."),
+    ("h", 2, "2.3 Seals — Certified Banger"),
+    ("p", "Seals are data-driven (a SealType table), not hardcoded, so a new seal type is a data "
+          "change, not a deploy. One seal type ships in v1: Certified Banger, the flagship seal for "
+          "exceptional quality (a popularity-gated 'Hidden Gem' seal shipped alongside it briefly "
+          "but was removed — Journal Entry 45 — in favor of one clear signal). A seal attaches to a "
+          "specific review, not the title directly; a title's displayed seal count is the number of "
+          "its reviews that have earned that seal (Journal Entry 7)."),
     ("h", 3, "2.3.1 Verification Workflow"),
     ("p", "Seal-granting is not a self-service user action. It follows a two-phase verification "
           "workflow, which applies generically to every seal type (Journal Entries 6, 14):"),
@@ -236,12 +236,6 @@ SECTION_2 = [
         "Probation applies only to Phase 2 (automatic, vote-threshold-granted) seals. Phase 1 admin-granted seals are permanent immediately (Journal Entry 11).",
         "A Phase 2 seal starts 'provisional.' Its net vote score must remain non-negative every single day; any dip resets a streak counter to zero. There is no outright revocation for failing probation — the review simply stays provisional indefinitely until it achieves 30 consecutive positive days, at which point it converts to permanent (Journal Entry 12).",
         "Once permanent, a seal is locked against automatic, vote-based revocation forever. A human admin retains a manual override to demote a permanent seal back to provisional or remove it entirely (Journal Entry 13).",
-    ]),
-    ("h", 3, "2.3.3 Hidden Gem Criteria"),
-    ("bullets", [
-        "Quality gate: same positive-vote bar as Certified Banger (net score ≥ the configured threshold).",
-        "Popularity gate: measured as total vote count on the title's highest-voted review — set to 100 votes for launch (Journal Entry 29). Below this, a qualifying review earns Hidden Gem; at or above it, the title also earns Certified Banger.",
-        "A title can hold both Hidden Gem and Certified Banger simultaneously — earning Certified Banger does not remove Hidden Gem. Hidden Gem remains permanently attached once earned, even after the title later becomes popular, so it stays an accurate historical/discovery marker (Journal Entry 15).",
     ]),
     ("h", 2, "2.4 Users, Profiles & Admin Roles"),
     ("bullets", [
@@ -270,7 +264,7 @@ SECTION_2 = [
         "Search titles by name, tag, genre, or author (PostgreSQL native full-text search — Journal Entry 38).",
         "Filter by genre, status, category-score thresholds, seal presence, seal count.",
         "Sort by highest overall score, most seals, most recent reviews, most discussed.",
-        "A dedicated Certified Banger / Hidden Gem showcase page — the platform's core differentiator, so it should be prominent.",
+        "A dedicated Certified Banger showcase page — the platform's core differentiator, so it should be prominent.",
     ]),
     ("h", 2, "2.8 Moderation & Reporting"),
     ("bullets", [
@@ -401,8 +395,7 @@ ARCHITECTURE_DIAGRAM = """
 +-----------------------------------+
 |        Next.js App (Vercel)        |
 |  - SSR pages (SEO: titles, reviews,|
-|    Certified Banger/Hidden Gem     |
-|    showcase)                       |
+|    Certified Banger showcase)      |
 |  - API routes / Server Actions     |
 |    (reviews, votes, seals, library,|
 |    admin actions)                  |
@@ -465,7 +458,7 @@ Title
    author, illustrator, genres[], cover_url, synopsis, publication_year,
    external_links[], created_at
  - precomputed: avg_category_scores, review_count,
-   certified_banger_count, hidden_gem_count      <- Entry 39
+   certified_banger_count                        <- Entry 39
 
 Category                <- data-driven, not hardcoded         (Entry 2)
  - id, name, applies_to_type, scale_min, scale_max
@@ -480,9 +473,9 @@ Review
 ReviewCategoryScore     <- one row per category per review
  - id, review_id, category_id, score
 
-SealType                <- data-driven                        (Entry 14, 15)
+SealType                <- data-driven                        (Entry 14, 45)
  - id, name, description, icon
-   (v1 rows: "Certified Banger", "Hidden Gem")
+   (v1 row: "Certified Banger")
 
 SealAward                                                      (Entry 5, 6, 7)
  - id, review_id, seal_type_id, justification_text,
@@ -522,7 +515,7 @@ SECTION_7 = [
 
 WORK_PACKAGES = [
     ("WP0.1", "Project scaffolding", "Next.js + TypeScript project init, Prisma setup, Supabase project (DB/Auth/Storage), Vercel deploy pipeline, environment/secrets configuration.", "—", "S"),
-    ("WP0.2", "Core data model & migrations", "Implement all entities from Section 7; seed the Category table (5 rows) and SealType table (2 rows).", "WP0.1", "M"),
+    ("WP0.2", "Core data model & migrations", "Implement all entities from Section 7; seed the Category table (5 rows) and SealType table (1 row, Entry 45).", "WP0.1", "M"),
     ("WP1.1", "Authentication & user profiles", "Supabase Auth integration, registration/login, public profile page, role field (user/admin/main_admin).", "WP0.2", "M"),
     ("WP1.2", "Title catalog & admin seeding tools", "Admin panel to search/import titles from AniList (primary path, Entry 44) with cover art re-hosted on this project's own storage; manual create/edit form kept as a fallback; search-before-create de-dup UX; admin merge tooling.", "WP0.2", "M"),
     ("WP2.1", "Review creation", "5-category rating form, free-text body, computed overall score, spoiler flag, one-review-per-user-per-title with edit-replace.", "WP1.1, WP1.2", "M"),
@@ -534,8 +527,8 @@ WORK_PACKAGES = [
     ("WP3.3", "Reporting/flagging", "Report flow for reviews, comments, and titles.", "WP2.1, WP3.2", "S"),
     ("WP4.1", "Seal data model & admin verification queue", "SealAward entity, justification field, Phase 1 admin-verifies-and-grants flow.", "WP2.1, WP3.1", "L"),
     ("WP4.2", "Vote-threshold auto-certification + probation cron", "Phase 2 automatic candidacy on threshold cross, Vercel Cron daily streak job, provisional→permanent conversion, manual admin override.", "WP4.1", "L"),
-    ("WP4.3", "Hidden Gem popularity-gate logic", "Popularity threshold check, dual-seal (Certified Banger + Hidden Gem) coexistence and display.", "WP4.2", "M"),
-    ("WP4.4", "Seal showcase page", "Dedicated Certified Banger / Hidden Gem discovery feed.", "WP4.1", "S"),
+    ("WP4.3", "Hidden Gem popularity-gate logic (removed)", "Originally a popularity threshold check and dual-seal (Certified Banger + Hidden Gem) coexistence/display; Hidden Gem was removed in favor of a single seal type (Journal Entry 45), so this package is superseded — no popularity-gate logic ships.", "WP4.2", "M"),
+    ("WP4.4", "Seal showcase page", "Dedicated Certified Banger discovery feed.", "WP4.1", "S"),
     ("WP5.1", "Search, filter & sort", "PostgreSQL full-text search, genre/status/score/seal filters, multi-field sort on the browse page.", "WP2.4, WP4.3", "M"),
     ("WP5.2", "User library feature", "Add/edit library entries (4 statuses), independent of reviews, displayed on profile.", "WP1.1, WP1.2", "M"),
     ("WP6.1", "Admin moderation panel", "Reports queue, ban/suspend users, title metadata editing, Category/SealType management UI.", "WP3.3, WP1.2", "M"),
@@ -610,16 +603,14 @@ USER_STORIES = [
         "As an admin who is not the Main Admin, I want my reviews to enter a pending-approval queue, so the Main Admin can verify quality before they go live.",
         "As the Main Admin, I want to approve or reject pending admin-authored reviews, so I can maintain quality control over official content.",
     ]),
-    ("Seals — Certified Banger & Hidden Gem", [
-        "As a registered user, I want to see whether a review has earned the Certified Banger or Hidden Gem seal, so I can trust the platform's curation signal.",
+    ("Seals — Certified Banger", [
+        "As a registered user, I want to see whether a review has earned the Certified Banger seal, so I can trust the platform's curation signal.",
         "As a reviewer, I want to write a justification separate from my review body when nominating a title for a seal, so my rating rationale and my 'why this deserves recognition' argument stay distinct.",
         "As the Main Admin, I want to manually verify a submitted review and grant it a seal, so I can curate quality seals while the platform is new.",
         "As a registered user, I want a review's votes to automatically qualify it for a seal once it crosses the configured vote threshold, so seal-granting scales without an admin bottleneck once the community is large enough.",
         "As a user, I want a newly-earned automatic seal to stay 'provisional' until it holds a positive vote streak for 30 consecutive days, so short-term vote brigading can't cheapen the seal.",
         "As a user, I want a provisional seal to convert to permanent automatically once it achieves the 30-day streak, so genuinely good reviews get recognized without manual intervention.",
         "As the Main Admin, I want to manually demote or remove a permanent seal, so I can correct fraud or abuse discovered after the fact.",
-        "As a registered user, I want a title with a high-quality but low-popularity review to earn the Hidden Gem seal, so I can discover well-reviewed titles that aren't yet widely known.",
-        "As a registered user, I want a title to keep its Hidden Gem seal even after it also earns Certified Banger, so the 'this was an underrated find' signal isn't lost once a title becomes popular.",
     ]),
     ("Voting & Comments", [
         "As a registered user, I want to upvote or downvote a review, so the community can surface the most helpful/agreed-with reviews.",
@@ -630,7 +621,7 @@ USER_STORIES = [
         "As a user, I want to search titles by name, genre, or author, so I can quickly find what I'm looking for.",
         "As a user, I want to filter titles by genre, status, category-score thresholds, and seal presence, so I can narrow down to what matters to me.",
         "As a user, I want to sort titles by highest overall score, most seals, or most recent reviews, so I can browse in the order that's useful to me.",
-        "As a user, I want a dedicated Certified Banger / Hidden Gem showcase page, so the platform's curated highlights are easy to find.",
+        "As a user, I want a dedicated Certified Banger showcase page, so the platform's curated highlights are easy to find.",
     ]),
     ("User Library", [
         "As a registered user, I want to add a title to my library with a status (Finished, Currently Reading, Plan to Read, or Dropped), so I can track my reading progress.",

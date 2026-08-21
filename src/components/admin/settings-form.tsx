@@ -6,7 +6,6 @@ import { updateSettings } from "@/lib/actions/settings";
 export function SettingsForm({
   minAccountAgeDays,
   sealQualityGateThreshold,
-  sealPopularityGateThreshold,
   reviewRateLimitPerHour,
   commentRateLimitPerHour,
   voteRateLimitPerHour,
@@ -14,7 +13,6 @@ export function SettingsForm({
 }: {
   minAccountAgeDays: number;
   sealQualityGateThreshold: number;
-  sealPopularityGateThreshold: number;
   reviewRateLimitPerHour: number;
   commentRateLimitPerHour: number;
   voteRateLimitPerHour: number;
@@ -52,27 +50,8 @@ export function SettingsForm({
         />
       </label>
       <p className="text-sm text-muted">
-        Net vote score (upvotes minus downvotes) a review needs to automatically become a seal
-        candidate (Journal Entry 8/29 — starting value +20). Which seal it earns depends on the
-        popularity threshold below.
-      </p>
-
-      <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-        Seal popularity-gate threshold (total votes)
-        <input
-          name="sealPopularityGateThreshold"
-          type="number"
-          min={1}
-          required
-          defaultValue={sealPopularityGateThreshold}
-          className="w-32 rounded-lg border border-border bg-panel px-3 py-2 text-base text-foreground"
-        />
-      </label>
-      <p className="text-sm text-muted">
-        Total votes (up+down) on a title&apos;s highest-voted review. Below this, a
-        quality-gate-crossing review earns Hidden Gem; at or above it, Certified Banger instead
-        (Journal Entry 15/29 — starting value 100). Certified Banger doesn&apos;t remove an
-        already-earned Hidden Gem.
+        Net vote score (upvotes minus downvotes) a review needs to automatically earn Certified
+        Banger (Journal Entry 8/29 — starting value +20).
       </p>
 
       <h2 className="mt-2 text-base font-semibold text-foreground">

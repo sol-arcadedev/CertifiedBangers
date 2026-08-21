@@ -22,11 +22,6 @@ export async function updateSettings(
     return { error: "Seal quality-gate threshold must be a whole number, at least 1." };
   }
 
-  const sealPopularityGateThreshold = Number(formData.get("sealPopularityGateThreshold"));
-  if (!Number.isInteger(sealPopularityGateThreshold) || sealPopularityGateThreshold < 1) {
-    return { error: "Seal popularity-gate threshold must be a whole number, at least 1." };
-  }
-
   const rateLimitFields = [
     "reviewRateLimitPerHour",
     "commentRateLimitPerHour",
@@ -49,12 +44,11 @@ export async function updateSettings(
 
   await prisma.platformSettings.upsert({
     where: { id: "singleton" },
-    update: { minAccountAgeDays, sealQualityGateThreshold, sealPopularityGateThreshold, ...rateLimits },
+    update: { minAccountAgeDays, sealQualityGateThreshold, ...rateLimits },
     create: {
       id: "singleton",
       minAccountAgeDays,
       sealQualityGateThreshold,
-      sealPopularityGateThreshold,
       ...rateLimits,
     },
   });

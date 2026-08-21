@@ -4,7 +4,7 @@ import { createCategory, updateCategory, createSealType, updateSealType } from "
 import { CategoryForm } from "@/components/admin/category-form";
 import { SealTypeForm } from "@/components/admin/seal-type-form";
 
-const LOCKED_SEAL_TYPE_NAMES = ["Certified Banger", "Hidden Gem"];
+const LOCKED_SEAL_TYPE_NAMES = ["Certified Banger"];
 
 export default async function AdminConfigPage() {
   await requireMainAdmin();

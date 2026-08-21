@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 
 const DEFAULT_MIN_ACCOUNT_AGE_DAYS = 3;
 const DEFAULT_SEAL_QUALITY_GATE_THRESHOLD = 20;
-const DEFAULT_SEAL_POPULARITY_GATE_THRESHOLD = 100;
 const DEFAULT_REVIEW_RATE_LIMIT_PER_HOUR = 10;
 const DEFAULT_COMMENT_RATE_LIMIT_PER_HOUR = 20;
 const DEFAULT_VOTE_RATE_LIMIT_PER_HOUR = 60;
@@ -18,7 +17,6 @@ export async function getPlatformSettings() {
     settings ?? {
       minAccountAgeDays: DEFAULT_MIN_ACCOUNT_AGE_DAYS,
       sealQualityGateThreshold: DEFAULT_SEAL_QUALITY_GATE_THRESHOLD,
-      sealPopularityGateThreshold: DEFAULT_SEAL_POPULARITY_GATE_THRESHOLD,
       reviewRateLimitPerHour: DEFAULT_REVIEW_RATE_LIMIT_PER_HOUR,
       commentRateLimitPerHour: DEFAULT_COMMENT_RATE_LIMIT_PER_HOUR,
       voteRateLimitPerHour: DEFAULT_VOTE_RATE_LIMIT_PER_HOUR,

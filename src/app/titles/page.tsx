@@ -36,12 +36,10 @@ type UnifiedCard = {
   anilistAverageScore: number | null;
   anilistPopularity: number | null;
   communityScore: number | null;
-  totalSealCount: number;
   lastReviewedAt: Date | null;
   discussionCount: number;
   reviewCount: number;
   certifiedBangerCount: number;
-  hiddenGemCount: number;
 };
 
 function compareCards(a: UnifiedCard, b: UnifiedCard, sort: SortKey): number {
@@ -55,7 +53,7 @@ function compareCards(a: UnifiedCard, b: UnifiedCard, sort: SortKey): number {
     case "community":
       return (b.communityScore ?? -1) - (a.communityScore ?? -1);
     case "seals":
-      return b.totalSealCount - a.totalSealCount;
+      return b.certifiedBangerCount - a.certifiedBangerCount;
     case "recent":
       return (b.lastReviewedAt?.getTime() ?? 0) - (a.lastReviewedAt?.getTime() ?? 0);
     case "discussed":
@@ -106,7 +104,6 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
     ? (statusParam as TitleStatus)
     : "";
   const hasCertifiedBanger = param("hasCB") === "1";
-  const hasHiddenGem = param("hasHG") === "1";
   const minScoreRaw = param("minScore");
   const minCommunityRaw = param("minCommunity");
   const sortParam = param("sort") || "name";
@@ -123,7 +120,6 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
   if (type) where.type = type;
   if (status) where.status = status;
   if (hasCertifiedBanger) where.certifiedBangerCount = { gt: 0 };
-  if (hasHiddenGem) where.hiddenGemCount = { gt: 0 };
   if (minScoreRaw && !Number.isNaN(Number(minScoreRaw))) {
     where.anilistAverageScore = { gte: Number(minScoreRaw) };
   }
@@ -140,10 +136,10 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
   // results (below), not a separate "not really ours" section, since the
   // site's search is meant to feel like it covers everything AniList has,
   // the same way AniList's own search does. Skipped when a filter is
-  // active that an unimported title structurally can never satisfy (seal
-  // checkboxes, minimum community score — both are review-driven, and an
-  // unimported title has no reviews).
-  const skipAniList = hasCertifiedBanger || hasHiddenGem || !!minCommunityRaw;
+  // active that an unimported title structurally can never satisfy (the
+  // seal checkbox, minimum community score — both are review-driven, and
+  // an unimported title has no reviews).
+  const skipAniList = hasCertifiedBanger || !!minCommunityRaw;
   let aniListCards: UnifiedCard[] = [];
   if (!skipAniList && (q.length >= 2 || genre || type || status)) {
     try {
@@ -173,12 +169,10 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
           anilistAverageScore: r.averageScore,
           anilistPopularity: r.popularity,
           communityScore: null,
-          totalSealCount: 0,
           lastReviewedAt: null,
           discussionCount: 0,
           reviewCount: 0,
           certifiedBangerCount: 0,
-          hiddenGemCount: 0,
         }));
     } catch {
       // AniList being slow/unreachable shouldn't break the browse page —
@@ -276,10 +270,6 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
         <label className="flex items-center gap-2 pb-2 text-sm text-foreground">
           <input type="checkbox" name="hasCB" value="1" defaultChecked={hasCertifiedBanger} />
           🏅 Certified Banger
-        </label>
-        <label className="flex items-center gap-2 pb-2 text-sm text-foreground">
-          <input type="checkbox" name="hasHG" value="1" defaultChecked={hasHiddenGem} />
-          💎 Hidden Gem
         </label>
 
         <button type="submit" className={BUTTON_PRIMARY}>

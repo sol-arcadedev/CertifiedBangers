@@ -8,16 +8,11 @@ import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 import { INPUT, LABEL, BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
 
 export default async function Home() {
-  const [certifiedBangers, hiddenGems, mostPopular, highestRated, genres, latestReviews] =
+  const [certifiedBangers, mostPopular, highestRated, genres, latestReviews] =
     await Promise.all([
     prisma.title.findMany({
       where: { certifiedBangerCount: { gt: 0 } },
       orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
-      take: 8,
-    }),
-    prisma.title.findMany({
-      where: { hiddenGemCount: { gt: 0 } },
-      orderBy: [{ hiddenGemCount: "desc" }, { reviewCount: "desc" }],
       take: 8,
     }),
     prisma.title.findMany({
@@ -44,11 +39,10 @@ export default async function Home() {
     }),
   ]);
 
-  // Certified Bangers/Hidden Gems lead — the brief calls the seal showcase
-  // out explicitly as "your differentiator — make it prominent" (Section 4.5).
+  // Certified Bangers lead — the brief calls the seal showcase out
+  // explicitly as "your differentiator — make it prominent" (Section 4.5).
   const sections = [
     { heading: "Certified Bangers", emoji: "🏅", titles: certifiedBangers, browseHref: "/seals" },
-    { heading: "Hidden Gems", emoji: "💎", titles: hiddenGems, browseHref: "/seals" },
     { heading: "Most Popular", emoji: null, titles: mostPopular, browseHref: "/titles" },
     { heading: "Highest Rated", emoji: null, titles: highestRated, browseHref: "/titles" },
   ].filter((section) => section.titles.length > 0);

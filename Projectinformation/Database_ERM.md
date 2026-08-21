@@ -67,10 +67,8 @@ erDiagram
         string_array externalLinks
         json avgCategoryScores "precomputed aggregate"
         int reviewCount "precomputed aggregate"
-        int certifiedBangerCount "precomputed aggregate"
-        int hiddenGemCount "precomputed aggregate"
+        int certifiedBangerCount "precomputed aggregate; WP5.1 'most seals' sort field"
         float communityScore "WP5.1: mean of avgCategoryScores, sort field"
-        int totalSealCount "WP5.1: certifiedBangerCount+hiddenGemCount, sort field"
         datetime lastReviewedAt "WP5.1: max PUBLISHED review createdAt, sort field"
         int discussionCount "WP5.1: total comments on the title's reviews, sort field"
         datetime createdAt
@@ -88,7 +86,6 @@ erDiagram
         string id PK "fixed at literal singleton"
         int minAccountAgeDays "review-gate threshold, Entry 40"
         int sealQualityGateThreshold "Phase 2 seal candidacy net-vote threshold, Entry 8/29"
-        int sealPopularityGateThreshold "Hidden Gem vs Certified Banger split, Entry 15/29"
         datetime updatedAt
     }
 

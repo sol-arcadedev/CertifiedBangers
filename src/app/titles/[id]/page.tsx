@@ -146,12 +146,9 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               </div>
             ))}
           </div>
-          {(title.certifiedBangerCount > 0 || title.hiddenGemCount > 0) && (
+          {title.certifiedBangerCount > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-              {title.certifiedBangerCount > 0 && (
-                <div>🏅 {title.certifiedBangerCount} Certified Banger</div>
-              )}
-              {title.hiddenGemCount > 0 && <div>💎 {title.hiddenGemCount} Hidden Gem</div>}
+              <div>🏅 {title.certifiedBangerCount} Certified Banger</div>
             </div>
           )}
         </div>
