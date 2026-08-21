@@ -265,6 +265,7 @@ SECTION_2 = [
         "Filter by genre, status, category-score thresholds, seal presence, seal count.",
         "Sort by highest overall score, most seals, most recent reviews, most discussed.",
         "A dedicated Certified Banger showcase page — the platform's core differentiator, so it should be prominent.",
+        "A dedicated Reviews page — browse reviews directly (rather than via their title), filterable by genre/Format/Status, showing the most recent first (Journal Entry 50).",
     ]),
     ("h", 2, "2.8 Moderation & Reporting"),
     ("bullets", [
@@ -532,6 +533,7 @@ WORK_PACKAGES = [
     ("WP4.4", "Seal showcase page", "Dedicated Certified Banger discovery feed.", "WP4.1", "S"),
     ("WP5.1", "Search, filter & sort", "PostgreSQL full-text search, genre/status/score/seal filters, multi-field sort on the browse page.", "WP2.4, WP4.3", "M"),
     ("WP5.2", "User library feature", "Add/edit library entries (4 statuses), independent of reviews, displayed on profile.", "WP1.1, WP1.2", "M"),
+    ("WP5.3", "Reviews browse page", "Dedicated /reviews page and nav item: same search/genre/Format/Status filters as /titles, but browsing reviews directly, most recent first (Journal Entry 50).", "WP5.1", "S"),
     ("WP6.1", "Admin moderation panel", "Reports queue, ban/suspend users, title metadata editing, Category/SealType management UI.", "WP3.3, WP1.2", "M"),
     ("WP6.2", "Rate limiting & spam mitigation", "Rate limits on review/comment/vote/report creation.", "WP2.1, WP3.1, WP3.2, WP3.3", "S"),
     ("WP7.1", "Accessibility pass", "Alt text on covers, keyboard navigation, contrast check across all pages.", "All prior UI work packages", "S"),
@@ -624,6 +626,7 @@ USER_STORIES = [
         "As a user, I want to filter titles by genre, status, category-score thresholds, and seal presence, so I can narrow down to what matters to me.",
         "As a user, I want to sort titles by highest overall score, most seals, or most recent reviews, so I can browse in the order that's useful to me.",
         "As a user, I want a dedicated Certified Banger showcase page, so the platform's curated highlights are easy to find.",
+        "As a user, I want a dedicated page to browse reviews directly (not just via a title), filterable by genre and Format, so I can find reviews on the kind of titles I care about without knowing a specific title's name first (Journal Entry 50).",
     ]),
     ("User Library", [
         "As a registered user, I want to add a title to my library with a status (Finished, Currently Reading, Plan to Read, or Dropped), so I can track my reading progress.",

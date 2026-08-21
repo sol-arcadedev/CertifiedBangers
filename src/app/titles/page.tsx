@@ -5,6 +5,7 @@ import { LiveSearchInput } from "@/components/live-search-input";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { browseAniListMedia } from "@/lib/anilist";
 import { getDistinctGenres } from "@/lib/genres";
+import { searchTitleIds } from "@/lib/title-search";
 import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
 // Sorting happens in JS on the merged local+AniList array (compareCards,
@@ -59,34 +60,6 @@ function compareCards(a: UnifiedCard, b: UnifiedCard, sort: SortKey): number {
     case "discussed":
       return b.discussionCount - a.discussionCount;
   }
-}
-
-// PostgreSQL native full-text search (Journal Entry 38 — not a dedicated
-// search service). Computes to_tsvector at query time rather than a
-// persisted/indexed generated column + GIN index; at the catalog sizes
-// this platform will see for a good while, a plain scan is fine, and
-// Entry 38 itself says to revisit only once that's an actual, demonstrated
-// problem. Returns matching ids, which the caller then filters by
-// alongside every other structured filter.
-async function searchTitleIds(query: string): Promise<string[]> {
-  // coalesce every operand, not just the scalar text columns: Prisma's
-  // typed client silently reads a NULL array column back as [], but raw
-  // SQL sees the real NULL — and array_to_string(NULL, ' ') returns NULL,
-  // which poisons the whole `||` chain (NULL || anything = NULL), making
-  // to_tsvector's input NULL and the row unmatchable by any search term.
-  const rows = await prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
-    SELECT id FROM titles
-    WHERE to_tsvector('english',
-      coalesce(name, '') || ' ' ||
-      coalesce("titleRomaji", '') || ' ' ||
-      coalesce("titleEnglish", '') || ' ' ||
-      coalesce("titleNative", '') || ' ' ||
-      coalesce(author, '') || ' ' ||
-      coalesce(array_to_string(genres, ' '), '') || ' ' ||
-      coalesce(array_to_string(synonyms, ' '), '')
-    ) @@ plainto_tsquery('english', ${query})
-  `);
-  return rows.map((r) => r.id);
 }
 
 export default async function TitlesPage(props: PageProps<"/titles">) {

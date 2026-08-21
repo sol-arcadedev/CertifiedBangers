@@ -45,7 +45,7 @@ export function LatestReviews({ reviews }: { reviews: LatestReview[] }) {
                   aria-hidden="true"
                   className="inline-flex items-center rounded-md bg-panel-hover px-1.5 py-0.5 text-xs"
                 >
-                  {award.sealType.name === "Certified Banger" ? "🏅" : "💎"}
+                  {award.sealType.name === "Certified Banger" ? "🏅" : award.sealType.name}
                 </span>
               ))}
             </div>
