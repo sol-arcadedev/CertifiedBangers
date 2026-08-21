@@ -42,7 +42,7 @@ export function CategoryForm({
           type="number"
           placeholder="Max"
           required
-          defaultValue={defaults?.scaleMax ?? 10}
+          defaultValue={defaults?.scaleMax ?? 5}
           className={`${inputClass} w-20`}
         />
       </div>

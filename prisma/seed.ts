@@ -32,7 +32,7 @@ async function main() {
         name: category.name,
         appliesToType: ["MANGA", "MANHWA", "MANHUA"],
         scaleMin: 1,
-        scaleMax: 10,
+        scaleMax: 5,
       },
     });
   }

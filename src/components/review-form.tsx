@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import type { ReviewActionState } from "@/lib/actions/reviews";
+import { StarRating } from "@/components/star-rating";
 import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
 type Category = { id: string; name: string; scaleMin: number; scaleMax: number };
@@ -30,24 +31,12 @@ export function ReviewForm({
         {categories.map((category) => (
           <label key={category.id} className={LABEL}>
             {category.name}
-            <select
+            <StarRating
               name={`score_${category.id}`}
-              required
-              defaultValue={existingReview?.scores[category.id] ?? ""}
-              className={INPUT}
-            >
-              <option value="" disabled>
-                Rate…
-              </option>
-              {Array.from(
-                { length: category.scaleMax - category.scaleMin + 1 },
-                (_, i) => category.scaleMin + i,
-              ).map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+              min={category.scaleMin}
+              max={category.scaleMax}
+              defaultValue={existingReview?.scores[category.id]}
+            />
           </label>
         ))}
       </div>

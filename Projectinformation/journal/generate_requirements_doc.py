@@ -207,7 +207,7 @@ SECTION_2 = [
     ("h", 2, "2.2 Reviews"),
     ("bullets", [
         "One review per user per title; editing replaces the existing review rather than creating a duplicate.",
-        "A numeric rating per category, using the platform's data-driven Category set (Art Style, Character Design, Story, Pacing for v1) — Journal Entry 2, renamed and reduced from five to four categories per Journal Entry 47.",
+        "A star rating (hover-to-preview, 1-5 stars) per category, using the platform's data-driven Category set (Art Style, Character Design, Story, Pacing for v1) — Journal Entry 2, renamed and reduced from five to four categories per Journal Entry 47, moved from a 1-10 dropdown to a 1-5 star widget per Journal Entry 49.",
         "Overall score is computed automatically as the simple average of the five category scores — not a separately entered field (Journal Entry 4).",
         "Free-text written review body (recommended minimum ~50 characters to discourage low-effort spam), which must stay spoiler-free by policy. A separate optional spoiler field holds any spoiler-specific commentary, always rendered collapsed behind a click-to-reveal (Journal Entry 48).",
         "Reviews track created_at / updated_at.",
