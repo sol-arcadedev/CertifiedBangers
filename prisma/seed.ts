@@ -9,10 +9,9 @@ const prisma = new PrismaClient({ adapter });
 
 const CATEGORIES = [
   { name: "Art Style" },
-  { name: "Character" },
-  { name: "Plot" },
+  { name: "Character Design" },
+  { name: "Story" },
   { name: "Pacing" },
-  { name: "Uniqueness" },
 ] as const;
 
 const SEAL_TYPES = [
