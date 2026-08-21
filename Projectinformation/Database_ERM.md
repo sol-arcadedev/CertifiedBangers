@@ -33,6 +33,7 @@ erDiagram
         string username UK
         string email UK
         string avatarUrl
+        string bannerUrl "self-service upload, Entry 51"
         string bio
         Role role "USER | ADMIN | MAIN_ADMIN"
         UserStatus status "ACTIVE | SUSPENDED | BANNED (WP6.1)"

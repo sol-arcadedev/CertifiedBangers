@@ -1075,5 +1075,18 @@
     "options": [],
     "decision": "A review has no independently searchable/filterable metadata of its own — genre, format, and status all live on its parent Title — so /reviews' filters (genre, Format, Status, and the same title full-text search as /titles) narrow the review list by joining through review.title. Reuses src/components/latest-reviews.tsx (previously homepage-only, showing a fixed 6 most-recent) for the review cards, now also driven by /reviews' filtered, larger (24) query. No sort dropdown was added — the page is explicitly “recent reviews, optionally filtered,” always ordered by createdAt desc, matching what was actually asked for rather than mirroring every /titles control.",
     "rationale": "User's explicit direction on the filter set (genre, format) and default-to-recent behavior. Extracting searchTitleIds into a shared lib file rather than copy-pasting it into the new page avoids two copies of the same full-text-search SQL silently drifting apart over time — the kind of duplication this codebase has consistently avoided elsewhere (e.g. Entry 39's shared aggregate-recompute functions)."
+  },
+  {
+    "id": 51,
+    "date": "2026-08-21",
+    "title": "Self-Service Avatar/Banner Upload and a Library Overview Stat on the Profile Page",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Extends Section 2.4 (Users, Profiles) and WP1.1/WP5.2 with self-service profile customization.",
+    "summary": "Profile owners can now upload their own avatar and banner image directly from their profile page, and a compact Library count stat was added alongside the existing Reviews/Reputation stats.",
+    "context": "User direction. avatarUrl already existed on User (WP0.1) but had no upload UI anywhere — it could only ever be set by direct DB access. The profile page already showed a full library breakdown grouped by status, but had no compact at-a-glance count next to Reviews/Reputation.",
+    "options": [],
+    "decision": "Added User.bannerUrl (nullable, additive column — no data-loss warning, so this one didn't need the Entry 45/47/48 destructive-change confirmation ritual). Created a new \"profile-images\" Supabase Storage bucket (src/lib/profile-image-storage.ts, extended scripts/setup-storage.ts) separate from title covers' \"covers\" bucket — avatars/banners split by path prefix within it since both are the same kind of thing (an owner-uploaded public image). src/lib/actions/profile.ts's updateProfileImages handles either or both files in one submission, re-uploading to this project's own storage (never accepting a raw URL) and deleting the old image first, same pattern as title cover uploads (Entry 35/44). src/components/profile-image-form.tsx renders inside a collapsed <details> (\"Edit profile picture / banner\"), shown only to the profile owner (src/app/profile/[username]/page.tsx now also fetches the current session user to compare). The banner renders as a full-width strip at the top of the profile with the avatar overlapping its bottom edge; a Library stat (count of all library entries, any status) sits next to Reviews/Reputation, above the existing per-status grids which stay as they were.",
+    "rationale": "User's explicit direction on both features. Re-uploading to this project's own storage rather than accepting a hot-linked URL matches the exact reasoning already established for title covers (Entry 35) — no reason to relax that for user-uploaded images. A separate bucket (rather than reusing \"covers\") keeps content types cleanly separated by purpose, matching how this project already names things narrowly (COVER_BUCKET, not a generic \"images\" bucket)."
   }
 ]

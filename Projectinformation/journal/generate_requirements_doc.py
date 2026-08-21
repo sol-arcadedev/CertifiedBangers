@@ -241,7 +241,7 @@ SECTION_2 = [
     ("bullets", [
         "Registration/auth: email + password minimum; social login is a nice-to-have.",
         "Anonymous visitors can browse titles, read reviews, and view the seal showcase without an account. An account is required only to write, rate, vote, comment, or take any seal-related action (Journal Entry 3).",
-        "Public profile: username, avatar, bio, list of reviews, seals awarded, join date, a basic reputation indicator, and the user's library (Section 2.5).",
+        "Public profile: username, self-service avatar and banner image (Journal Entry 51), bio, list of reviews, seals awarded, join date, a basic reputation indicator, and a library overview (Section 2.5).",
         "Two-tier admin structure: a single Main Admin (the platform founder/owner) and additional Admin accounts recruited later. Only the Main Admin can grant/lift the review-approval requirement for a given admin (Journal Entry 28).",
         "Follow/unfollow other users — nice-to-have, not core-critical for v1.",
     ]),
@@ -450,7 +450,7 @@ SECTION_6 = [
 
 DATA_MODEL_CODE = """
 User
- - id, username, email, password_hash, avatar_url, bio, created_at,
+ - id, username, email, password_hash, avatar_url, banner_url, bio, created_at,
    reputation_score, role (user | admin | main_admin),
    admin_reviews_require_approval (bool; only meaningful when role = admin)
 
@@ -534,6 +534,7 @@ WORK_PACKAGES = [
     ("WP5.1", "Search, filter & sort", "PostgreSQL full-text search, genre/status/score/seal filters, multi-field sort on the browse page.", "WP2.4, WP4.3", "M"),
     ("WP5.2", "User library feature", "Add/edit library entries (4 statuses), independent of reviews, displayed on profile.", "WP1.1, WP1.2", "M"),
     ("WP5.3", "Reviews browse page", "Dedicated /reviews page and nav item: same search/genre/Format/Status filters as /titles, but browsing reviews directly, most recent first (Journal Entry 50).", "WP5.1", "S"),
+    ("WP5.4", "Self-service profile images & library overview", "Avatar and banner upload on the profile owner's own page, re-hosted on this project's own storage (same pattern as title covers, Entry 35/44); a library-count stat added alongside Reviews/Reputation (Journal Entry 51).", "WP1.1, WP5.2", "S"),
     ("WP6.1", "Admin moderation panel", "Reports queue, ban/suspend users, title metadata editing, Category/SealType management UI.", "WP3.3, WP1.2", "M"),
     ("WP6.2", "Rate limiting & spam mitigation", "Rate limits on review/comment/vote/report creation.", "WP2.1, WP3.1, WP3.2, WP3.3", "S"),
     ("WP7.1", "Accessibility pass", "Alt text on covers, keyboard navigation, contrast check across all pages.", "All prior UI work packages", "S"),
@@ -587,6 +588,7 @@ USER_STORIES = [
         "As a visitor, I want to register with an email and password, so I can start writing reviews and voting.",
         "As a registered user, I want to log in and out, so I can access my account securely.",
         "As a registered user, I want a public profile page showing my reviews, seals awarded, join date, and library, so others can gauge my track record.",
+        "As a registered user, I want to upload my own profile picture and banner image, so my profile reflects my identity (Journal Entry 51).",
         "As any user, I want an admin's username to always show an '(admin)' label wherever it appears, so I can tell official content apart from community content.",
     ]),
     ("Title Catalog", [
