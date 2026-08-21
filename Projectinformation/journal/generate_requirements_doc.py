@@ -198,8 +198,8 @@ SECTION_2 = [
     ("p", "A Title represents a single manga/manhwa/manhua work (the series as a whole, not a chapter "
           "or volume)."),
     ("bullets", [
-        "Fields: name, alternate/original names, type (manga/manhwa/manhua — extensible enum), author(s)/illustrator(s), status (ongoing/completed/hiatus/dropped), genre tags, cover image, publication year, source links (official reading platforms only — never hosted content), short synopsis.",
-        "Titles are de-duplicated: search-before-create UX for users/admins, plus admin merge tooling for canonical entries.",
+        "Fields: name, alternate/original names, type (manga/manhwa/manhua — extensible enum), author(s)/illustrator(s), status (ongoing/completed/hiatus/dropped), genre tags, cover image, publication year, source links (official reading platforms only — never hosted content), short synopsis. For an AniList-linked title, everything except name/type/status/cover is fetched live from AniList on every render rather than stored (Journal Entry 52) — those four are kept locally: type because it's read on a synchronous write path (Category matching) and a title's country-of-origin never changes; name/status as a graceful-degrade fallback for when AniList itself is unreachable. A manually-created title (AniList doesn't have it) keeps every field locally, since there's no other source.",
+        "Titles are de-duplicated: search-before-create UX for users/admins (which also checks AniList directly, Entry 52), plus admin merge tooling for canonical entries.",
         "Titles aggregate and display: average score per category, seal count (Certified Banger), review count, and the review list.",
         "For performance at scale, these aggregates are stored as precomputed columns updated incrementally, not recalculated live on every page view (Journal Entry 39).",
         "Admin-seeded at launch — no scraping for v1 (matches the original MVP cut).",
@@ -458,6 +458,10 @@ Title
  - id, name, alt_names[], type (manga | manhwa | manhua), status,
    author, illustrator, genres[], cover_url, synopsis, publication_year,
    external_links[], created_at
+   <- Entry 52: for an AniList-linked title, only name/type/status/
+      cover_url are stored/trusted locally; everything else here is
+      fetched live from AniList on every render. A manually-created
+      title (no AniList source) keeps every field locally as before.
  - precomputed: avg_category_scores, review_count,
    certified_banger_count                        <- Entry 39
 
@@ -518,7 +522,7 @@ WORK_PACKAGES = [
     ("WP0.1", "Project scaffolding", "Next.js + TypeScript project init, Prisma setup, Supabase project (DB/Auth/Storage), Vercel deploy pipeline, environment/secrets configuration.", "—", "S"),
     ("WP0.2", "Core data model & migrations", "Implement all entities from Section 7; seed the Category table (4 rows, Entry 47) and SealType table (1 row, Entry 45).", "WP0.1", "M"),
     ("WP1.1", "Authentication & user profiles", "Supabase Auth integration, registration/login, public profile page, role field (user/admin/main_admin).", "WP0.2", "M"),
-    ("WP1.2", "Title catalog & admin seeding tools", "Admin panel to search/import titles from AniList (primary path, Entry 44) with cover art re-hosted on this project's own storage; manual create/edit form kept as a fallback; search-before-create de-dup UX; admin merge tooling.", "WP0.2", "M"),
+    ("WP1.2", "Title catalog & admin seeding tools", "Admin panel to search/import titles from AniList (primary path, Entry 44) with cover art re-hosted on this project's own storage; manual create/edit form kept as a fallback; search-before-create de-dup UX; admin merge tooling. Revised by Entry 52: importing no longer copies AniList's metadata into the row (name/type/status/cover only) — everything else is fetched live, so the admin edit form only applies to manual titles now.", "WP0.2", "M"),
     ("WP2.1", "Review creation", "Rating form across the platform's categories, free-text body, computed overall score, separate optional spoiler field, one-review-per-user-per-title with edit-replace.", "WP1.1, WP1.2", "M"),
     ("WP2.2", "Baseline review-submission gate", "Enforce email verification plus a minimum 3-day account age before first review submission; gate parameters admin-configurable for future tuning.", "WP2.1", "S"),
     ("WP2.3", "Admin review-approval workflow", "'(admin)' label everywhere a username appears; Main Admin approval queue for non-Main-Admin admin-authored reviews.", "WP2.1", "M"),

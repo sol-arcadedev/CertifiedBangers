@@ -4,24 +4,31 @@ import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { LatestReviews } from "@/components/latest-reviews";
 import { getDistinctGenres } from "@/lib/genres";
+import { hydrateWithLiveAniListData } from "@/lib/anilist-linked-titles";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 import { INPUT, LABEL, BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
 
 export default async function Home() {
-  const [certifiedBangers, mostPopular, highestRated, genres, latestReviews] =
-    await Promise.all([
+  const [certifiedBangers, importedTitles, genres, latestReviews] = await Promise.all([
     prisma.title.findMany({
       where: { certifiedBangerCount: { gt: 0 } },
       orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
       take: 8,
     }),
+    // Most Popular/Highest Rated sort by AniList's live popularity/score
+    // (Entry 52) — no longer local columns, so every imported title gets
+    // batch-live-fetched once and sorted in-app rather than via `orderBy`.
     prisma.title.findMany({
-      orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } },
-      take: 8,
-    }),
-    prisma.title.findMany({
-      orderBy: { anilistAverageScore: { sort: "desc", nulls: "last" } },
-      take: 8,
+      where: { anilistId: { not: null } },
+      select: {
+        id: true,
+        anilistId: true,
+        name: true,
+        type: true,
+        coverUrl: true,
+        reviewCount: true,
+        certifiedBangerCount: true,
+      },
     }),
     getDistinctGenres(),
     prisma.review.findMany({
@@ -38,6 +45,29 @@ export default async function Home() {
       },
     }),
   ]);
+
+  const hydrated = await hydrateWithLiveAniListData(importedTitles);
+  const toCard = (t: (typeof hydrated)[number]) => ({
+    id: t.id,
+    name: t.live?.name ?? t.name,
+    type: t.type,
+    coverUrl: t.coverUrl,
+    anilistAverageScore: t.live?.averageScore ?? null,
+    reviewCount: t.reviewCount,
+    certifiedBangerCount: t.certifiedBangerCount,
+  });
+
+  const mostPopular = hydrated
+    .filter((t) => t.live?.popularity != null)
+    .sort((a, b) => b.live!.popularity! - a.live!.popularity!)
+    .slice(0, 8)
+    .map(toCard);
+
+  const highestRated = hydrated
+    .filter((t) => t.live?.averageScore != null)
+    .sort((a, b) => b.live!.averageScore! - a.live!.averageScore!)
+    .slice(0, 8)
+    .map(toCard);
 
   // Certified Bangers lead — the brief calls the seal showcase out
   // explicitly as "your differentiator — make it prominent" (Section 4.5).

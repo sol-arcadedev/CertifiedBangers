@@ -35,7 +35,7 @@ export default async function AniListTitlePreviewPage(
   // id — AniList's API responds 404 for those, which anilistRequest
   // surfaces as a thrown Error rather than null data.
   const [media, user] = await Promise.all([
-    getAniListMediaById(anilistId).catch(() => null),
+    getAniListMediaById(anilistId, true).catch(() => null),
     getCurrentUser(),
   ]);
   if (!media) notFound();

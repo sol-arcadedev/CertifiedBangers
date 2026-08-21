@@ -31,6 +31,13 @@ type DuplicateResult = {
   publicationYear: number | null;
 };
 
+type AniListDuplicate = {
+  anilistId: number;
+  name: string;
+  type: string;
+  publicationYear: number | null;
+};
+
 export function TitleForm({
   action,
   defaults,
@@ -43,6 +50,7 @@ export function TitleForm({
   const [state, formAction, pending] = useActionState(action, undefined);
   const [name, setName] = useState(defaults?.name ?? "");
   const [duplicates, setDuplicates] = useState<DuplicateResult[]>([]);
+  const [aniListDuplicates, setAniListDuplicates] = useState<AniListDuplicate[]>([]);
   const [, startSearch] = useTransition();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,11 +59,13 @@ export function TitleForm({
     debounceRef.current = setTimeout(() => {
       if (name.trim().length < 2) {
         setDuplicates([]);
+        setAniListDuplicates([]);
         return;
       }
       startSearch(async () => {
         const results = await searchTitles(name);
-        setDuplicates(results.filter((r) => r.id !== defaults?.id));
+        setDuplicates(results.local.filter((r) => r.id !== defaults?.id));
+        setAniListDuplicates(results.aniList);
       });
     }, 300);
     return () => {
@@ -87,6 +97,26 @@ export function TitleForm({
                   {d.name}
                 </Link>{" "}
                 ({d.type}
+                {d.publicationYear ? `, ${d.publicationYear}` : ""})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {aniListDuplicates.length > 0 && (
+        <div className="rounded-lg border border-amber-900/40 bg-amber-950/30 p-3 text-sm text-amber-300">
+          <p className="font-medium">
+            Found on AniList — consider using{" "}
+            <Link href="/admin/titles/import" className="underline" target="_blank">
+              Import from AniList
+            </Link>{" "}
+            instead of a manual entry:
+          </p>
+          <ul className="mt-1 list-disc pl-5">
+            {aniListDuplicates.map((d) => (
+              <li key={d.anilistId}>
+                {d.name} ({d.type}
                 {d.publicationYear ? `, ${d.publicationYear}` : ""})
               </li>
             ))}

@@ -11,7 +11,6 @@
     "setup:storage": "tsx scripts/setup-storage.ts",
     "promote-admin": "tsx scripts/promote-admin.ts",
     "seed:titles": "tsx scripts/seed-default-titles.ts",
-    "refresh:anilist-data": "tsx scripts/refresh-anilist-data.ts",
     "backfill:reputation": "tsx scripts/backfill-reputation.ts"
   },
   "dependencies": {

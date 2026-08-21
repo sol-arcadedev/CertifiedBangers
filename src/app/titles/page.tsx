@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { browseAniListMedia } from "@/lib/anilist";
+import { hydrateWithLiveAniListData } from "@/lib/anilist-linked-titles";
 import { getDistinctGenres } from "@/lib/genres";
 import { searchTitleIds } from "@/lib/title-search";
 import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
@@ -22,7 +23,7 @@ const SORT_OPTIONS = {
 
 type SortKey = keyof typeof SORT_OPTIONS;
 
-// One unified shape for both "already in our catalog" and "AniList-only"
+// One unified shape for local (manual + already-imported), and AniList-only
 // results, so they render in a single grid indistinguishable from each
 // other — no more "our stuff" vs "AniList's stuff" split. AniList-only
 // entries just carry zero/null for every locally-computed field, which
@@ -79,42 +80,98 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
   const hasCertifiedBanger = param("hasCB") === "1";
   const minScoreRaw = param("minScore");
   const minCommunityRaw = param("minCommunity");
+  const minScore = minScoreRaw && !Number.isNaN(Number(minScoreRaw)) ? Number(minScoreRaw) : null;
+  const minCommunity =
+    minCommunityRaw && !Number.isNaN(Number(minCommunityRaw)) ? Number(minCommunityRaw) : null;
   const sortParam = param("sort") || "name";
   const sort: SortKey = sortParam in SORT_OPTIONS ? (sortParam as SortKey) : "name";
 
-  const [matchingIds, genres] = await Promise.all([
+  const [matchingManualIds, genres] = await Promise.all([
     q.length >= 2 ? searchTitleIds(q) : null,
     getDistinctGenres(),
   ]);
 
-  const where: Prisma.TitleWhereInput = {};
-  if (matchingIds) where.id = { in: matchingIds };
-  if (genre) where.genres = { has: genre };
-  if (type) where.type = type;
-  if (status) where.status = status;
-  if (hasCertifiedBanger) where.certifiedBangerCount = { gt: 0 };
-  if (minScoreRaw && !Number.isNaN(Number(minScoreRaw))) {
-    where.anilistAverageScore = { gte: Number(minScoreRaw) };
-  }
-  if (minCommunityRaw && !Number.isNaN(Number(minCommunityRaw))) {
-    where.communityScore = { gte: Number(minCommunityRaw) };
-  }
+  // Manual titles (anilistId IS NULL) are still fully locally-stored/
+  // filterable — unaffected by Entry 52. `type` is filterable on imported
+  // titles here too since it's a locally-cached, never-stale exception.
+  const commonWhere: Prisma.TitleWhereInput = {};
+  if (type) commonWhere.type = type;
+  if (hasCertifiedBanger) commonWhere.certifiedBangerCount = { gt: 0 };
+  if (minCommunity !== null) commonWhere.communityScore = { gte: minCommunity };
 
-  const titles = await prisma.title.findMany({ where, take: 100 });
+  const manualWhere: Prisma.TitleWhereInput = { ...commonWhere, anilistId: null };
+  if (matchingManualIds) manualWhere.id = { in: matchingManualIds };
+  if (genre) manualWhere.genres = { has: genre };
+  if (status) manualWhere.status = status;
+  if (minScore !== null) manualWhere.anilistAverageScore = { gte: minScore };
+
+  // Entry 52: genre/synopsis/status/scores are no longer trustworthy on the
+  // local row for an already-imported title, so matching one against these
+  // filters requires live AniList data — batch-hydrate every imported
+  // title (a small, bounded set: "everything we've ever imported", not
+  // AniList's whole catalog) rather than trusting stale local columns.
+  const importedTitles = await prisma.title.findMany({
+    where: { ...commonWhere, anilistId: { not: null } },
+    select: {
+      id: true,
+      anilistId: true,
+      name: true,
+      type: true,
+      coverUrl: true,
+      communityScore: true,
+      lastReviewedAt: true,
+      discussionCount: true,
+      reviewCount: true,
+      certifiedBangerCount: true,
+    },
+  });
+  const hydratedImported = await hydrateWithLiveAniListData(importedTitles);
+
+  const qLower = q.toLowerCase();
+  const importedCards: UnifiedCard[] = hydratedImported
+    .filter((t) => {
+      if (genre && !(t.live?.genres.includes(genre) ?? false)) return false;
+      if (status && t.live?.status !== status) return false;
+      if (minScore !== null && (t.live?.averageScore ?? -1) < minScore) return false;
+      if (q.length >= 2) {
+        const haystack = [t.live?.name ?? t.name, t.live?.titleRomaji, t.live?.titleEnglish, t.live?.titleNative, ...(t.live?.genres ?? []), ...(t.live?.synonyms ?? [])]
+          .filter((s): s is string => !!s)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(qLower)) return false;
+      }
+      return true;
+    })
+    .map((t) => ({
+      id: t.id,
+      name: t.live?.name ?? t.name,
+      type: t.type,
+      coverUrl: t.coverUrl,
+      anilistAverageScore: t.live?.averageScore ?? null,
+      anilistPopularity: t.live?.popularity ?? null,
+      communityScore: t.communityScore,
+      lastReviewedAt: t.lastReviewedAt,
+      discussionCount: t.discussionCount,
+      reviewCount: t.reviewCount,
+      certifiedBangerCount: t.certifiedBangerCount,
+    }));
+
+  const manualTitles = await prisma.title.findMany({ where: manualWhere, take: 100 });
 
   // On-demand catalog growth: rather than mirroring AniList's whole ~60k+
   // manga database up front (real rate-limit/storage cost for no product
-  // benefit), any search, genre, Format, or Status filter also pulls in
-  // live AniList results — merged into the exact same grid as local
-  // results (below), not a separate "not really ours" section, since the
-  // site's search is meant to feel like it covers everything AniList has,
-  // the same way AniList's own search does. Skipped when a filter is
-  // active that an unimported title structurally can never satisfy (the
-  // seal checkbox, minimum community score — both are review-driven, and
-  // an unimported title has no reviews).
-  const skipAniList = hasCertifiedBanger || !!minCommunityRaw;
+  // benefit), any search, genre, Format, Status, or minScore filter also
+  // pulls in live AniList results for titles we haven't imported yet —
+  // merged into the exact same grid as local results (below), not a
+  // separate "not really ours" section, since the site's search is meant
+  // to feel like it covers everything AniList has, the same way AniList's
+  // own search does. Skipped when a filter is active that an unimported
+  // title structurally can never satisfy (the seal checkbox, minimum
+  // community score — both are review-driven, and an unimported title has
+  // no reviews).
+  const skipAniList = hasCertifiedBanger || minCommunity !== null;
   let aniListCards: UnifiedCard[] = [];
-  if (!skipAniList && (q.length >= 2 || genre || type || status)) {
+  if (!skipAniList && (q.length >= 2 || genre || type || status || minScore !== null)) {
     try {
       const results = await browseAniListMedia({
         search: q.length >= 2 ? q : undefined,
@@ -123,12 +180,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
         status: status || undefined,
         perPage: 30,
       });
-      const alreadyImported = await prisma.title.findMany({
-        where: { anilistId: { in: results.map((r) => r.anilistId) } },
-        select: { anilistId: true },
-      });
-      const importedIds = new Set(alreadyImported.map((t) => t.anilistId));
-      const minScore = minScoreRaw && !Number.isNaN(Number(minScoreRaw)) ? Number(minScoreRaw) : null;
+      const importedIds = new Set(importedTitles.map((t) => t.anilistId));
 
       aniListCards = results
         .filter((r) => !importedIds.has(r.anilistId))
@@ -154,7 +206,9 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
     }
   }
 
-  const cards: UnifiedCard[] = [...titles, ...aniListCards].sort((a, b) => compareCards(a, b, sort));
+  const cards: UnifiedCard[] = [...manualTitles, ...importedCards, ...aniListCards].sort((a, b) =>
+    compareCards(a, b, sort),
+  );
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">

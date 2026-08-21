@@ -6,11 +6,22 @@ import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 // by countryOfOrigin — mapped to our TitleType below.
 const ANILIST_ENDPOINT = "https://graphql.anilist.co";
 
-async function anilistRequest<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+// revalidateSeconds is only passed by display-oriented callers (title
+// pages, browse/homepage listings, the genre dropdown) — Entry 52's live
+// data model means these run on essentially every page view, and AniList's
+// public API is rate-limited to 30 req/min, so they opt into Next's fetch
+// cache. Admin one-off actions (search-to-import, the dedupe check) omit
+// it, since up-to-the-minute freshness matters more there than cache economy.
+async function anilistRequest<T>(
+  query: string,
+  variables: Record<string, unknown>,
+  revalidateSeconds?: number,
+): Promise<T> {
   const res = await fetch(ANILIST_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ query, variables }),
+    ...(revalidateSeconds ? { next: { revalidate: revalidateSeconds } } : {}),
   });
 
   const json = await res.json().catch(() => null);
@@ -22,6 +33,12 @@ async function anilistRequest<T>(query: string, variables: Record<string, unknow
   }
   return json.data as T;
 }
+
+// How long display-oriented AniList data is trusted before Next re-fetches
+// it (Entry 52). Long enough to comfortably stay under the 30 req/min
+// public rate limit under real traffic; short enough that "stale for
+// months" (the bug this replaced) can't happen again.
+const DISPLAY_CACHE_SECONDS = 3600;
 
 function mapCountryToTitleType(countryOfOrigin: string): TitleType | null {
   switch (countryOfOrigin) {
@@ -128,6 +145,8 @@ const SEARCH_QUERY = `
   }
 `;
 
+// Admin import search — deliberately uncached, freshest possible results
+// when an admin is actively deciding what to import.
 export async function searchAniListMedia(query: string): Promise<AniListSearchResult[]> {
   const data = await anilistRequest<{
     Page: {
@@ -230,7 +249,7 @@ export async function browseAniListMedia(filters: {
         popularity: number | null;
       }[];
     };
-  }>(query, variables);
+  }>(query, variables, DISPLAY_CACHE_SECONDS);
 
   return data.Page.media
     .map((m) => {
@@ -249,27 +268,12 @@ export async function browseAniListMedia(filters: {
     .filter((m): m is AniListSearchResult => m !== null);
 }
 
-// Fields sourced straight from AniList with no manual-edit UI anywhere —
-// safe for scripts/refresh-anilist-data.ts to overwrite periodically.
-// synonyms is deliberately excluded: it's editable via the manual title
-// form (repurposed from the old altNames field), so an auto-refresh could
-// clobber an admin's correction the same way genres/synopsis are protected.
-type AniListRefreshableFields = {
-  averageScore: number | null;
-  meanScore: number | null;
-  popularity: number | null;
-  favourites: number | null;
-  source: string | null;
+export type AniListTitleImport = {
+  anilistId: number;
+  name: string;
   titleRomaji: string | null;
   titleEnglish: string | null;
   titleNative: string | null;
-  startMonth: number | null;
-  startDay: number | null;
-};
-
-export type AniListTitleImport = AniListRefreshableFields & {
-  anilistId: number;
-  name: string;
   synonyms: string[];
   type: TitleType;
   status: TitleStatus;
@@ -278,10 +282,20 @@ export type AniListTitleImport = AniListRefreshableFields & {
   genres: string[];
   synopsis: string | null;
   publicationYear: number | null;
+  startMonth: number | null;
+  startDay: number | null;
   externalLinks: string[];
   coverImageUrl: string | null;
+  averageScore: number | null;
+  meanScore: number | null;
+  popularity: number | null;
+  favourites: number | null;
+  source: string | null;
 };
 
+// Shared by getAniListMediaById (single) and getAniListMediaByIds (batch,
+// Entry 52) — same field set, same shape-to-AniListTitleImport mapping,
+// just queried one-at-a-time vs. via id_in.
 const DETAIL_FIELDS = `
   id
   title { romaji english native }
@@ -303,38 +317,28 @@ const DETAIL_FIELDS = `
   }
 `;
 
-type DetailResponse = {
-  Media: {
-    id: number;
-    title: { romaji: string | null; english: string | null; native: string | null };
-    // AniList's synonyms field is a nullable list of nullable strings — it
-    // has genuinely come back as null for real titles, not just [].
-    synonyms: (string | null)[] | null;
-    countryOfOrigin: string;
-    status: string;
-    startDate: { year: number | null; month: number | null; day: number | null };
-    genres: string[];
-    description: string | null;
-    coverImage: { large: string | null };
-    siteUrl: string | null;
-    averageScore: number | null;
-    meanScore: number | null;
-    popularity: number | null;
-    favourites: number | null;
-    source: string | null;
-    staff: { edges: StaffEdge[] };
-  } | null;
+type MediaDetailItem = {
+  id: number;
+  title: { romaji: string | null; english: string | null; native: string | null };
+  // AniList's synonyms field is a nullable list of nullable strings — it
+  // has genuinely come back as null for real titles, not just [].
+  synonyms: (string | null)[] | null;
+  countryOfOrigin: string;
+  status: string;
+  startDate: { year: number | null; month: number | null; day: number | null };
+  genres: string[];
+  description: string | null;
+  coverImage: { large: string | null };
+  siteUrl: string | null;
+  averageScore: number | null;
+  meanScore: number | null;
+  popularity: number | null;
+  favourites: number | null;
+  source: string | null;
+  staff: { edges: StaffEdge[] };
 };
 
-export async function getAniListMediaById(id: number): Promise<AniListTitleImport | null> {
-  const data = await anilistRequest<DetailResponse>(
-    `query ($id: Int) { Media(id: $id, type: MANGA) { ${DETAIL_FIELDS} } }`,
-    { id },
-  );
-
-  const media = data.Media;
-  if (!media) return null;
-
+function mapMediaToImport(media: MediaDetailItem): AniListTitleImport | null {
   const type = mapCountryToTitleType(media.countryOfOrigin);
   if (!type) return null;
 
@@ -367,49 +371,68 @@ export async function getAniListMediaById(id: number): Promise<AniListTitleImpor
   };
 }
 
-// Used by scripts/refresh-anilist-data.ts to re-fetch just the
-// AniListRefreshableFields for an already-imported title.
-export async function getAniListRefreshableFields(
+// cache: true for display-oriented callers (title pages) — Entry 52. false
+// for performAniListImport, which wants the freshest possible snapshot at
+// the moment an admin/user actually imports a title.
+export async function getAniListMediaById(
   id: number,
-): Promise<AniListRefreshableFields | null> {
-  const data = await anilistRequest<{
-    Media: {
-      title: { romaji: string | null; english: string | null; native: string | null };
-      startDate: { month: number | null; day: number | null };
-      averageScore: number | null;
-      meanScore: number | null;
-      popularity: number | null;
-      favourites: number | null;
-      source: string | null;
-    } | null;
-  }>(
-    `query ($id: Int) {
-      Media(id: $id, type: MANGA) {
-        title { romaji english native }
-        startDate { month day }
-        averageScore
-        meanScore
-        popularity
-        favourites
-        source
-      }
-    }`,
+  cache = false,
+): Promise<AniListTitleImport | null> {
+  const data = await anilistRequest<{ Media: MediaDetailItem | null }>(
+    `query ($id: Int) { Media(id: $id, type: MANGA) { ${DETAIL_FIELDS} } }`,
     { id },
+    cache ? DISPLAY_CACHE_SECONDS : undefined,
   );
 
   const media = data.Media;
   if (!media) return null;
+  return mapMediaToImport(media);
+}
 
-  return {
-    titleRomaji: media.title.romaji,
-    titleEnglish: media.title.english,
-    titleNative: media.title.native,
-    startMonth: media.startDate.month,
-    startDay: media.startDate.day,
-    averageScore: media.averageScore,
-    meanScore: media.meanScore,
-    popularity: media.popularity,
-    favourites: media.favourites,
-    source: media.source,
-  };
+// Batch equivalent for list views (browse grids, homepage sorts, admin
+// list) — Entry 52. One AniList request per call regardless of how many
+// ids are requested (chunked at AniList's perPage ceiling), so a page
+// showing N imported titles costs one round trip, not N — required to
+// stay under AniList's public 30 req/min rate limit under real traffic.
+// Always cached: every caller is a display list, never a write path.
+const ANILIST_BATCH_SIZE = 50;
+
+export async function getAniListMediaByIds(
+  ids: number[],
+): Promise<Map<number, AniListTitleImport>> {
+  const result = new Map<number, AniListTitleImport>();
+  if (ids.length === 0) return result;
+
+  for (let i = 0; i < ids.length; i += ANILIST_BATCH_SIZE) {
+    const chunk = ids.slice(i, i + ANILIST_BATCH_SIZE);
+    const data = await anilistRequest<{ Page: { media: MediaDetailItem[] } }>(
+      `query ($ids: [Int]) {
+        Page(page: 1, perPage: ${ANILIST_BATCH_SIZE}) {
+          media(id_in: $ids, type: MANGA) { ${DETAIL_FIELDS} }
+        }
+      }`,
+      { ids: chunk },
+      DISPLAY_CACHE_SECONDS,
+    );
+
+    for (const media of data.Page.media) {
+      const mapped = mapMediaToImport(media);
+      if (mapped) result.set(media.id, mapped);
+    }
+  }
+
+  return result;
+}
+
+// AniList's canonical genre list — feeds the genre filter dropdown
+// (src/lib/genres.ts) instead of a local `SELECT DISTINCT unnest(genres)`,
+// since genres are no longer stored locally for AniList-linked titles
+// (Entry 52). Cached like every other display-oriented call.
+export async function getAniListGenreCollection(): Promise<string[]> {
+  const data = await anilistRequest<{ GenreCollection: string[] }>(
+    `query { GenreCollection }`,
+    {},
+    DISPLAY_CACHE_SECONDS,
+  );
+  return data.GenreCollection;
 }

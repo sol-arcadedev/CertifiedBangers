@@ -76,20 +76,6 @@ function mapAniListStatus(status: string): "ONGOING" | "COMPLETED" | "HIATUS" | 
   }
 }
 
-type StaffEdge = { role: string; node: { name: { full: string } } };
-
-function deriveCredits(edges: StaffEdge[]) {
-  let author: string | null = null;
-  let illustrator: string | null = null;
-  for (const edge of edges) {
-    const role = edge.role.toLowerCase();
-    const name = edge.node.name.full;
-    if (role.includes("story")) author ??= name;
-    if (role.includes("art")) illustrator ??= name;
-  }
-  return { author, illustrator };
-}
-
 const SEARCH_QUERY = `
   query ($search: String) {
     Page(page: 1, perPage: 5) {
@@ -101,25 +87,18 @@ const SEARCH_QUERY = `
   }
 `;
 
+// Entry 52: only `name`/`type`/`status`/cover are ever written locally
+// (type is a deliberate permanent exception; name/status are a
+// graceful-degrade fallback for when AniList is unreachable at render
+// time) — everything else is fetched live on every render, never stored.
 const DETAIL_QUERY = `
   query ($id: Int) {
     Media(id: $id, type: MANGA) {
       id
-      title { romaji english native }
-      synonyms
+      title { romaji english }
       countryOfOrigin
       status
-      startDate { year month day }
-      genres
-      description(asHtml: false)
       coverImage { large }
-      siteUrl
-      averageScore
-      meanScore
-      popularity
-      favourites
-      source
-      staff(perPage: 6) { edges { role node { name { full } } } }
     }
   }
 `;
@@ -162,23 +141,10 @@ async function main() {
       const detailData = await anilistRequest<{
         Media: {
           id: number;
-          title: { romaji: string | null; english: string | null; native: string | null };
-          // AniList's synonyms field is a nullable list of nullable strings
-          // — it has genuinely come back as null for real titles, not [].
-          synonyms: (string | null)[] | null;
+          title: { romaji: string | null; english: string | null };
           countryOfOrigin: string;
           status: string;
-          startDate: { year: number | null; month: number | null; day: number | null };
-          genres: string[];
-          description: string | null;
           coverImage: { large: string | null };
-          siteUrl: string | null;
-          averageScore: number | null;
-          meanScore: number | null;
-          popularity: number | null;
-          favourites: number | null;
-          source: string | null;
-          staff: { edges: StaffEdge[] };
         } | null;
       }>(DETAIL_QUERY, { id: best.id });
       const media = detailData.Media;
@@ -190,7 +156,6 @@ async function main() {
       }
 
       const titleName = media.title.english ?? media.title.romaji ?? name;
-      const { author, illustrator } = deriveCredits(media.staff.edges);
 
       let coverUrl: string | null = null;
       if (media.coverImage.large) {
@@ -213,26 +178,9 @@ async function main() {
         data: {
           anilistId: media.id,
           name: titleName,
-          titleRomaji: media.title.romaji,
-          titleEnglish: media.title.english,
-          titleNative: media.title.native,
-          synonyms: (media.synonyms ?? []).filter((s): s is string => !!s),
           type,
           status: mapAniListStatus(media.status),
-          author,
-          illustrator,
-          genres: media.genres,
-          synopsis: media.description ? media.description.replace(/<br\s*\/?>/gi, "\n").trim() : null,
-          publicationYear: media.startDate.year,
-          startMonth: media.startDate.month,
-          startDay: media.startDate.day,
-          externalLinks: media.siteUrl ? [media.siteUrl] : [],
           coverUrl,
-          anilistAverageScore: media.averageScore,
-          anilistMeanScore: media.meanScore,
-          anilistPopularity: media.popularity,
-          anilistFavourites: media.favourites,
-          anilistSource: media.source,
         },
       });
       console.log(`  + imported: ${titleName}`);

@@ -45,27 +45,27 @@ erDiagram
     TITLE {
         string id PK
         int anilistId UK "null = manually created, Entry 44"
-        int anilistAverageScore "0-100, reference only, not overallScore"
-        int anilistMeanScore "0-100, reference only"
-        int anilistPopularity "reference only"
-        int anilistFavourites "reference only"
-        string anilistSource "AniList source enum, e.g. WEB_NOVEL"
-        string name
-        string titleRomaji "not admin-editable"
-        string titleEnglish "not admin-editable"
-        string titleNative "not admin-editable"
-        string_array synonyms "admin-editable via manual form"
-        TitleType type "MANGA | MANHWA | MANHUA"
-        TitleStatus status "ONGOING | COMPLETED | HIATUS | DROPPED"
-        string author
-        string illustrator
-        string_array genres
-        string coverUrl
-        string synopsis
-        int publicationYear
-        int startMonth
-        int startDay
-        string_array externalLinks
+        int anilistAverageScore "manual titles only now, Entry 52 - AniList-linked titles fetch this live"
+        int anilistMeanScore "manual titles only now, Entry 52"
+        int anilistPopularity "manual titles only now, Entry 52"
+        int anilistFavourites "manual titles only now, Entry 52"
+        string anilistSource "manual titles only now, Entry 52"
+        string name "cached fallback for AniList-linked titles, Entry 52 - live-fetched name preferred when reachable"
+        string titleRomaji "manual titles only now, Entry 52"
+        string titleEnglish "manual titles only now, Entry 52"
+        string titleNative "manual titles only now, Entry 52"
+        string_array synonyms "manual titles only now, Entry 52"
+        TitleType type "MANGA | MANHWA | MANHUA - kept for AniList-linked titles too, Entry 52 (country-of-origin never changes)"
+        TitleStatus status "ONGOING | COMPLETED | HIATUS | DROPPED - cached fallback for AniList-linked titles, Entry 52"
+        string author "manual titles only now, Entry 52"
+        string illustrator "manual titles only now, Entry 52"
+        string_array genres "manual titles only now, Entry 52 - AniList-linked titles fetch this live"
+        string coverUrl "still re-hosted to Storage for every title, Entry 35/44/52"
+        string synopsis "manual titles only now, Entry 52"
+        int publicationYear "manual titles only now, Entry 52"
+        int startMonth "manual titles only now, Entry 52"
+        int startDay "manual titles only now, Entry 52"
+        string_array externalLinks "manual titles only now, Entry 52"
         json avgCategoryScores "precomputed aggregate"
         int reviewCount "precomputed aggregate"
         int certifiedBangerCount "precomputed aggregate; WP5.1 'most seals' sort field"

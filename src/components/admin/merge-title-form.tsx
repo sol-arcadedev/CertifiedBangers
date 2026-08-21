@@ -25,7 +25,7 @@ export function MergeTitleForm({ id }: { id: string }) {
       }
       startSearch(async () => {
         const found = await searchTitles(query);
-        setResults(found.filter((r) => r.id !== id));
+        setResults(found.local.filter((r) => r.id !== id));
       });
     }, 300);
     return () => {
