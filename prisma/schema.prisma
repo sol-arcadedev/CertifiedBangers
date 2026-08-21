@@ -231,7 +231,11 @@ model Review {
   // Computed as the simple average of this review's category scores (Entry 4).
   overallScore         Float?
   bodyText             String
-  spoilerFlag          Boolean              @default(false)
+  // The main review body must stay spoiler-free by policy (enforced by
+  // moderation via the report system, not automatically) — spoiler-specific
+  // thoughts go here instead, always rendered collapsed by default on the
+  // strength of simply having content, no separate boolean flag needed.
+  spoilerText          String?
   isAdminAuthored      Boolean              @default(false)
   approvalStatus       ReviewApprovalStatus @default(PUBLISHED)
   // Derived flag used by the future first-review reward (Entry 22/26).

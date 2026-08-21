@@ -209,7 +209,7 @@ SECTION_2 = [
         "One review per user per title; editing replaces the existing review rather than creating a duplicate.",
         "A numeric rating per category, using the platform's data-driven Category set (Art Style, Character Design, Story, Pacing for v1) — Journal Entry 2, renamed and reduced from five to four categories per Journal Entry 47.",
         "Overall score is computed automatically as the simple average of the five category scores — not a separately entered field (Journal Entry 4).",
-        "Free-text written review body (recommended minimum ~50 characters to discourage low-effort spam), with an optional spoiler flag/section.",
+        "Free-text written review body (recommended minimum ~50 characters to discourage low-effort spam), which must stay spoiler-free by policy. A separate optional spoiler field holds any spoiler-specific commentary, always rendered collapsed behind a click-to-reveal (Journal Entry 48).",
         "Reviews track created_at / updated_at.",
         "Reviews can be upvoted/downvoted by other users, and can receive flat (non-threaded) comments.",
         "A baseline gate applies to submitting any review, active from launch: email verification plus a minimum account age of 3 days. No specific future restrictions are pre-committed — the Main Admin adjusts the gate's (admin-configurable) parameters over time based on observed abuse signals (Journal Entries 16, 40).",
@@ -335,7 +335,7 @@ SECTION_4 = [
     ("bullets", [
         "All database access goes through Prisma's parameterized queries (Journal Entry 33) — no raw string-concatenated SQL, which eliminates the standard SQL-injection vector by construction.",
         "Free-text fields (review body, justification text, comments, bio) must be sanitized/escaped on render to prevent stored XSS, since this content is displayed to other users.",
-        "Server-side validation of all inputs (category score ranges, required justification length, spoiler flag, file types/sizes for cover uploads) — client-side validation is a UX convenience only, never the security boundary.",
+        "Server-side validation of all inputs (category score ranges, required justification length, file types/sizes for cover uploads) — client-side validation is a UX convenience only, never the security boundary.",
     ]),
     ("h", 2, "4.4 Abuse & Spam Mitigation"),
     ("bullets", [
@@ -465,7 +465,7 @@ Category                <- data-driven, not hardcoded         (Entry 2)
 
 Review
  - id, user_id, title_id, overall_score (= avg of category scores, Entry 4),
-   body_text, spoiler_flag, created_at, updated_at,
+   body_text, spoiler_text (nullable, Entry 48), created_at, updated_at,
    is_admin_authored (bool),
    approval_status (published | pending_approval | rejected)   <- Entry 28
    is_first_review_of_title (bool, derived)                    <- Entry 26
@@ -518,7 +518,7 @@ WORK_PACKAGES = [
     ("WP0.2", "Core data model & migrations", "Implement all entities from Section 7; seed the Category table (4 rows, Entry 47) and SealType table (1 row, Entry 45).", "WP0.1", "M"),
     ("WP1.1", "Authentication & user profiles", "Supabase Auth integration, registration/login, public profile page, role field (user/admin/main_admin).", "WP0.2", "M"),
     ("WP1.2", "Title catalog & admin seeding tools", "Admin panel to search/import titles from AniList (primary path, Entry 44) with cover art re-hosted on this project's own storage; manual create/edit form kept as a fallback; search-before-create de-dup UX; admin merge tooling.", "WP0.2", "M"),
-    ("WP2.1", "Review creation", "5-category rating form, free-text body, computed overall score, spoiler flag, one-review-per-user-per-title with edit-replace.", "WP1.1, WP1.2", "M"),
+    ("WP2.1", "Review creation", "Rating form across the platform's categories, free-text body, computed overall score, separate optional spoiler field, one-review-per-user-per-title with edit-replace.", "WP1.1, WP1.2", "M"),
     ("WP2.2", "Baseline review-submission gate", "Enforce email verification plus a minimum 3-day account age before first review submission; gate parameters admin-configurable for future tuning.", "WP2.1", "S"),
     ("WP2.3", "Admin review-approval workflow", "'(admin)' label everywhere a username appears; Main Admin approval queue for non-Main-Admin admin-authored reviews.", "WP2.1", "M"),
     ("WP2.4", "Title pages", "Aggregate score display, review list, precomputed-aggregate wiring (Journal Entry 39).", "WP2.1", "M"),
@@ -597,7 +597,7 @@ USER_STORIES = [
     ("Reviews", [
         "As a registered user, I want to write one review per title with a rating for each of the platform's rating categories, so my opinion is structured and comparable to others'.",
         "As a registered user, I want my review's overall score computed automatically as the average of my category scores, so I don't have to separately judge a single number.",
-        "As a registered user, I want to mark my review as containing spoilers, so readers can choose whether to see the full text.",
+        "As a registered user, I want a separate field for spoiler-specific commentary, always hidden behind a click-to-reveal, so I can write freely about plot specifics without spoiling readers who just want the spoiler-free verdict (Journal Entry 48).",
         "As a registered user, I want to edit or delete my own review, so I can correct or update my opinion later.",
         "As a new user, I want to understand the minimum account age required before I can submit a review, so I know why I might be blocked.",
         "As the Main Admin, I want my own reviews to publish immediately without needing approval, so I can seed content efficiently at launch.",

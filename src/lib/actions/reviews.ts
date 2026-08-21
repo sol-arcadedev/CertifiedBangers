@@ -51,7 +51,7 @@ async function createOrUpdateReview(
   if (bodyText.length < MIN_BODY_LENGTH) {
     return { error: `Review must be at least ${MIN_BODY_LENGTH} characters.` };
   }
-  const spoilerFlag = formData.get("spoilerFlag") === "on";
+  const spoilerText = String(formData.get("spoilerText") ?? "").trim() || null;
 
   const scores: { categoryId: string; score: number }[] = [];
   for (const category of categories) {
@@ -83,7 +83,7 @@ async function createOrUpdateReview(
           where: { id: existing.id },
           data: {
             bodyText,
-            spoilerFlag,
+            spoilerText,
             overallScore,
             isAdminAuthored,
             // Entry 42's approval gate only needs to re-run on resubmission
@@ -97,7 +97,7 @@ async function createOrUpdateReview(
             userId: user.id,
             titleId,
             bodyText,
-            spoilerFlag,
+            spoilerText,
             overallScore,
             isFirstReviewOfTitle,
             isAdminAuthored,

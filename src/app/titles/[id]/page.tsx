@@ -193,7 +193,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                   existingReview
                     ? {
                         bodyText: existingReview.bodyText,
-                        spoilerFlag: existingReview.spoilerFlag,
+                        spoilerText: existingReview.spoilerText,
                         scores: Object.fromEntries(
                           existingReview.categoryScores.map((s) => [s.categoryId, s.score]),
                         ),
@@ -263,15 +263,14 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                   <ReportButton targetType="REVIEW" targetId={review.id} />
                 )}
               </div>
-              {review.spoilerFlag ? (
+              <p className="mt-2 text-sm leading-6 text-foreground/90">{review.bodyText}</p>
+              {review.spoilerText && (
                 <details className="mt-2">
                   <summary className="cursor-pointer text-sm text-muted">
                     Contains spoilers — click to show
                   </summary>
-                  <p className="mt-2 text-sm leading-6 text-foreground/90">{review.bodyText}</p>
+                  <p className="mt-2 text-sm leading-6 text-foreground/90">{review.spoilerText}</p>
                 </details>
-              ) : (
-                <p className="mt-2 text-sm leading-6 text-foreground/90">{review.bodyText}</p>
               )}
 
               {review.comments.length > 0 && (

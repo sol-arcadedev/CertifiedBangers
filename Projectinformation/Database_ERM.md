@@ -95,7 +95,7 @@ erDiagram
         string titleId FK
         float overallScore "avg of category scores"
         string bodyText
-        bool spoilerFlag
+        string spoilerText "nullable; main bodyText must stay spoiler-free, Entry 48"
         bool isAdminAuthored
         ReviewApprovalStatus approvalStatus "PUBLISHED | PENDING_APPROVAL | REJECTED"
         bool isFirstReviewOfTitle

@@ -15,7 +15,7 @@ export function ReviewForm({
   categories: Category[];
   existingReview?: {
     bodyText: string;
-    spoilerFlag: boolean;
+    spoilerText: string | null;
     scores: Record<string, number>;
   };
 }) {
@@ -64,14 +64,20 @@ export function ReviewForm({
           className={INPUT}
         />
       </label>
+      <p className="-mt-2 text-xs text-muted">
+        Keep this field spoiler-free — describe plot specifics in the spoiler field below instead.
+        Reviews with unhidden spoilers in the main text will be removed.
+      </p>
 
-      <label className="flex items-center gap-2 text-sm text-foreground">
-        <input
-          type="checkbox"
-          name="spoilerFlag"
-          defaultChecked={existingReview?.spoilerFlag}
+      <label className={LABEL}>
+        Spoiler details (optional)
+        <textarea
+          name="spoilerText"
+          rows={4}
+          defaultValue={existingReview?.spoilerText ?? ""}
+          placeholder="Anything spoiler-specific goes here — hidden behind a click-to-reveal by default."
+          className={INPUT}
         />
-        Contains spoilers
       </label>
 
       {state?.error && (
