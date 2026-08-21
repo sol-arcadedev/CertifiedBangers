@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/require-user";
 import { checkReviewGate } from "@/lib/review-gate";
 import { checkReviewRateLimit } from "@/lib/rate-limit";
 import { recomputeTitleAggregates } from "@/lib/title-aggregates";
+import { recomputeUserReputation } from "@/lib/user-reputation";
 import { performAniListImport } from "@/lib/actions/anilist-import";
 
 export type ReviewActionState = { error?: string } | undefined;
@@ -116,6 +117,7 @@ async function createOrUpdateReview(
     // Cheap to always recompute rather than branch on whether this
     // submission actually changed a PUBLISHED review's scores.
     await recomputeTitleAggregates(titleId, tx);
+    await recomputeUserReputation(user.id, tx);
   });
 
   revalidatePath(`/titles/${titleId}`);

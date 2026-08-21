@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getPlatformSettings } from "@/lib/settings";
 import { recomputeTitleSealCounts } from "@/lib/title-aggregates";
+import { recomputeUserReputation } from "@/lib/user-reputation";
 
 const PROBATION_STREAK_DAYS = 30; // Entry 12
 
@@ -49,6 +50,7 @@ export async function checkAutoSealCandidacy(reviewId: string) {
   );
 
   await recomputeTitleSealCounts(review.titleId);
+  await recomputeUserReputation(review.userId);
 }
 
 // Daily cron job (src/app/api/cron/seal-probation/route.ts). Entry 12:

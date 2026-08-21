@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { recomputeTitleSealCounts } from "@/lib/title-aggregates";
+import { recomputeUserReputation } from "@/lib/user-reputation";
 
 export type SealActionState = { error?: string } | undefined;
 
@@ -52,6 +53,7 @@ export async function grantSeal(
   });
 
   await recomputeTitleSealCounts(review.titleId);
+  await recomputeUserReputation(review.userId);
   revalidatePath(`/titles/${review.titleId}`);
   revalidatePath("/admin/seals");
 }
@@ -65,12 +67,13 @@ export async function revokeSeal(sealAwardId: string) {
 
   const award = await prisma.sealAward.findUnique({
     where: { id: sealAwardId },
-    include: { review: { select: { titleId: true } } },
+    include: { review: { select: { titleId: true, userId: true } } },
   });
   if (!award) return;
 
   await prisma.sealAward.delete({ where: { id: sealAwardId } });
   await recomputeTitleSealCounts(award.review.titleId);
+  await recomputeUserReputation(award.review.userId);
   revalidatePath(`/titles/${award.review.titleId}`);
   revalidatePath("/admin/seals");
 }

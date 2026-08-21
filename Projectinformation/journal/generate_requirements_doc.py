@@ -525,6 +525,7 @@ WORK_PACKAGES = [
     ("WP3.1", "Voting on reviews", "Up/down voting with a unique constraint per user/review; net-score computation.", "WP2.1", "S"),
     ("WP3.2", "Comments on reviews", "Flat (non-threaded) comments.", "WP2.1", "S"),
     ("WP3.3", "Reporting/flagging", "Report flow for reviews, comments, and titles.", "WP2.1, WP3.2", "S"),
+    ("WP3.4", "Reputation system", "Points for writing a published review, earning Certified Banger, net votes received, and voting engagement (capped daily); recomputed from source data on every relevant event (Journal Entry 46).", "WP2.1, WP3.1, WP4.1", "S"),
     ("WP4.1", "Seal data model & admin verification queue", "SealAward entity, justification field, Phase 1 admin-verifies-and-grants flow.", "WP2.1, WP3.1", "L"),
     ("WP4.2", "Vote-threshold auto-certification + probation cron", "Phase 2 automatic candidacy on threshold cross, Vercel Cron daily streak job, provisional→permanent conversion, manual admin override.", "WP4.1", "L"),
     ("WP4.3", "Hidden Gem popularity-gate logic (removed)", "Originally a popularity threshold check and dual-seal (Certified Banger + Hidden Gem) coexistence/display; Hidden Gem was removed in favor of a single seal type (Journal Entry 45), so this package is superseded — no popularity-gate logic ships.", "WP4.2", "M"),
@@ -616,6 +617,7 @@ USER_STORIES = [
         "As a registered user, I want to upvote or downvote a review, so the community can surface the most helpful/agreed-with reviews.",
         "As a registered user, I want to comment on a review, so I can discuss or disagree with it.",
         "As a user, I want to see engagement (votes, comment count) on a review, so I can judge how the community responded to it.",
+        "As a registered user, I want to earn reputation for writing reviews, earning seals, receiving upvotes, and voting on other people's reviews, so my track record reflects genuine contribution to the platform (Journal Entry 46).",
     ]),
     ("Discovery & Browsing", [
         "As a user, I want to search titles by name, genre, or author, so I can quickly find what I'm looking for.",

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireMainAdmin } from "@/lib/require-admin";
 import { recomputeTitleAggregates } from "@/lib/title-aggregates";
+import { recomputeUserReputation } from "@/lib/user-reputation";
 
 // Only the Main Admin approves/rejects — Entry 28: non-Main-Admin admin
 // reviews are gated behind the Main Admin's own approval, so it wouldn't
@@ -15,6 +16,7 @@ export async function approveReview(id: string) {
     data: { approvalStatus: "PUBLISHED" },
   });
   await recomputeTitleAggregates(review.titleId);
+  await recomputeUserReputation(review.userId);
   revalidatePath("/admin/reviews");
   revalidatePath(`/titles/${review.titleId}`);
 }
@@ -26,6 +28,7 @@ export async function rejectReview(id: string) {
     data: { approvalStatus: "REJECTED" },
   });
   await recomputeTitleAggregates(review.titleId);
+  await recomputeUserReputation(review.userId);
   revalidatePath("/admin/reviews");
   revalidatePath(`/titles/${review.titleId}`);
 }
