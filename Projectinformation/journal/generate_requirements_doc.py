@@ -252,6 +252,7 @@ SECTION_2 = [
         "Four statuses: Finished, Currently Reading, Plan to Read, Dropped (Journal Entry 18).",
         "Library entries are fully independent of reviews — a user can add any title at any status with or without ever reviewing it (Journal Entry 19).",
         "This feature ships in v1; it is the data foundation for the future recommendation engine, which is itself deferred (Journal Entry 20).",
+        "Each title's page shows a Reader Activity breakdown — how many users have it as Currently Reading, Finished, Plan to Read, or Dropped (Journal Entry 53).",
     ]),
     ("h", 2, "2.6 Voting & Comments"),
     ("bullets", [
@@ -639,6 +640,7 @@ USER_STORIES = [
         "As a registered user, I want to add a title to my library without needing to review it, so I can track titles I haven't formed a full opinion on yet.",
         "As a registered user, I want to change a library entry's status as I progress (e.g. Currently Reading to Finished), so my library stays accurate.",
         "As a registered user, I want to view my library on my profile, so I (and others) can see what I've read or am reading.",
+        "As a user, I want to see how many people are currently reading, finished, dropped, or plan to read a title, so I can gauge its ongoing engagement at a glance (Journal Entry 53).",
     ]),
     ("Moderation & Reporting", [
         "As a registered user, I want to report a review, comment, or title as inappropriate/spam, so problematic content gets moderator attention.",

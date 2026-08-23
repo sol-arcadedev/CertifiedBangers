@@ -13,6 +13,14 @@ import { ReportButton } from "@/components/report-button";
 import { LibraryWidget } from "@/components/library-widget";
 import { formatStartDate, formatSource } from "@/lib/title-format";
 import { BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
+import type { LibraryStatus } from "@/generated/prisma/enums";
+
+const LIBRARY_STATUS_DISPLAY: { status: LibraryStatus; label: string; emoji: string }[] = [
+  { status: "CURRENTLY_READING", label: "Currently Reading", emoji: "📖" },
+  { status: "FINISHED", label: "Finished", emoji: "✅" },
+  { status: "PLAN_TO_READ", label: "Plan to Read", emoji: "📋" },
+  { status: "DROPPED", label: "Dropped", emoji: "❌" },
+];
 
 // Entry 52: for an AniList-linked title, every detail field below except
 // `type`/`coverUrl` (kept locally by design) is resolved live rather than
@@ -104,7 +112,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
 
   const display = await resolveTitleDisplay(title);
 
-  const [categories, user, reviews] = await Promise.all([
+  const [categories, user, reviews, libraryStats] = await Promise.all([
     prisma.category.findMany({
       where: { appliesToType: { has: title.type } },
       orderBy: { name: "asc" },
@@ -123,7 +131,15 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
       },
       orderBy: { createdAt: "desc" },
     }),
+    // Reader-activity analytics — how many people have this title in each
+    // library status. Grouped rather than 4 separate counts.
+    prisma.libraryEntry.groupBy({ by: ["status"], where: { titleId: id }, _count: true }),
   ]);
+
+  const libraryCounts = Object.fromEntries(
+    libraryStats.map((s) => [s.status, s._count]),
+  ) as Partial<Record<LibraryStatus, number>>;
+  const totalLibraryEntries = libraryStats.reduce((sum, s) => sum + s._count, 0);
 
   const existingReview = user
     ? await prisma.review.findUnique({
@@ -252,6 +268,23 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
               <div className="text-sm text-foreground">{d.value}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalLibraryEntries > 0 && (
+        <div className={`mt-6 ${CARD} p-4`}>
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Reader Activity</h2>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+            {LIBRARY_STATUS_DISPLAY.map(({ status, label, emoji }) => (
+              <div key={status}>
+                <span aria-hidden="true">{emoji}</span>{" "}
+                <span className="font-medium text-foreground">
+                  {libraryCounts[status] ?? 0}
+                </span>{" "}
+                {label}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
