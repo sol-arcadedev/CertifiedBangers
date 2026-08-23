@@ -13,7 +13,15 @@ export async function hydrateWithLiveAniListData<T extends { anilistId: number |
   const ids = rows
     .map((row) => row.anilistId)
     .filter((id): id is number => id !== null);
-  const liveById = await getAniListMediaByIds(ids);
+
+  // AniList being slow/unreachable/rate-limited must never take down a
+  // whole page (this bit the homepage in production — every caller here
+  // is a list/browse view, not a single-title detail page with its own
+  // fallback UI) — degrade to "no live data for anything" rather than
+  // throwing. Every caller already handles `live: null` per-row (that's
+  // the not-yet-fetched/not-found case), so this is a safe, silent
+  // degrade, not a special case callers need to add handling for.
+  const liveById = await getAniListMediaByIds(ids).catch(() => new Map<number, AniListTitleImport>());
 
   return rows.map((row) => ({
     ...row,

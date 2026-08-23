@@ -405,19 +405,25 @@ export async function getAniListMediaByIds(
 
   for (let i = 0; i < ids.length; i += ANILIST_BATCH_SIZE) {
     const chunk = ids.slice(i, i + ANILIST_BATCH_SIZE);
-    const data = await anilistRequest<{ Page: { media: MediaDetailItem[] } }>(
-      `query ($ids: [Int]) {
-        Page(page: 1, perPage: ${ANILIST_BATCH_SIZE}) {
-          media(id_in: $ids, type: MANGA) { ${DETAIL_FIELDS} }
-        }
-      }`,
-      { ids: chunk },
-      DISPLAY_CACHE_SECONDS,
-    );
+    try {
+      const data = await anilistRequest<{ Page: { media: MediaDetailItem[] } }>(
+        `query ($ids: [Int]) {
+          Page(page: 1, perPage: ${ANILIST_BATCH_SIZE}) {
+            media(id_in: $ids, type: MANGA) { ${DETAIL_FIELDS} }
+          }
+        }`,
+        { ids: chunk },
+        DISPLAY_CACHE_SECONDS,
+      );
 
-    for (const media of data.Page.media) {
-      const mapped = mapMediaToImport(media);
-      if (mapped) result.set(media.id, mapped);
+      for (const media of data.Page.media) {
+        const mapped = mapMediaToImport(media);
+        if (mapped) result.set(media.id, mapped);
+      }
+    } catch {
+      // One chunk failing (rate limit, timeout) shouldn't lose results
+      // already fetched from earlier chunks — only relevant once the
+      // catalog outgrows a single batch, but cheap to get right now.
     }
   }
 
