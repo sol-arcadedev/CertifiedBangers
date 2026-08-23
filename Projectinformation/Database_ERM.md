@@ -14,6 +14,8 @@ erDiagram
     USER ||--o{ VOTE : casts
     USER ||--o{ REPORT : files
     USER |o--o{ SEAL_AWARD : "grants (admin, optional)"
+    USER ||--o{ FOLLOW : "follows (as follower)"
+    USER ||--o{ FOLLOW : "is followed (as following)"
 
     TITLE ||--o{ REVIEW : "reviewed in"
     TITLE ||--o{ LIBRARY_ENTRY : "tracked in"
@@ -169,6 +171,13 @@ erDiagram
         string targetId "no DB FK — app-enforced"
         string reason
         ReportStatus status "OPEN | RESOLVED | DISMISSED"
+        datetime createdAt
+    }
+
+    FOLLOW {
+        string id PK
+        string followerId FK
+        string followingId FK
         datetime createdAt
     }
 ```

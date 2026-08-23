@@ -243,7 +243,7 @@ SECTION_2 = [
         "Anonymous visitors can browse titles, read reviews, and view the seal showcase without an account. An account is required only to write, rate, vote, comment, or take any seal-related action (Journal Entry 3).",
         "Public profile: username, self-service avatar and banner image (Journal Entry 51), bio, list of reviews, seals awarded, join date, a basic reputation indicator, and a library overview (Section 2.5).",
         "Two-tier admin structure: a single Main Admin (the platform founder/owner) and additional Admin accounts recruited later. Only the Main Admin can grant/lift the review-approval requirement for a given admin (Journal Entry 28).",
-        "Follow/unfollow other users — nice-to-have, not core-critical for v1.",
+        "Follow/unfollow other users, with an activity feed of published reviews and Finished/Dropped library updates from people you follow — shipped in v1 (Journal Entry 54), derived live from existing review/library data rather than a separate notification/event-log system.",
     ]),
     ("h", 2, "2.5 User Library (Reading Status Tracking)"),
     ("p", "A v1 feature (introduced this session, not in the original brief): registered users can "
@@ -507,6 +507,10 @@ Vote
 Report
  - id, reporter_user_id, target_type, target_id, reason,
    status, created_at
+
+Follow                  <- Entry 54, no event-log table for the feed itself
+ - id, follower_id, following_id, created_at
+   UNIQUE (follower_id, following_id)
 """.strip("\n")
 
 SECTION_7 = [
@@ -523,6 +527,7 @@ WORK_PACKAGES = [
     ("WP0.1", "Project scaffolding", "Next.js + TypeScript project init, Prisma setup, Supabase project (DB/Auth/Storage), Vercel deploy pipeline, environment/secrets configuration.", "—", "S"),
     ("WP0.2", "Core data model & migrations", "Implement all entities from Section 7; seed the Category table (4 rows, Entry 47) and SealType table (1 row, Entry 45).", "WP0.1", "M"),
     ("WP1.1", "Authentication & user profiles", "Supabase Auth integration, registration/login, public profile page, role field (user/admin/main_admin).", "WP0.2", "M"),
+    ("WP1.4", "Follow system & activity feed", "Follow/unfollow (Follow model), follower/following counts on the profile page, a /feed page showing published reviews and Finished/Dropped library updates from followed users derived live (no event-log table) (Journal Entry 54).", "WP1.1, WP2.1, WP5.2", "M"),
     ("WP1.2", "Title catalog & admin seeding tools", "Admin panel to search/import titles from AniList (primary path, Entry 44) with cover art re-hosted on this project's own storage; manual create/edit form kept as a fallback; search-before-create de-dup UX; admin merge tooling. Revised by Entry 52: importing no longer copies AniList's metadata into the row (name/type/status/cover only) — everything else is fetched live, so the admin edit form only applies to manual titles now.", "WP0.2", "M"),
     ("WP2.1", "Review creation", "Rating form across the platform's categories, free-text body, computed overall score, separate optional spoiler field, one-review-per-user-per-title with edit-replace.", "WP1.1, WP1.2", "M"),
     ("WP2.2", "Baseline review-submission gate", "Enforce email verification plus a minimum 3-day account age before first review submission; gate parameters admin-configurable for future tuning.", "WP2.1", "S"),
@@ -641,6 +646,11 @@ USER_STORIES = [
         "As a registered user, I want to change a library entry's status as I progress (e.g. Currently Reading to Finished), so my library stays accurate.",
         "As a registered user, I want to view my library on my profile, so I (and others) can see what I've read or am reading.",
         "As a user, I want to see how many people are currently reading, finished, dropped, or plan to read a title, so I can gauge its ongoing engagement at a glance (Journal Entry 53).",
+    ]),
+    ("Follow System & Activity Feed", [
+        "As a registered user, I want to follow another user's profile, so I can keep up with reviewers whose taste I trust.",
+        "As a registered user, I want to see a feed of reviews and finished/dropped titles from people I follow, so I can discover content through people rather than only through search (Journal Entry 54).",
+        "As a registered user, I want to see follower/following counts on a profile, so I can gauge how established a reviewer is.",
     ]),
     ("Moderation & Reporting", [
         "As a registered user, I want to report a review, comment, or title as inappropriate/spam, so problematic content gets moderator attention.",

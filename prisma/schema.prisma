@@ -152,8 +152,29 @@ model User {
   votes             Vote[]
   reports           Report[]       @relation("ReporterReports")
   sealAwardsAsAdmin SealAward[]    @relation("SealGrantedByAdmin")
+  following         Follow[]       @relation("Following")
+  followers         Follow[]       @relation("Followers")
 
   @@map("users")
+}
+
+// Entry 54: who follows whom. The activity feed itself has no dedicated
+// event-log table — a followed user's qualifying activity (review
+// created, library status set to Finished/Dropped) is derived live from
+// Review/LibraryEntry at feed-render time, the same "derive from source
+// data" pattern used for Reader Activity and the profile Library stat.
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Following", fields: [followerId], references: [id])
+  following User @relation("Followers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
 }
 
 model Title {

@@ -1114,5 +1114,18 @@
     "options": [],
     "decision": "src/app/titles/[id]/page.tsx groups LibraryEntry rows by status for the title (prisma.libraryEntry.groupBy) alongside its existing per-page data fetches, and renders a small card (only when at least one library entry exists) with one line per status. Read live on every render rather than precomputed — unlike Title's review-driven aggregates (Entry 39), library-status counts have no existing incremental-update hook anywhere library actions happen, and a single groupBy over one title's entries is cheap enough that adding one isn't warranted yet.",
     "rationale": "User's explicit direction, scope clarified before implementing to avoid building a fifth status nobody asked for. Kept as a live query rather than a new precomputed column since this data has no other consumer yet and the query is trivially cheap at a single title's scale — revisit as a precomputed aggregate only if this specific query is ever shown to be a real cost."
+  },
+  {
+    "id": 54,
+    "date": "2026-08-23",
+    "title": "Follow System and Activity Feed",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "New v1 feature, extending Section 2.4 (Users, Profiles) with a social-graph layer not in the original brief.",
+    "summary": "Users can follow other profiles. A new /feed page shows recent qualifying activity from people you follow: a published review, or a library status set to Finished or Dropped.",
+    "context": "User direction: follow interesting profiles and see their activity in a feed. Clarified during planning that this meant a feed page to visit, not a persistent notification system with unread badges/read-state.",
+    "options": [],
+    "decision": "Added a Follow model (followerId, followingId, unique compound key, indexed on followingId) with User back-relations `following`/`followers`. No new event-log table for the feed itself — a followed user's activity is derived live at feed-render time from the existing Review and LibraryEntry tables (same 'derive from source data' pattern as Reader Activity and the profile Library stat, Entry 53), rather than writing a new row on every qualifying review/library action. src/lib/actions/follows.ts's toggleFollow mirrors voteOnReview's toggle shape (create if absent, delete if present) and blocks following yourself. src/components/follow-button.tsx uses useOptimistic for an instant toggle. The profile page (src/app/profile/[username]/page.tsx) shows Followers/Following counts alongside the existing Reviews/Reputation/Library stats and renders the follow button next to the username when viewing someone else's profile while signed in. The new /feed page (requireUser-gated) merges published reviews and Finished/Dropped library entries from followed users, sorted by recency, with distinct empty states for 'following no one' vs 'no recent activity.' A 'Feed' nav link was added, shown only when signed in.",
+    "rationale": "User's explicit direction on the core feature; the notification-mechanism question was clarified before implementing to avoid building unread-state/badge infrastructure nobody asked for. Deriving feed activity live rather than logging discrete events keeps this consistent with the rest of the app's aggregate/analytics features, at the accepted cost that a status change away from Finished/Dropped later erases that moment from the feed (LibraryEntry has no history, only current state) — a known, documented tradeoff rather than an oversight."
   }
 ]

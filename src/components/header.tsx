@@ -32,6 +32,9 @@ export async function Header() {
         </Link>
         {user ? (
           <>
+            <Link href="/feed" className={navLinkClass}>
+              Feed
+            </Link>
             {(user.role === "ADMIN" || user.role === "MAIN_ADMIN") && (
               <Link href="/admin/titles" className={navLinkClass}>
                 Admin

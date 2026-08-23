@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { UsernameLabel } from "@/components/username-label";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { ProfileImageForm } from "@/components/profile-image-form";
+import { FollowButton } from "@/components/follow-button";
 import type { LibraryStatus } from "@/generated/prisma/enums";
 
 const LIBRARY_STATUS_ORDER: { status: LibraryStatus; label: string }[] = [
@@ -30,7 +31,7 @@ export default async function ProfilePage(
         role: true,
         reputationScore: true,
         createdAt: true,
-        _count: { select: { reviews: true } },
+        _count: { select: { reviews: true, followers: true, following: true } },
         // Public — library entries aren't restricted to the profile owner,
         // matching the hybrid browsing model (Entry 3).
         libraryEntries: {
@@ -47,6 +48,13 @@ export default async function ProfilePage(
   if (!user) notFound();
 
   const isOwner = currentUser?.id === user.id;
+
+  const isFollowing =
+    currentUser && !isOwner
+      ? !!(await prisma.follow.findUnique({
+          where: { followerId_followingId: { followerId: currentUser.id, followingId: user.id } },
+        }))
+      : false;
 
   const joined = user.createdAt.toLocaleDateString("en-US", {
     year: "numeric",
@@ -88,11 +96,20 @@ export default async function ProfilePage(
             </div>
           )}
 
-          <div className="pb-1">
-            <h1 className="text-2xl font-semibold text-foreground">
-              <UsernameLabel username={user.username} role={user.role} />
-            </h1>
-            <p className="text-sm text-muted">Joined {joined}</p>
+          <div className="flex flex-1 items-end justify-between gap-4 pb-1">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">
+                <UsernameLabel username={user.username} role={user.role} />
+              </h1>
+              <p className="text-sm text-muted">Joined {joined}</p>
+            </div>
+            {currentUser && !isOwner && (
+              <FollowButton
+                targetUserId={user.id}
+                targetUsername={user.username}
+                initiallyFollowing={isFollowing}
+              />
+            )}
           </div>
         </div>
 
@@ -112,6 +129,14 @@ export default async function ProfilePage(
           <div>
             <div className="text-lg font-semibold text-foreground">{user.libraryEntries.length}</div>
             <div className="text-sm text-muted">Library</div>
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-foreground">{user._count.followers}</div>
+            <div className="text-sm text-muted">Followers</div>
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-foreground">{user._count.following}</div>
+            <div className="text-sm text-muted">Following</div>
           </div>
         </div>
 
