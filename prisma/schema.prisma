@@ -246,6 +246,13 @@ model Title {
 
   @@index([type, status])
   @@index([name])
+  // GIN index for the genre filter's array-containment check (`has`) —
+  // same class of bug as the sort columns below: without this, both
+  // findMany and count() on a genre filter forced a full seq scan of
+  // every full-width row (findMany could often still limp by on an
+  // orderBy index's early-exit, but count() always paid the full scan
+  // since it can't short-circuit — confirmed ~9.6s on 'Adventure').
+  @@index([genres], type: Gin)
   // Entry 58: one index per /titles sort option — at 100k+ mirrored
   // titles, sorting/filtering on any of these without an index forced a
   // full seq scan of every full-width row (synopsis text, genre/synonym
