@@ -1,0 +1,45 @@
+name: Mirror AniList Catalog (one-time backfill)
+
+# Journal Entry 56: the initial full-catalog mirror, run manually
+# (workflow_dispatch only — this is a one-time backfill, not a recurring
+# job; scripts/refresh-anilist-catalog.ts + refresh-anilist-catalog.yml
+# handle ongoing daily freshness once this completes).
+#
+# Moved here from a local background run after that kept getting killed
+# partway through (machine/session interruption, not a script bug — every
+# write already made is safely persisted, since the script upserts
+# per-page and is resumable via START_YEAR). GitHub Actions runs on a
+# cloud runner independent of any local machine state, which a multi-hour
+# job like this needs.
+#
+# Requires these repo secrets (Settings -> Secrets and variables ->
+# Actions), matching the same values already in Vercel's project env vars:
+#   DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: "Resume from this publication year (1900 for a fresh full mirror)"
+        required: true
+        default: "1900"
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - run: npx tsx scripts/mirror-anilist-catalog.ts
+        env:
+          START_YEAR: ${{ inputs.start_year }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
