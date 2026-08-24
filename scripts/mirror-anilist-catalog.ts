@@ -115,7 +115,13 @@ async function main() {
   const currentYear = new Date().getFullYear();
   // 1900 as a safe floor (AniList has no manga entries meaningfully older
   // than this), currentYear+1 to catch not-yet-released/announced titles.
-  const years = Array.from({ length: currentYear + 1 - 1900 + 1 }, (_, i) => 1900 + i);
+  // START_YEAR lets a re-run skip years already mirrored in a prior
+  // (e.g. interrupted) pass instead of re-walking the whole catalog.
+  const startYear = process.env.START_YEAR ? Number(process.env.START_YEAR) : 1900;
+  const years = Array.from(
+    { length: currentYear + 1 - startYear + 1 },
+    (_, i) => startYear + i,
+  );
 
   for (const year of years) {
     const gt = Number(`${year - 1}1231`); // strictly after Dec 31 of the prior year
