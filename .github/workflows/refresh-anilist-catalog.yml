@@ -1,0 +1,37 @@
+name: Refresh AniList Catalog
+
+# Journal Entry 56: the daily refresh for the fully-mirrored AniList
+# catalog. Runs as a GitHub Actions scheduled workflow rather than Vercel
+# Cron — a full-catalog refresh takes on the order of an hour or more even
+# for a lightweight metadata-only pass, well past Vercel's serverless
+# function timeout regardless of plan. GitHub Actions allows up to 6 hours
+# per scheduled job on the free tier, with no per-invocation timeout fight.
+#
+# Requires these repo secrets (Settings -> Secrets and variables ->
+# Actions), matching the same values already in Vercel's project env vars:
+#   DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+on:
+  schedule:
+    # 03:00 UTC daily — low-traffic hours for most audiences.
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - run: npx tsx scripts/refresh-anilist-catalog.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

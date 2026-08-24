@@ -5,7 +5,6 @@ import { LiveSearchInput } from "@/components/live-search-input";
 import { LatestReviews } from "@/components/latest-reviews";
 import { searchTitleIds } from "@/lib/title-search";
 import { getDistinctGenres } from "@/lib/genres";
-import { hydrateWithLiveAniListData } from "@/lib/anilist-linked-titles";
 import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
 const REVIEWS_PER_PAGE = 24;
@@ -33,53 +32,20 @@ export default async function ReviewsPage(props: PageProps<"/reviews">) {
   // Reviews are filtered by their title's attributes — a review has no
   // independently searchable/filterable metadata of its own (genre, format,
   // status all live on Title), so "filter reviews by genre Comedy" means
-  // "reviews on titles tagged Comedy." Entry 52: genre/synopsis/status are
-  // no longer trustworthy on the local row for an AniList-linked title, so
-  // matching one against these filters needs live AniList data — without
-  // this, every genre/Status filter would silently return zero results for
-  // virtually every review (almost all reviewed titles are AniList-linked).
-  const hasFilter = !!matchingIds || !!genre || !!type || !!status;
-  let titleIds: string[] | null = null;
-
-  if (hasFilter) {
-    const manualWhere: Prisma.TitleWhereInput = { anilistId: null };
-    if (matchingIds) manualWhere.id = { in: matchingIds };
-    if (genre) manualWhere.genres = { has: genre };
-    if (type) manualWhere.type = type;
-    if (status) manualWhere.status = status;
-
-    const [matchingManual, importedTitles] = await Promise.all([
-      prisma.title.findMany({ where: manualWhere, select: { id: true } }),
-      prisma.title.findMany({
-        where: { anilistId: { not: null }, ...(type ? { type } : {}) },
-        select: { id: true, anilistId: true, name: true },
-      }),
-    ]);
-
-    const hydratedImported = await hydrateWithLiveAniListData(importedTitles);
-    const qLower = q.toLowerCase();
-    const matchingImportedIds = hydratedImported
-      .filter((t) => {
-        if (genre && !(t.live?.genres.includes(genre) ?? false)) return false;
-        if (status && t.live?.status !== status) return false;
-        if (q.length >= 2) {
-          const haystack = [t.live?.name ?? t.name, t.live?.titleRomaji, t.live?.titleEnglish, t.live?.titleNative, ...(t.live?.genres ?? []), ...(t.live?.synonyms ?? [])]
-            .filter((s): s is string => !!s)
-            .join(" ")
-            .toLowerCase();
-          if (!haystack.includes(qLower)) return false;
-        }
-        return true;
-      })
-      .map((t) => t.id);
-
-    titleIds = [...matchingManual.map((t) => t.id), ...matchingImportedIds];
-  }
+  // "reviews on titles tagged Comedy." Entry 56: the whole AniList catalog
+  // is mirrored and refreshed locally now, so this is a plain, trustworthy
+  // `where` clause again for every title, not just manual ones.
+  const titleWhere: Prisma.TitleWhereInput = {};
+  if (matchingIds) titleWhere.id = { in: matchingIds };
+  if (genre) titleWhere.genres = { has: genre };
+  if (type) titleWhere.type = type;
+  if (status) titleWhere.status = status;
+  const hasTitleFilter = Object.keys(titleWhere).length > 0;
 
   const reviews = await prisma.review.findMany({
     where: {
       approvalStatus: "PUBLISHED",
-      ...(titleIds ? { titleId: { in: titleIds } } : {}),
+      ...(hasTitleFilter ? { title: titleWhere } : {}),
     },
     orderBy: { createdAt: "desc" },
     take: REVIEWS_PER_PAGE,

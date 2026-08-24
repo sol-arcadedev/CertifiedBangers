@@ -47,27 +47,27 @@ erDiagram
     TITLE {
         string id PK
         int anilistId UK "null = manually created, Entry 44"
-        int anilistAverageScore "manual titles only now, Entry 52 - AniList-linked titles fetch this live"
-        int anilistMeanScore "manual titles only now, Entry 52"
-        int anilistPopularity "manual titles only now, Entry 52"
-        int anilistFavourites "manual titles only now, Entry 52"
-        string anilistSource "manual titles only now, Entry 52"
-        string name "cached fallback for AniList-linked titles, Entry 52 - live-fetched name preferred when reachable"
-        string titleRomaji "manual titles only now, Entry 52"
-        string titleEnglish "manual titles only now, Entry 52"
-        string titleNative "manual titles only now, Entry 52"
-        string_array synonyms "manual titles only now, Entry 52"
-        TitleType type "MANGA | MANHWA | MANHUA - kept for AniList-linked titles too, Entry 52 (country-of-origin never changes)"
-        TitleStatus status "ONGOING | COMPLETED | HIATUS | DROPPED - cached fallback for AniList-linked titles, Entry 52"
-        string author "manual titles only now, Entry 52"
-        string illustrator "manual titles only now, Entry 52"
-        string_array genres "manual titles only now, Entry 52 - AniList-linked titles fetch this live"
-        string coverUrl "still re-hosted to Storage for every title, Entry 35/44/52"
-        string synopsis "manual titles only now, Entry 52"
-        int publicationYear "manual titles only now, Entry 52"
-        int startMonth "manual titles only now, Entry 52"
-        int startDay "manual titles only now, Entry 52"
-        string_array externalLinks "manual titles only now, Entry 52"
+        int anilistAverageScore "mirrored from AniList, refreshed daily, Entry 56"
+        int anilistMeanScore "mirrored from AniList, refreshed daily, Entry 56"
+        int anilistPopularity "mirrored from AniList, refreshed daily, Entry 56"
+        int anilistFavourites "mirrored from AniList, refreshed daily, Entry 56"
+        string anilistSource
+        string name
+        string titleRomaji
+        string titleEnglish
+        string titleNative
+        string_array synonyms "admin-editable via manual form"
+        TitleType type "MANGA | MANHWA | MANHUA"
+        TitleStatus status "ONGOING | COMPLETED | HIATUS | DROPPED"
+        string author
+        string illustrator
+        string_array genres
+        string coverUrl "re-hosted to Storage, never hotlinked, Entry 35/44"
+        string synopsis
+        int publicationYear
+        int startMonth
+        int startDay
+        string_array externalLinks
         json avgCategoryScores "precomputed aggregate"
         int reviewCount "precomputed aggregate"
         int certifiedBangerCount "precomputed aggregate; WP5.1 'most seals' sort field"

@@ -58,11 +58,9 @@ async function uploadCover(file: File): Promise<string> {
 // Called directly (via startTransition) from the new/edit title forms as
 // the admin types a name — "search-before-create" de-dup UX (README
 // Section 4.1) — not bound to a <form>, so it isn't (prevState, formData).
-// Also checks AniList directly (Entry 52): title/titleRomaji/etc. are only
-// ever populated locally for manual titles now, so a name match against an
-// AniList-linked title already in our catalog still works (its cached
-// `name` fallback is searched too), but a duplicate that isn't in our
-// catalog *yet* would otherwise go undetected without this.
+// Also checks AniList directly: the whole catalog is mirrored (Entry 56),
+// but a duplicate that predates the next refresh/mirror pass would
+// otherwise go undetected without this.
 export async function searchTitles(query: string) {
   await requireAdmin();
   const q = query.trim();
@@ -124,14 +122,6 @@ export async function updateTitle(
   const existing = await prisma.title.findUnique({ where: { id } });
   if (!existing) return { error: "Title not found." };
 
-  // AniList-linked titles no longer store editable metadata locally
-  // (Entry 52) — name/genres/synopsis/etc. are always fetched live, so
-  // there's nothing meaningful for this form to write back except the
-  // cover. Manual titles (existing.anilistId === null) are unaffected.
-  if (existing.anilistId !== null) {
-    return updateTitleCover(id, existing.coverUrl, formData);
-  }
-
   const parsed = parseTitleFields(formData);
   if ("error" in parsed) return { error: parsed.error };
 
@@ -148,27 +138,6 @@ export async function updateTitle(
   }
 
   await prisma.title.update({ where: { id }, data: { ...parsed.data, coverUrl } });
-
-  revalidatePath("/admin/titles");
-  revalidatePath(`/admin/titles/${id}`);
-  return { message: "Saved." };
-}
-
-async function updateTitleCover(
-  id: string,
-  existingCoverUrl: string | null,
-  formData: FormData,
-): Promise<TitleActionState> {
-  const cover = formData.get("cover");
-  if (cover instanceof File && cover.size > 0) {
-    try {
-      const newCoverUrl = await uploadCover(cover);
-      await deleteCoverIfOwned(existingCoverUrl);
-      await prisma.title.update({ where: { id }, data: { coverUrl: newCoverUrl } });
-    } catch (err) {
-      return { error: err instanceof Error ? err.message : "Cover upload failed." };
-    }
-  }
 
   revalidatePath("/admin/titles");
   revalidatePath(`/admin/titles/${id}`);

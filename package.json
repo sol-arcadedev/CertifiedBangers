@@ -11,7 +11,9 @@
     "setup:storage": "tsx scripts/setup-storage.ts",
     "promote-admin": "tsx scripts/promote-admin.ts",
     "seed:titles": "tsx scripts/seed-default-titles.ts",
-    "backfill:reputation": "tsx scripts/backfill-reputation.ts"
+    "backfill:reputation": "tsx scripts/backfill-reputation.ts",
+    "mirror:anilist-catalog": "tsx scripts/mirror-anilist-catalog.ts",
+    "refresh:anilist-catalog": "tsx scripts/refresh-anilist-catalog.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

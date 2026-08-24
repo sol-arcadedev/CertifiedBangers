@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { getAniListMediaById } from "@/lib/anilist";
 import { checkReviewGate } from "@/lib/review-gate";
 import { submitReview } from "@/lib/actions/reviews";
 import { ReviewForm } from "@/components/review-form";
@@ -22,95 +21,11 @@ const LIBRARY_STATUS_DISPLAY: { status: LibraryStatus; label: string; emoji: str
   { status: "DROPPED", label: "Dropped", emoji: "❌" },
 ];
 
-// Entry 52: for an AniList-linked title, every detail field below except
-// `type`/`coverUrl` (kept locally by design) is resolved live rather than
-// from the local row, which no longer carries a trustworthy copy of them.
-// Falls back to the local `name`/`status` snapshot (written once at
-// import, Entry 52) if AniList itself is slow/unreachable — a real
-// (if possibly slightly stale) name/status beats a generic placeholder,
-// and this title's reviews/aggregate score are real local content that
-// must stay visible regardless of AniList's uptime.
-async function resolveTitleDisplay(title: {
-  anilistId: number | null;
-  name: string;
-  status: string;
-  genres: string[];
-  synopsis: string | null;
-  author: string | null;
-  illustrator: string | null;
-  publicationYear: number | null;
-  startMonth: number | null;
-  startDay: number | null;
-  titleRomaji: string | null;
-  titleEnglish: string | null;
-  titleNative: string | null;
-  synonyms: string[];
-  anilistAverageScore: number | null;
-  anilistMeanScore: number | null;
-  anilistPopularity: number | null;
-  anilistFavourites: number | null;
-  anilistSource: string | null;
-}) {
-  if (title.anilistId === null) {
-    // Manual title (Entry 44's fallback path) — no AniList source, local
-    // columns are the only data that has ever existed for it.
-    return { ...title, liveDataUnavailable: false };
-  }
-
-  const live = await getAniListMediaById(title.anilistId, true).catch(() => null);
-  if (!live) {
-    return {
-      ...title,
-      genres: [],
-      synopsis: null,
-      author: null,
-      illustrator: null,
-      publicationYear: null,
-      startMonth: null,
-      startDay: null,
-      titleRomaji: null,
-      titleEnglish: null,
-      titleNative: null,
-      synonyms: [],
-      anilistAverageScore: null,
-      anilistMeanScore: null,
-      anilistPopularity: null,
-      anilistFavourites: null,
-      anilistSource: null,
-      liveDataUnavailable: true,
-    };
-  }
-
-  return {
-    name: live.name,
-    status: live.status,
-    genres: live.genres,
-    synopsis: live.synopsis,
-    author: live.author,
-    illustrator: live.illustrator,
-    publicationYear: live.publicationYear,
-    startMonth: live.startMonth,
-    startDay: live.startDay,
-    titleRomaji: live.titleRomaji,
-    titleEnglish: live.titleEnglish,
-    titleNative: live.titleNative,
-    synonyms: live.synonyms,
-    anilistAverageScore: live.averageScore,
-    anilistMeanScore: live.meanScore,
-    anilistPopularity: live.popularity,
-    anilistFavourites: live.favourites,
-    anilistSource: live.source,
-    liveDataUnavailable: false,
-  };
-}
-
 export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) {
   const { id } = await props.params;
 
   const title = await prisma.title.findUnique({ where: { id } });
   if (!title) notFound();
-
-  const display = await resolveTitleDisplay(title);
 
   const [categories, user, reviews, libraryStats] = await Promise.all([
     prisma.category.findMany({
@@ -172,18 +87,18 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
     : {};
 
   const details: { label: string; value: string }[] = [
-    { label: "Status", value: display.status },
-    { label: "Start Date", value: formatStartDate(display.publicationYear, display.startMonth, display.startDay) },
-    { label: "Average Score", value: display.anilistAverageScore !== null ? `${display.anilistAverageScore}%` : null },
-    { label: "Mean Score", value: display.anilistMeanScore !== null ? `${display.anilistMeanScore}%` : null },
-    { label: "Popularity", value: display.anilistPopularity?.toLocaleString() ?? null },
-    { label: "Favorites", value: display.anilistFavourites?.toLocaleString() ?? null },
-    { label: "Source", value: formatSource(display.anilistSource) },
-    { label: "Genres", value: display.genres.length > 0 ? display.genres.join(", ") : null },
-    { label: "Romaji", value: display.titleRomaji },
-    { label: "English", value: display.titleEnglish },
-    { label: "Native", value: display.titleNative },
-    { label: "Synonyms", value: display.synonyms.length > 0 ? display.synonyms.join(", ") : null },
+    { label: "Status", value: title.status },
+    { label: "Start Date", value: formatStartDate(title.publicationYear, title.startMonth, title.startDay) },
+    { label: "Average Score", value: title.anilistAverageScore !== null ? `${title.anilistAverageScore}%` : null },
+    { label: "Mean Score", value: title.anilistMeanScore !== null ? `${title.anilistMeanScore}%` : null },
+    { label: "Popularity", value: title.anilistPopularity?.toLocaleString() ?? null },
+    { label: "Favorites", value: title.anilistFavourites?.toLocaleString() ?? null },
+    { label: "Source", value: formatSource(title.anilistSource) },
+    { label: "Genres", value: title.genres.length > 0 ? title.genres.join(", ") : null },
+    { label: "Romaji", value: title.titleRomaji },
+    { label: "English", value: title.titleEnglish },
+    { label: "Native", value: title.titleNative },
+    { label: "Synonyms", value: title.synonyms.length > 0 ? title.synonyms.join(", ") : null },
   ].filter((d): d is { label: string; value: string } => !!d.value);
 
   // Per-category breakdown still reads the JSON blob (no separate scalar
@@ -203,29 +118,24 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={title.coverUrl}
-            alt={display.name}
+            alt={title.name}
             className="h-48 w-32 shrink-0 rounded-xl object-cover shadow-lg shadow-black/30"
           />
         )}
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">{display.name}</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{title.name}</h1>
           <p className="text-sm text-muted">
-            {title.type} · {display.status}
-            {display.publicationYear ? ` · ${display.publicationYear}` : ""}
+            {title.type} · {title.status}
+            {title.publicationYear ? ` · ${title.publicationYear}` : ""}
           </p>
-          {display.liveDataUnavailable && (
-            <p className="mt-2 text-sm text-amber-400">
-              Live details from AniList are unavailable right now — showing limited info.
-            </p>
-          )}
-          {display.author && (
+          {title.author && (
             <p className="mt-2 text-sm text-muted">
-              By {display.author}
-              {display.illustrator ? ` (art: ${display.illustrator})` : ""}
+              By {title.author}
+              {title.illustrator ? ` (art: ${title.illustrator})` : ""}
             </p>
           )}
-          {display.synopsis && (
-            <p className="mt-3 text-sm leading-6 text-foreground/90">{display.synopsis}</p>
+          {title.synopsis && (
+            <p className="mt-3 text-sm leading-6 text-foreground/90">{title.synopsis}</p>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <Link href="#review" className={BUTTON_PRIMARY}>

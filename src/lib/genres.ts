@@ -1,21 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
-import { getAniListGenreCollection } from "@/lib/anilist";
 
 // Shared by /titles'/`/reviews`' filter forms and the homepage toolbar —
-// all need the same "what genres exist to filter by" list. AniList's own
-// canonical genre list (Entry 52) covers every AniList-linked title, since
-// genres are no longer stored locally for those; unioned with whatever
-// genres exist on local manual titles (the only rows where genres are
-// still locally stored) so a manual title's genre is always selectable
-// too, even if AniList's list doesn't happen to include it verbatim.
+// both need the same "what genres actually exist in the catalog" list.
+// Entry 56: back to a plain local query across every title — the whole
+// AniList catalog is mirrored locally now, so this no longer needs an
+// AniList API call at all.
 export async function getDistinctGenres(): Promise<string[]> {
-  const [aniListGenres, manualGenreRows] = await Promise.all([
-    getAniListGenreCollection().catch(() => []),
-    prisma.$queryRaw<{ genre: string }[]>(
-      Prisma.sql`SELECT DISTINCT unnest(genres) AS genre FROM titles WHERE "anilistId" IS NULL`,
-    ),
-  ]);
-
-  return [...new Set([...aniListGenres, ...manualGenreRows.map((r) => r.genre)])].sort();
+  const rows = await prisma.$queryRaw<{ genre: string }[]>(
+    Prisma.sql`SELECT DISTINCT unnest(genres) AS genre FROM titles ORDER BY 1`,
+  );
+  return rows.map((r) => r.genre);
 }

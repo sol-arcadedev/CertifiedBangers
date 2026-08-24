@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { hydrateWithLiveAniListData } from "@/lib/anilist-linked-titles";
 import { INPUT, BUTTON_PRIMARY, BUTTON_SECONDARY } from "@/lib/ui-classes";
 
 export default async function AdminTitlesPage(props: PageProps<"/admin/titles">) {
@@ -8,10 +7,6 @@ export default async function AdminTitlesPage(props: PageProps<"/admin/titles">)
   const q = typeof searchParams.q === "string" ? searchParams.q.trim() : "";
   const unreviewedOnly = searchParams.unreviewed === "1";
 
-  // `name` stays populated even for AniList-linked titles (Entry 52's
-  // cached fallback), so this search/sort still works — titleRomaji/
-  // English/Native/synonyms are only ever populated for manual titles now,
-  // so they only match those.
   const searchClause = q
     ? {
         OR: [
@@ -24,26 +19,20 @@ export default async function AdminTitlesPage(props: PageProps<"/admin/titles">)
       }
     : undefined;
 
-  const [titlesRaw, totalCount, reviewedCount] = await Promise.all([
+  const [titles, totalCount, reviewedCount] = await Promise.all([
     prisma.title.findMany({
       where: unreviewedOnly ? { ...searchClause, reviewCount: 0 } : searchClause,
-      orderBy: { name: "asc" },
+      // WP7.3: when hunting for launch-content gaps, most-visible titles
+      // first — AniList popularity is the best proxy for which unreviewed
+      // titles matter most to seed.
+      orderBy: unreviewedOnly
+        ? [{ anilistPopularity: { sort: "desc", nulls: "last" } }, { name: "asc" }]
+        : { name: "asc" },
       take: 50,
     }),
     prisma.title.count(),
     prisma.title.count({ where: { reviewCount: { gt: 0 } } }),
   ]);
-
-  // WP7.3: when hunting for launch-content gaps, most-visible titles first
-  // — AniList popularity is the best proxy for which unreviewed titles
-  // matter most to seed. anilistPopularity is no longer a trustworthy local
-  // column (Entry 52), so the unreviewed view live-hydrates and sorts in
-  // app instead of via `orderBy`.
-  const titles = unreviewedOnly
-    ? (await hydrateWithLiveAniListData(titlesRaw)).sort(
-        (a, b) => (b.live?.popularity ?? -1) - (a.live?.popularity ?? -1),
-      )
-    : titlesRaw;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
