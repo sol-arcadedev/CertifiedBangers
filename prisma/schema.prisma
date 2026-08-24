@@ -213,6 +213,23 @@ model Title {
   startDay            Int?
   externalLinks       String[]
   createdAt           DateTime    @default(now())
+  // Entry 58: trigger-maintained (not GENERATED ALWAYS AS — to_tsvector()
+  // isn't IMMUTABLE) full-text search column, GIN-indexed. Prisma can't
+  // express or manage this column's type/trigger, so it's declared
+  // Unsupported here purely for documentation — created and kept in sync
+  // entirely via scripts/add-search-index.ts.
+  //
+  // IMPORTANT, confirmed by hitting it directly: `prisma db push` DOES
+  // drop this column's GIN index (and would drop the four DESC NULLS
+  // LAST sort indexes below too — see the comment above those) even
+  // though it can't touch the Unsupported column itself, because db push
+  // reconciles the DB to exactly match what's declared here, and an
+  // index with no corresponding @@index is invisible to that
+  // reconciliation only for the column type, not the index object. Any
+  // `prisma db push` MUST be followed immediately by re-running
+  // scripts/add-search-index.ts and scripts/add-sort-indexes.ts, or
+  // search/sort silently falls back to full sequential scans again.
+  searchVector        Unsupported("tsvector")?
 
   // Precomputed aggregates (Entry 39) — updated incrementally on
   // review/vote/seal/comment events, never recalculated live on read.
@@ -229,6 +246,20 @@ model Title {
 
   @@index([type, status])
   @@index([name])
+  // Entry 58: one index per /titles sort option — at 100k+ mirrored
+  // titles, sorting/filtering on any of these without an index forced a
+  // full seq scan of every full-width row (synopsis text, genre/synonym
+  // arrays included) just to find the top 24. certifiedBangerCount and
+  // discussionCount are never null, so a plain index matches their
+  // (desc) query exactly. anilistAverageScore/anilistPopularity/
+  // communityScore/lastReviewedAt are all sorted `desc, nulls: last` —
+  // Prisma's @@index can't express NULLS ordering, and a plain ascending
+  // index doesn't satisfy that query shape (Postgres falls back to a
+  // full scan regardless of how many rows are actually null), so those
+  // four get DESC NULLS LAST indexes via raw SQL instead, same pattern
+  // as searchVector's trigger/index — see scripts/add-sort-indexes.ts.
+  @@index([certifiedBangerCount])
+  @@index([discussionCount])
   @@map("titles")
 }
 

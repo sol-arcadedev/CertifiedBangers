@@ -3,63 +3,27 @@ import { Prisma } from "@/generated/prisma/client";
 import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
 import { TitleCardGrid } from "@/components/title-card-grid";
-import { browseAniListMedia } from "@/lib/anilist";
 import { getDistinctGenres } from "@/lib/genres";
 import { searchTitleIds } from "@/lib/title-search";
 import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
 
-// Sorting happens in JS on the merged local+AniList array (compareCards,
-// below), not at the DB level — a plain label list is all this needs now.
+const PAGE_SIZE = 24;
+
+// Entry 58: every sort option maps directly to a real, indexed-or-plain
+// column on Title now that the whole catalog is mirrored locally — sorting
+// happens in the DB via `orderBy` (and pagination via skip/take), not by
+// fetching everything and sorting in JS.
 const SORT_OPTIONS = {
-  name: { label: "Name" },
-  score: { label: "AniList score" },
-  popularity: { label: "AniList popularity" },
-  community: { label: "Highest overall score" },
-  seals: { label: "Most seals" },
-  recent: { label: "Most recent reviews" },
-  discussed: { label: "Most discussed" },
-} satisfies Record<string, { label: string }>;
+  name: { label: "Name", orderBy: { name: "asc" } },
+  score: { label: "AniList score", orderBy: { anilistAverageScore: { sort: "desc", nulls: "last" } } },
+  popularity: { label: "AniList popularity", orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } } },
+  community: { label: "Highest overall score", orderBy: { communityScore: { sort: "desc", nulls: "last" } } },
+  seals: { label: "Most seals", orderBy: { certifiedBangerCount: "desc" } },
+  recent: { label: "Most recent reviews", orderBy: { lastReviewedAt: { sort: "desc", nulls: "last" } } },
+  discussed: { label: "Most discussed", orderBy: { discussionCount: "desc" } },
+} satisfies Record<string, { label: string; orderBy: Prisma.TitleOrderByWithRelationInput }>;
 
 type SortKey = keyof typeof SORT_OPTIONS;
-
-// One unified shape for local and AniList-only results, so they render in
-// a single grid indistinguishable from each other. AniList-only entries
-// just carry zero/null for every locally-computed field, which naturally
-// sorts them after anything with real review/seal/discussion data without
-// needing special-case logic.
-type UnifiedCard = {
-  id: string;
-  href?: string;
-  name: string;
-  type: string;
-  coverUrl: string | null;
-  anilistAverageScore: number | null;
-  anilistPopularity: number | null;
-  communityScore: number | null;
-  lastReviewedAt: Date | null;
-  discussionCount: number;
-  reviewCount: number;
-  certifiedBangerCount: number;
-};
-
-function compareCards(a: UnifiedCard, b: UnifiedCard, sort: SortKey): number {
-  switch (sort) {
-    case "name":
-      return a.name.localeCompare(b.name);
-    case "score":
-      return (b.anilistAverageScore ?? -1) - (a.anilistAverageScore ?? -1);
-    case "popularity":
-      return (b.anilistPopularity ?? -1) - (a.anilistPopularity ?? -1);
-    case "community":
-      return (b.communityScore ?? -1) - (a.communityScore ?? -1);
-    case "seals":
-      return b.certifiedBangerCount - a.certifiedBangerCount;
-    case "recent":
-      return (b.lastReviewedAt?.getTime() ?? 0) - (a.lastReviewedAt?.getTime() ?? 0);
-    case "discussed":
-      return b.discussionCount - a.discussionCount;
-  }
-}
 
 export default async function TitlesPage(props: PageProps<"/titles">) {
   const searchParams = await props.searchParams;
@@ -80,6 +44,8 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
   const minCommunityRaw = param("minCommunity");
   const sortParam = param("sort") || "name";
   const sort: SortKey = sortParam in SORT_OPTIONS ? (sortParam as SortKey) : "name";
+  const pageParam = Number(param("page"));
+  const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
 
   const [matchingIds, genres] = await Promise.all([
     q.length >= 2 ? searchTitleIds(q) : null,
@@ -88,7 +54,13 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
 
   // Entry 56: the whole AniList catalog is mirrored and refreshed locally
   // now, so every filter is a plain, trustworthy `where` clause again — no
-  // live-fetch/hydration needed at render time.
+  // live-fetch/hydration needed at render time. Entry 58: dropped the
+  // live AniList blend that used to sit alongside this — the mirror is
+  // complete and refreshed daily, so it rarely surfaced anything a local
+  // search wouldn't, at the cost of an external HTTP round-trip on nearly
+  // every filtered search. A brand-new AniList title not yet in the
+  // mirror is still reachable via /titles/anilist/[anilistId] directly
+  // (e.g. from the admin import flow) — just not blended into browse.
   const where: Prisma.TitleWhereInput = {};
   if (matchingIds) where.id = { in: matchingIds };
   if (genre) where.genres = { has: genre };
@@ -102,58 +74,31 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
     where.communityScore = { gte: Number(minCommunityRaw) };
   }
 
-  const titles = await prisma.title.findMany({ where, take: 100 });
+  const [cards, totalCount] = await Promise.all([
+    prisma.title.findMany({
+      where,
+      orderBy: SORT_OPTIONS[sort].orderBy,
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.title.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  // Thin safety net for a brand-new AniList title that predates the next
-  // daily refresh/mirror pass (Entry 56) — the catalog is fully mirrored,
-  // so this should rarely surface anything, but AniList adds new titles
-  // continuously. Skipped when a filter is active that an unimported title
-  // structurally can never satisfy (the seal checkbox, minimum community
-  // score — both are review-driven, and an unimported title has no
-  // reviews).
-  const skipAniList = hasCertifiedBanger || !!minCommunityRaw;
-  let aniListCards: UnifiedCard[] = [];
-  if (!skipAniList && (q.length >= 2 || genre || type || status)) {
-    try {
-      const results = await browseAniListMedia({
-        search: q.length >= 2 ? q : undefined,
-        genre: genre || undefined,
-        type: type || undefined,
-        status: status || undefined,
-        perPage: 30,
-      });
-      const alreadyImported = await prisma.title.findMany({
-        where: { anilistId: { in: results.map((r) => r.anilistId) } },
-        select: { anilistId: true },
-      });
-      const importedIds = new Set(alreadyImported.map((t) => t.anilistId));
-      const minScore = minScoreRaw && !Number.isNaN(Number(minScoreRaw)) ? Number(minScoreRaw) : null;
-
-      aniListCards = results
-        .filter((r) => !importedIds.has(r.anilistId))
-        .filter((r) => minScore === null || (r.averageScore !== null && r.averageScore >= minScore))
-        .map((r) => ({
-          id: `anilist-${r.anilistId}`,
-          href: `/titles/anilist/${r.anilistId}`,
-          name: r.name,
-          type: r.type,
-          coverUrl: r.coverImageUrl,
-          anilistAverageScore: r.averageScore,
-          anilistPopularity: r.popularity,
-          communityScore: null,
-          lastReviewedAt: null,
-          discussionCount: 0,
-          reviewCount: 0,
-          certifiedBangerCount: 0,
-        }));
-    } catch {
-      // AniList being slow/unreachable shouldn't break the browse page —
-      // it just falls back to local-only results.
-      aniListCards = [];
-    }
-  }
-
-  const cards: UnifiedCard[] = [...titles, ...aniListCards].sort((a, b) => compareCards(a, b, sort));
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (genre) params.set("genre", genre);
+    if (type) params.set("type", type);
+    if (status) params.set("status", status);
+    if (hasCertifiedBanger) params.set("hasCB", "1");
+    if (minScoreRaw) params.set("minScore", minScoreRaw);
+    if (minCommunityRaw) params.set("minCommunity", minCommunityRaw);
+    if (sort !== "name") params.set("sort", sort);
+    if (targetPage > 1) params.set("page", String(targetPage));
+    const qs = params.toString();
+    return qs ? `/titles?${qs}` : "/titles";
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
@@ -250,7 +195,26 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       </form>
 
       {cards.length > 0 ? (
-        <TitleCardGrid titles={cards} />
+        <>
+          <TitleCardGrid titles={cards} />
+          <div className="mt-8 flex items-center justify-between text-sm text-muted">
+            <span>
+              {totalCount.toLocaleString()} title{totalCount === 1 ? "" : "s"} · page {page} of {totalPages}
+            </span>
+            <div className="flex gap-2">
+              {page > 1 && (
+                <a href={pageHref(page - 1)} className={BUTTON_PRIMARY}>
+                  Previous
+                </a>
+              )}
+              {page < totalPages && (
+                <a href={pageHref(page + 1)} className={BUTTON_PRIMARY}>
+                  Next
+                </a>
+              )}
+            </div>
+          </div>
+        </>
       ) : (
         <p className="py-6 text-sm text-muted">No titles match these filters.</p>
       )}
