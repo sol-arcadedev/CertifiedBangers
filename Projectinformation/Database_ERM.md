@@ -75,6 +75,7 @@ erDiagram
         datetime lastReviewedAt "WP5.1: max PUBLISHED review createdAt, sort field"
         int discussionCount "WP5.1: total comments on the title's reviews, sort field"
         datetime createdAt
+        tsvector searchVector "trigger-maintained, GIN-indexed, not Prisma-managed, Entry 58"
     }
 
     CATEGORY {

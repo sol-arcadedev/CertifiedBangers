@@ -465,6 +465,8 @@ Title
       live at render time.
  - precomputed: avg_category_scores, review_count,
    certified_banger_count                        <- Entry 39
+ - search_vector (trigger-maintained tsvector, GIN-indexed;
+   not a Prisma-managed column)                  <- Entry 58
 
 Category                <- data-driven, not hardcoded         (Entry 2)
  - id, name, applies_to_type, scale_min, scale_max
