@@ -93,8 +93,25 @@ async function upsertMediaList(
         await prisma.title.update({ where: { id: existing.id }, data: { ...titleData, coverUrl } });
         counters.updated++;
       } else {
-        await prisma.title.create({ data: { anilistId: media.id, ...titleData, coverUrl } });
-        counters.created++;
+        try {
+          await prisma.title.create({ data: { anilistId: media.id, ...titleData, coverUrl } });
+          counters.created++;
+        } catch (err) {
+          // A title with the same anilistId can legitimately already exist
+          // here even though it wasn't in this page's existingByAnilistId
+          // snapshot: AniList's FuzzyDateInt for a year-only date (e.g.
+          // 20120000 for "2012, no month/day") satisfies both that year's
+          // range AND the prior year's range (20120000 < 20120101), so a
+          // media item can surface in two adjacent year partitions. Treat
+          // it as an update instead of a hard failure.
+          const isUniqueConflict =
+            typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
+          if (!isUniqueConflict) throw err;
+          const row = await prisma.title.findUnique({ where: { anilistId: media.id }, select: { id: true } });
+          if (!row) throw err;
+          await prisma.title.update({ where: { id: row.id }, data: { ...titleData, coverUrl } });
+          counters.updated++;
+        }
       }
     } catch (err) {
       counters.failed++;
@@ -130,7 +147,21 @@ async function main() {
     let page = 1;
     let pageCount = 0;
     for (;;) {
-      const data = await anilistRequest<{ Page: { media: Media[] } }>(YEAR_QUERY, { page, gt, lt });
+      let data: { Page: { media: Media[] } };
+      try {
+        data = await anilistRequest<{ Page: { media: Media[] } }>(YEAR_QUERY, { page, gt, lt });
+      } catch (err) {
+        // A single bad page (deep pagination past whatever internal limit
+        // AniList enforces, a transient outage, etc.) shouldn't cost hours
+        // of accumulated progress — log it and move on to the next year.
+        // The next scripts/refresh-anilist-catalog.ts run's "discover
+        // newest" pass and a future START_YEAR-targeted re-run can pick up
+        // whatever this page would have covered.
+        console.log(
+          `  ! year ${year} page ${page} failed, abandoning rest of this year: ${err instanceof Error ? err.message : err}`,
+        );
+        break;
+      }
       const mediaList = data.Page.media;
       if (mediaList.length === 0) break;
 
@@ -159,7 +190,15 @@ async function main() {
   console.log("\nUndated catch-all pass...");
   let page = 1;
   for (;;) {
-    const data = await anilistRequest<{ Page: { media: Media[] } }>(UNDATED_QUERY, { page });
+    let data: { Page: { media: Media[] } };
+    try {
+      data = await anilistRequest<{ Page: { media: Media[] } }>(UNDATED_QUERY, { page });
+    } catch (err) {
+      console.log(
+        `  ! undated pass page ${page} failed, stopping: ${err instanceof Error ? err.message : err}`,
+      );
+      break;
+    }
     const mediaList = data.Page.media;
     if (mediaList.length === 0) break;
 
