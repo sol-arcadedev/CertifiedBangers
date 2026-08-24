@@ -50,6 +50,20 @@ const YEAR_QUERY = `
   }
 `;
 
+// FuzzyDateInt (YYYYMMDD as a plain int) helpers for splitting a year into
+// month-level ranges when the year itself hits the ~5000-result ceiling.
+function utcDateToFuzzy(date: Date): number {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return Number(`${y}${m}${d}`);
+}
+function monthRange(year: number, month: number): { gt: number; lt: number } {
+  const dayBeforeStart = new Date(Date.UTC(year, month - 1, 1) - 86400000);
+  const firstDayOfNextMonth = new Date(Date.UTC(year, month, 1));
+  return { gt: utcDateToFuzzy(dayBeforeStart), lt: utcDateToFuzzy(firstDayOfNextMonth) };
+}
+
 const UNDATED_QUERY = `
   query ($page: Int) {
     Page(page: $page, perPage: ${PER_PAGE}) {
@@ -120,6 +134,42 @@ async function upsertMediaList(
   });
 }
 
+// Walks all pages for a single (gt, lt) date range, upserting as it goes.
+// Returns whether a page fetch failed (the observed signal for "this range
+// has more results than AniList's ~5000-result ceiling reaches").
+async function walkRange(
+  prisma: PrismaClient,
+  storage: ReturnType<typeof createClient>["storage"],
+  gt: number,
+  lt: number,
+  label: string,
+  counters: Counters,
+): Promise<{ pageCount: number; hitCeiling: boolean }> {
+  let page = 1;
+  let pageCount = 0;
+  for (;;) {
+    let data: { Page: { media: Media[] } };
+    try {
+      data = await anilistRequest<{ Page: { media: Media[] } }>(YEAR_QUERY, { page, gt, lt });
+    } catch (err) {
+      console.log(
+        `  ! ${label} page ${page} failed: ${err instanceof Error ? err.message : err}`,
+      );
+      return { pageCount, hitCeiling: true };
+    }
+    const mediaList = data.Page.media;
+    if (mediaList.length === 0) break;
+
+    await upsertMediaList(prisma, storage, mediaList, counters);
+    pageCount = page;
+    if (mediaList.length < PER_PAGE) break; // last (partial) page for this range
+
+    page++;
+    await sleep(REQUEST_DELAY_MS);
+  }
+  return { pageCount, hitCeiling: false };
+}
+
 async function main() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });
@@ -132,55 +182,53 @@ async function main() {
   const currentYear = new Date().getFullYear();
   // 1900 as a safe floor (AniList has no manga entries meaningfully older
   // than this), currentYear+1 to catch not-yet-released/announced titles.
-  // START_YEAR lets a re-run skip years already mirrored in a prior
-  // (e.g. interrupted) pass instead of re-walking the whole catalog.
+  // START_YEAR/END_YEAR let a re-run target just a subset of years already
+  // known to need another pass (e.g. ones that hit the ceiling below)
+  // instead of re-walking the whole catalog.
   const startYear = process.env.START_YEAR ? Number(process.env.START_YEAR) : 1900;
-  const years = Array.from(
-    { length: currentYear + 1 - startYear + 1 },
-    (_, i) => startYear + i,
-  );
+  const endYear = process.env.END_YEAR ? Number(process.env.END_YEAR) : currentYear + 1;
+  const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   for (const year of years) {
     const gt = Number(`${year - 1}1231`); // strictly after Dec 31 of the prior year
     const lt = Number(`${year + 1}0101`); // strictly before Jan 1 of the next year
 
-    let page = 1;
-    let pageCount = 0;
-    for (;;) {
-      let data: { Page: { media: Media[] } };
-      try {
-        data = await anilistRequest<{ Page: { media: Media[] } }>(YEAR_QUERY, { page, gt, lt });
-      } catch (err) {
-        // A single bad page (deep pagination past whatever internal limit
-        // AniList enforces, a transient outage, etc.) shouldn't cost hours
-        // of accumulated progress — log it and move on to the next year.
-        // The next scripts/refresh-anilist-catalog.ts run's "discover
-        // newest" pass and a future START_YEAR-targeted re-run can pick up
-        // whatever this page would have covered.
-        console.log(
-          `  ! year ${year} page ${page} failed, abandoning rest of this year: ${err instanceof Error ? err.message : err}`,
+    const { pageCount, hitCeiling } = await walkRange(
+      prisma,
+      supabase.storage,
+      gt,
+      lt,
+      `year ${year}`,
+      counters,
+    );
+
+    if (hitCeiling) {
+      // This year has more results than AniList's ~5000-result ceiling
+      // reaches in one date-filtered query — re-walk it month by month
+      // instead (each month is comfortably under the ceiling for a single
+      // year's worth of manga releases).
+      console.log(`  -> year ${year} hit the ceiling, re-walking by month...`);
+      for (let month = 1; month <= 12; month++) {
+        const range = monthRange(year, month);
+        await sleep(REQUEST_DELAY_MS);
+        const monthResult = await walkRange(
+          prisma,
+          supabase.storage,
+          range.gt,
+          range.lt,
+          `year ${year} month ${month}`,
+          counters,
         );
-        break;
+        if (monthResult.hitCeiling) {
+          console.log(
+            `  ! year ${year} month ${month} ALSO hit the ceiling — some titles from this month may still be missing.`,
+          );
+        }
       }
-      const mediaList = data.Page.media;
-      if (mediaList.length === 0) break;
-
-      await upsertMediaList(prisma, supabase.storage, mediaList, counters);
-      pageCount = page;
-      if (mediaList.length < PER_PAGE) break; // last (partial) page for this year
-
-      page++;
-      await sleep(REQUEST_DELAY_MS);
-    }
-
-    if (pageCount >= PAGE_CAP_WARNING) {
-      console.log(
-        `  ! WARNING: year ${year} hit the ${PAGE_CAP_WARNING}-page ceiling — it may have more titles than this run reached. Consider a month-level sub-partition for this year.`,
-      );
     }
 
     console.log(
-      `Year ${year} (${pageCount} page${pageCount === 1 ? "" : "s"}) — running totals: created=${counters.created} updated=${counters.updated} skipped=${counters.skipped} failed=${counters.failed}`,
+      `Year ${year} (${pageCount} page${pageCount === 1 ? "" : "s"}${hitCeiling ? ", month-split" : ""}) — running totals: created=${counters.created} updated=${counters.updated} skipped=${counters.skipped} failed=${counters.failed}`,
     );
     await sleep(REQUEST_DELAY_MS);
   }
