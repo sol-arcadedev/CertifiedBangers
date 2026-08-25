@@ -18,6 +18,9 @@ type TitleCard = {
   // status) just don't show a popover rather than showing a broken one.
   status?: string;
   genres?: string[];
+  // Optional (Entry 71) — same "just don't show it" fallback for a caller
+  // whose query doesn't include the relation.
+  discoveredByUser?: { username: string } | null;
   // Overrides the default /titles/{id} link — used for titles that
   // aren't in our catalog yet, which link to the AniList preview page
   // instead (src/app/titles/anilist/[anilistId]). Search results look
@@ -44,7 +47,10 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
       {titles.map((title) => {
-        const hasPopoverInfo = title.status !== undefined || (title.genres?.length ?? 0) > 0;
+        const hasPopoverInfo =
+          title.status !== undefined ||
+          (title.genres?.length ?? 0) > 0 ||
+          !!title.discoveredByUser;
         return (
           <Link
             key={title.id}
@@ -139,6 +145,14 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
                         {genre}
                       </span>
                     ))}
+                  </div>
+                )}
+                {title.discoveredByUser && (
+                  <div className="mt-2 text-[11px] text-muted">
+                    🏅 Discovered by{" "}
+                    <span className="font-medium text-accent">
+                      {title.discoveredByUser.username}
+                    </span>
                   </div>
                 )}
               </div>

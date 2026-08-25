@@ -48,6 +48,7 @@ export default async function ProfilePage(
                 anilistAverageScore: true,
                 status: true,
                 genres: true,
+                discoveredByUser: { select: { username: true } },
               },
             },
           },

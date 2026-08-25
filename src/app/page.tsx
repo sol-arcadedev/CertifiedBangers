@@ -15,14 +15,17 @@ export default async function Home() {
       where: { certifiedBangerCount: { gt: 0 } },
       orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
       take: 8,
+      include: { discoveredByUser: { select: { username: true } } },
     }),
     prisma.title.findMany({
       orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } },
       take: 8,
+      include: { discoveredByUser: { select: { username: true } } },
     }),
     prisma.title.findMany({
       orderBy: { anilistAverageScore: { sort: "desc", nulls: "last" } },
       take: 8,
+      include: { discoveredByUser: { select: { username: true } } },
     }),
     getDistinctGenres(),
     prisma.review.findMany({

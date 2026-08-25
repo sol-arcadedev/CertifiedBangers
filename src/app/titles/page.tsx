@@ -80,6 +80,7 @@ export default async function TitlesPage(props: PageProps<"/titles">) {
       orderBy: SORT_OPTIONS[sort].orderBy,
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
+      include: { discoveredByUser: { select: { username: true } } },
     }),
     prisma.title.count({ where }),
   ]);

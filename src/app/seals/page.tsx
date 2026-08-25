@@ -13,6 +13,7 @@ export default async function SealsPage() {
     where: { certifiedBangerCount: { gt: 0 } },
     orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
     take: 24,
+    include: { discoveredByUser: { select: { username: true } } },
   });
 
   return (
