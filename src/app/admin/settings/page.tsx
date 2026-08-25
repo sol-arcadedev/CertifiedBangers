@@ -8,7 +8,7 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold text-foreground">
+      <h1 className="mb-6 font-display text-xl font-bold text-foreground">
         Platform settings
       </h1>
       <SettingsForm

@@ -72,7 +72,7 @@ export default async function AniListTitlePreviewPage(
           />
         )}
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">{media.name}</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">{media.name}</h1>
           <p className="text-sm text-muted">
             {media.type} · {media.status}
             {media.publicationYear ? ` · ${media.publicationYear}` : ""}

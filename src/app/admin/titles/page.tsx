@@ -37,7 +37,7 @@ export default async function AdminTitlesPage(props: PageProps<"/admin/titles">)
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Titles</h1>
+        <h1 className="font-display text-xl font-bold text-foreground">Titles</h1>
         <div className="flex items-center gap-3">
           <Link href="/admin/titles/new" className="text-sm text-muted hover:text-foreground">
             Add manually

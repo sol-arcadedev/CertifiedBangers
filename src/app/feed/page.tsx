@@ -31,7 +31,7 @@ export default async function FeedPage() {
   if (followedIds.length === 0) {
     return (
       <div className="mx-auto w-full max-w-2xl px-6 py-8">
-        <h1 className="mb-4 text-xl font-semibold text-foreground">Feed</h1>
+        <h1 className="mb-4 font-display text-xl font-bold text-foreground">Feed</h1>
         <EmptyState message="You're not following anyone yet. Follow a user from their profile to see their reviews and reading activity here." />
       </div>
     );
@@ -84,7 +84,7 @@ export default async function FeedPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold text-foreground">Feed</h1>
+      <h1 className="mb-6 font-display text-xl font-bold text-foreground">Feed</h1>
 
       {items.length > 0 ? (
         <ul className="flex flex-col gap-3">

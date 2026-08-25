@@ -61,7 +61,7 @@ export default async function ReviewsPage(props: PageProps<"/reviews">) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold text-foreground">Reviews</h1>
+      <h1 className="mb-6 font-display text-xl font-bold text-foreground">Reviews</h1>
 
       <form className="mb-8 flex flex-wrap items-end gap-4 rounded-xl border border-border bg-panel p-4" action="/reviews">
         <label className={`${LABEL} min-w-[200px] flex-1`}>

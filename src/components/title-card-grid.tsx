@@ -42,15 +42,22 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
                 No cover
               </div>
             )}
+            {/* Bottom gradient — gives the cover art some depth instead of
+                a flat photo pasted into a box, and keeps the score/seal
+                badges legible over busy artwork. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent"
+            />
             {title.anilistAverageScore !== null && (
               <span
-                className={`absolute right-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-xs font-semibold ${scoreColor(title.anilistAverageScore)}`}
+                className={`absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-xs font-bold ${scoreColor(title.anilistAverageScore)}`}
               >
                 {title.anilistAverageScore}%
               </span>
             )}
             {(title.certifiedBangerCount ?? 0) > 0 && (
-              <span className="absolute left-1.5 top-1.5 flex gap-0.5 rounded-md bg-black/60 px-1.5 py-0.5 text-xs backdrop-blur-sm">
+              <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-black/70 px-2 py-0.5 text-xs shadow-[0_0_10px_rgba(226,163,61,0.5)] ring-2 ring-accent/60 backdrop-blur-sm">
                 <span aria-hidden="true">🏅</span>
               </span>
             )}

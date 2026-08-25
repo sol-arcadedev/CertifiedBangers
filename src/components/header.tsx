@@ -14,7 +14,7 @@ export async function Header() {
     <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border bg-background/95 px-4 py-3.5 backdrop-blur sm:px-6">
       <Link
         href="/"
-        className="flex items-center gap-1.5 text-lg font-semibold tracking-tight text-foreground"
+        className="flex items-center gap-1.5 font-display text-lg font-bold tracking-tight text-foreground"
       >
         <span className="text-accent">🏅</span>
         CertifiedBanger

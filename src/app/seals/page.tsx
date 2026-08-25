@@ -17,7 +17,7 @@ export default async function SealsPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
-      <h1 className="text-2xl font-semibold text-foreground">Seals</h1>
+      <h1 className="font-display text-2xl font-bold text-foreground">Seals</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
         🏅 Certified Banger marks reviews the community (or an admin) has verified as genuinely
         exceptional.

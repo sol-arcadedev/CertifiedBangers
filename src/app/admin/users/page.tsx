@@ -23,7 +23,7 @@ export default async function AdminUsersPage(props: PageProps<"/admin/users">) {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-foreground">Users</h1>
+      <h1 className="mb-2 font-display text-xl font-bold text-foreground">Users</h1>
       <p className="mb-6 text-sm text-muted">
         Suspending or banning only blocks future reviews, comments, votes, reports, and library
         changes — existing content stays up.{" "}

@@ -10,7 +10,7 @@ export function Footer() {
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-foreground"
+          className="flex items-center gap-1.5 font-display text-sm font-bold tracking-tight text-foreground"
         >
           <span className="text-accent">🏅</span>
           CertifiedBanger

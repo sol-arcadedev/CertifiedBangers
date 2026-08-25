@@ -1,12 +1,12 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { LatestReviews } from "@/components/latest-reviews";
 import { getDistinctGenres } from "@/lib/genres";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
-import { INPUT, LABEL, BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
+import { INPUT, LABEL, BUTTON_PRIMARY, CARD } from "@/lib/ui-classes";
+import { SectionHeading } from "@/components/section-heading";
 
 export default async function Home() {
   const [certifiedBangers, mostPopular, highestRated, genres, latestReviews] =
@@ -42,10 +42,13 @@ export default async function Home() {
 
   // Certified Bangers lead — the brief calls the seal showcase out
   // explicitly as "your differentiator — make it prominent" (Section 4.5).
-  const sections = [
-    { heading: "Certified Bangers", emoji: "🏅", titles: certifiedBangers, browseHref: "/seals" },
-    { heading: "Most Popular", emoji: null, titles: mostPopular, browseHref: "/titles" },
-    { heading: "Highest Rated", emoji: null, titles: highestRated, browseHref: "/titles" },
+  // Entry 67: given its own visually distinct showcase treatment below
+  // rather than sitting in the same generic loop as Most Popular/Highest
+  // Rated — "prominent" should mean it actually looks different, not just
+  // appears first in an identical list.
+  const rankedSections = [
+    { heading: "Most Popular", titles: mostPopular, browseHref: "/titles" },
+    { heading: "Highest Rated", titles: highestRated, browseHref: "/titles" },
   ].filter((section) => section.titles.length > 0);
 
   return (
@@ -62,7 +65,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-background/70 to-background" />
         <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 pb-6 pt-16 sm:pt-20 lg:flex-row lg:items-center lg:text-left">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            <h1 className="font-display text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
               Certified<span className="text-accent">Banger</span>
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-foreground/90">
@@ -77,14 +80,18 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="shrink-0">
+          <div className="relative shrink-0">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-10 scale-125 rounded-full bg-accent/25 blur-3xl"
+            />
             <Image
               src="/CB-WAIFU.png"
               alt=""
               width={420}
               height={420}
               priority
-              className="h-auto w-56 select-none sm:w-72 lg:w-80"
+              className="h-auto w-56 select-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] sm:w-72 lg:w-80"
             />
           </div>
         </div>
@@ -155,29 +162,29 @@ export default async function Home() {
 
       {latestReviews.length > 0 && (
         <div className="mx-auto w-full max-w-5xl px-6 py-10">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Latest Reviews</h2>
-            <Link href="/titles?sort=recent" className={`text-sm ${LINK}`}>
-              View all
-            </Link>
-          </div>
+          <SectionHeading href="/titles?sort=recent">Latest Reviews</SectionHeading>
           <div className="mt-4">
             <LatestReviews reviews={latestReviews} />
           </div>
         </div>
       )}
 
-      {sections.map((section) => (
-        <div key={section.heading} className="mx-auto w-full max-w-5xl px-6 py-10">
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-              {section.emoji && <span aria-hidden="true">{section.emoji}</span>}
-              {section.heading}
-            </h2>
-            <Link href={section.browseHref} className={`text-sm ${LINK}`}>
-              View all
-            </Link>
+      {certifiedBangers.length > 0 && (
+        <div className="relative overflow-hidden border-y border-accent/20 bg-gradient-to-b from-accent/10 via-accent/[0.03] to-transparent">
+          <div className="mx-auto w-full max-w-5xl px-6 py-10">
+            <SectionHeading emoji="🏅" href="/seals">
+              Certified Bangers
+            </SectionHeading>
+            <div className="mt-4">
+              <TitleCardGrid titles={certifiedBangers} />
+            </div>
           </div>
+        </div>
+      )}
+
+      {rankedSections.map((section) => (
+        <div key={section.heading} className="mx-auto w-full max-w-5xl px-6 py-10">
+          <SectionHeading href={section.browseHref}>{section.heading}</SectionHeading>
           <div className="mt-4">
             <TitleCardGrid titles={section.titles} />
           </div>

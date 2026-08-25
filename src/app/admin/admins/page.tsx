@@ -13,7 +13,7 @@ export default async function AdminAdminsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-foreground">Admins</h1>
+      <h1 className="mb-2 font-display text-xl font-bold text-foreground">Admins</h1>
       <p className="mb-6 text-sm text-muted">
         By default an admin&apos;s reviews wait for {mainAdmin.username}&apos;s approval before
         publishing (Journal Entry 28). Lift that once you trust them — a manual, case-by-case

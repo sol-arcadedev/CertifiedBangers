@@ -12,7 +12,7 @@ export default function NotFound() {
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4 py-16">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Page not found</h1>
+        <h1 className="font-display text-xl font-bold text-foreground">Page not found</h1>
         <p className="mt-4 text-sm text-muted">
           The page you&apos;re looking for doesn&apos;t exist or isn&apos;t available.
         </p>

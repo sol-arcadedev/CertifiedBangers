@@ -61,7 +61,7 @@ export default async function AdminReportsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-foreground">Reports</h1>
+      <h1 className="mb-2 font-display text-xl font-bold text-foreground">Reports</h1>
       <p className="mb-6 text-sm text-muted">
         Open reports, oldest first. Dismiss if there&apos;s nothing to act on, or remove the
         reported content directly.

@@ -15,7 +15,7 @@ export default async function AccountRestrictedPage() {
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4 py-16">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Account restricted</h1>
+        <h1 className="font-display text-xl font-bold text-foreground">Account restricted</h1>
         <p className="mt-4 text-sm text-muted">{message}</p>
       </div>
     </div>

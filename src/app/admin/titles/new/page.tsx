@@ -7,7 +7,7 @@ import { TitleForm } from "@/components/admin/title-form";
 export default function NewTitlePage() {
   return (
     <div className="mx-auto w-full max-w-xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-foreground">
+      <h1 className="mb-2 font-display text-xl font-bold text-foreground">
         Add a title manually
       </h1>
       <p className="mb-6 text-sm text-muted">

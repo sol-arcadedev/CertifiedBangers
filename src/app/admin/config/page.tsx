@@ -16,7 +16,7 @@ export default async function AdminConfigPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-8">
-      <h1 className="mb-2 text-xl font-semibold text-foreground">Categories & seal types</h1>
+      <h1 className="mb-2 font-display text-xl font-bold text-foreground">Categories & seal types</h1>
       <p className="mb-6 text-sm text-muted">
         Data-driven (Journal Entries 2, 14) — adding a 6th category or a new seal type is a data
         change, not a deploy.

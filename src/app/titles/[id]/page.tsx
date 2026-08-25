@@ -129,7 +129,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
           />
         )}
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">{title.name}</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">{title.name}</h1>
           <p className="text-sm text-muted">
             {title.type} · {title.status}
             {title.publicationYear ? ` · ${title.publicationYear}` : ""}

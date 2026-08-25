@@ -23,7 +23,7 @@ export default function ErrorPage({
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4 py-16">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
+        <h1 className="font-display text-xl font-bold text-foreground">Something went wrong</h1>
         <p className="mt-4 text-sm text-muted">
           An unexpected error occurred. You can try again, or head back to the homepage.
         </p>

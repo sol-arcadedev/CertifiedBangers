@@ -13,7 +13,7 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4">
       <form action={formAction} className={`w-full max-w-sm ${CARD} p-8`}>
-        <h1 className="mb-6 text-2xl font-semibold text-foreground">Create your account</h1>
+        <h1 className="mb-6 font-display text-2xl font-bold text-foreground">Create your account</h1>
 
         <div className="flex flex-col gap-4">
           <label className={LABEL}>

@@ -13,7 +13,7 @@ export default async function EditTitlePage(props: PageProps<"/admin/titles/[id]
 
   return (
     <div className="mx-auto w-full max-w-xl px-6 py-8">
-      <h1 className="mb-6 text-xl font-semibold text-foreground">{title.name}</h1>
+      <h1 className="mb-6 font-display text-xl font-bold text-foreground">{title.name}</h1>
 
       <TitleForm
         action={updateTitle.bind(null, id)}
