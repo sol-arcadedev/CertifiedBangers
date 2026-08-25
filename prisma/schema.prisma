@@ -330,6 +330,11 @@ model Review {
   @@unique([userId, titleId])
   @@index([titleId])
   @@index([approvalStatus])
+  // /reviews, /feed, and /titles/[id] all `orderBy: { createdAt: "desc" }`
+  // — added proactively (cleanup pass after Entries 58-59 hit this exact
+  // gap on Title at scale) rather than waiting for review volume to grow
+  // enough to make it a repeat incident.
+  @@index([createdAt])
   @@map("reviews")
 }
 

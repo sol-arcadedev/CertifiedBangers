@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "db:push": "tsx scripts/db-push-safe.ts",
     "setup:storage": "tsx scripts/setup-storage.ts",
     "promote-admin": "tsx scripts/promote-admin.ts",
     "seed:titles": "tsx scripts/seed-default-titles.ts",
