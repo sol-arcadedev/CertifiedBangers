@@ -90,6 +90,7 @@ erDiagram
         string id PK "fixed at literal singleton"
         int minAccountAgeDays "review-gate threshold, Entry 40"
         int sealQualityGateThreshold "Phase 2 seal candidacy net-vote threshold, Entry 8/29"
+        string_array distinctGenres "cached, not admin-tunable; refreshed daily, Entry 60"
         datetime updatedAt
     }
 
