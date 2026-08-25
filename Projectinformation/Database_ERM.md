@@ -204,7 +204,7 @@ erDiagram
 - `LibraryEntry`: unique on `(userId, titleId)` — one library status per user per title.
 - `Vote`: unique on `(userId, targetType, targetId)` — one vote per user per target.
 - `Title`: indexed on `(type, status)` and `name` for catalog filtering/search.
-- `Review`: indexed on `titleId` and `approvalStatus` (pending-approval queue, Entry 28/42).
+- `Review`: indexed on `titleId`, `approvalStatus` (pending-approval queue, Entry 28/42), and `createdAt` (Entry 63 — /reviews, /feed, and /titles/[id] all sort by it).
 - `Report`: indexed on `status` (open-reports queue).
 
 ## Regenerating this diagram
