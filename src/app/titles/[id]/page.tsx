@@ -30,7 +30,10 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
   // back for a logged-in user (title, then a 4-query batch, then three
   // more one at a time); it's now three stages at most.
   const [title, user] = await Promise.all([
-    prisma.title.findUnique({ where: { id } }),
+    prisma.title.findUnique({
+      where: { id },
+      include: { discoveredByUser: { select: { username: true, role: true } } },
+    }),
     getCurrentUser(),
   ]);
   if (!title) notFound();
@@ -171,6 +174,17 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
           {title.certifiedBangerCount > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
               <div>🏅 {title.certifiedBangerCount} Certified Banger</div>
+            </div>
+          )}
+          {title.discoveredByUser && (
+            <div className="text-sm text-muted">
+              Discovered by{" "}
+              <Link href={`/profile/${title.discoveredByUser.username}`} className={LINK}>
+                <UsernameLabel
+                  username={title.discoveredByUser.username}
+                  role={title.discoveredByUser.role}
+                />
+              </Link>
             </div>
           )}
         </div>

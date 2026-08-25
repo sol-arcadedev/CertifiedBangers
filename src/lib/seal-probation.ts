@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getPlatformSettings } from "@/lib/settings";
-import { recomputeTitleSealCounts } from "@/lib/title-aggregates";
+import { maybeSetDiscoveredBy, recomputeTitleSealCounts } from "@/lib/title-aggregates";
 import { recomputeUserReputation } from "@/lib/user-reputation";
 
 const PROBATION_STREAK_DAYS = 30; // Entry 12
@@ -73,6 +73,7 @@ export async function checkAutoSealCandidacy(reviewId: string) {
   );
 
   await recomputeTitleSealCounts(review.titleId);
+  await maybeSetDiscoveredBy(review.titleId, review.userId);
   await recomputeUserReputation(review.userId);
 }
 

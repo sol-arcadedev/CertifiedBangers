@@ -91,6 +91,24 @@ export async function recomputeTitleSealCounts(
   });
 }
 
+// Entry 71: one-time, permanent "discovered by" credit — set the first time
+// a title earns ANY Certified Banger seal (vote-threshold or admin-granted
+// alike), never reassigned afterward even if that specific seal is later
+// revoked (see src/lib/actions/seals.ts's revokeSeal — deliberately doesn't
+// touch this). The `discoveredByUserId: null` guard in the where clause
+// makes this atomic/race-safe: if two grants for the same title's first-ever
+// seal somehow raced, only one updateMany call would find a matching row.
+export async function maybeSetDiscoveredBy(
+  titleId: string,
+  userId: string,
+  client: typeof prisma | Prisma.TransactionClient = prisma,
+) {
+  await client.title.updateMany({
+    where: { id: titleId, discoveredByUserId: null },
+    data: { discoveredByUserId: userId, discoveredAt: new Date() },
+  });
+}
+
 // WP5.1's "most discussed" sort. Called from src/lib/actions/comments.ts
 // after a comment is created — comments have no approval gate of their
 // own (Comment has no approvalStatus field), but still only count toward

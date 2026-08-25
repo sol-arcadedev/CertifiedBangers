@@ -165,6 +165,7 @@ model User {
   sealAwardsAsAdmin SealAward[]    @relation("SealGrantedByAdmin")
   following         Follow[]       @relation("Following")
   followers         Follow[]       @relation("Followers")
+  discoveredTitles  Title[]        @relation("TitleDiscoverer")
 
   @@map("users")
 }
@@ -252,8 +253,16 @@ model Title {
   lastReviewedAt       DateTime? // max createdAt of PUBLISHED reviews — "most recent reviews" sort
   discussionCount      Int       @default(0) // total comments across the title's reviews — "most discussed" sort
 
+  // Entry 71: whoever's review was first to earn this title a Certified
+  // Banger seal (vote-threshold or admin-granted alike) — set once, forever,
+  // by maybeSetDiscoveredBy() in src/lib/title-aggregates.ts. Not cleared or
+  // reassigned if that specific seal is later revoked (see comment there).
+  discoveredByUserId String?
+  discoveredAt       DateTime?
+
   reviews        Review[]
   libraryEntries LibraryEntry[]
+  discoveredByUser User? @relation("TitleDiscoverer", fields: [discoveredByUserId], references: [id])
 
   @@index([type, status])
   @@index([name])
@@ -278,6 +287,7 @@ model Title {
   // as searchVector's trigger/index — see scripts/add-sort-indexes.ts.
   @@index([certifiedBangerCount])
   @@index([discussionCount])
+  @@index([discoveredByUserId])
   @@map("titles")
 }
 

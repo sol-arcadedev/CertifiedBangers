@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import { recomputeTitleSealCounts } from "@/lib/title-aggregates";
+import { maybeSetDiscoveredBy, recomputeTitleSealCounts } from "@/lib/title-aggregates";
 import { recomputeUserReputation } from "@/lib/user-reputation";
 
 export type SealActionState = { error?: string } | undefined;
@@ -53,6 +53,12 @@ export async function grantSeal(
   });
 
   await recomputeTitleSealCounts(review.titleId);
+  // Entry 71: admin grants can be for any seal type, so scope the
+  // "discovered by" credit to Certified Banger specifically — same as the
+  // vote-threshold path in checkAutoSealCandidacy.
+  if (sealType.name === "Certified Banger") {
+    await maybeSetDiscoveredBy(review.titleId, review.userId);
+  }
   await recomputeUserReputation(review.userId);
   revalidatePath(`/titles/${review.titleId}`);
   revalidatePath("/admin/seals");

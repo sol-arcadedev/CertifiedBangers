@@ -32,7 +32,9 @@ export default async function ProfilePage(
         role: true,
         reputationScore: true,
         createdAt: true,
-        _count: { select: { reviews: true, followers: true, following: true } },
+        _count: {
+          select: { reviews: true, followers: true, following: true, discoveredTitles: true },
+        },
         // Public — library entries aren't restricted to the profile owner,
         // matching the hybrid browsing model (Entry 3).
         libraryEntries: {
@@ -149,6 +151,14 @@ export default async function ProfilePage(
             <div className="text-lg font-semibold text-foreground">{user._count.following}</div>
             <div className="text-sm text-muted">Following</div>
           </div>
+          {user._count.discoveredTitles > 0 && (
+            <div>
+              <div className="text-lg font-semibold text-accent">
+                🏅 {user._count.discoveredTitles}
+              </div>
+              <div className="text-sm text-muted">Discovered</div>
+            </div>
+          )}
         </div>
 
         {libraryGroups.length > 0 ? (
