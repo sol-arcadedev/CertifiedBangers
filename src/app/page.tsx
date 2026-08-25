@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { LatestReviews } from "@/components/latest-reviews";
@@ -95,7 +96,18 @@ export default async function Home() {
           >
             <label className={`${LABEL} min-w-[200px] flex-1 text-left`}>
               Search
-              <input name="q" type="search" placeholder="Name, genre, author…" className={INPUT} />
+              <div className="relative">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                />
+                <input
+                  name="q"
+                  type="search"
+                  placeholder="Name, genre, author…"
+                  className="w-full rounded-lg border border-border bg-panel py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
             </label>
 
             <label className={`${LABEL} text-left`}>

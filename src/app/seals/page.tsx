@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
+import { EmptyState } from "@/components/empty-state";
 import { LINK } from "@/lib/ui-classes";
 
 // Dedicated discovery feed (WP4.4) — separate from the browse/search page
@@ -29,7 +30,7 @@ export default async function SealsPage() {
             <TitleCardGrid titles={certifiedBangers} />
           </div>
         ) : (
-          <p className="mt-2 text-sm text-muted">No titles have earned Certified Banger yet.</p>
+          <EmptyState message="No titles have earned Certified Banger yet." />
         )}
       </div>
 

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CARD, CARD_HOVER } from "@/lib/ui-classes";
+import { scoreColor } from "@/lib/score-color";
 
 type TitleCard = {
   id: string;
@@ -18,12 +20,6 @@ type TitleCard = {
   href?: string;
 };
 
-function scoreColor(score: number) {
-  if (score >= 75) return "bg-emerald-500/90 text-emerald-950";
-  if (score >= 50) return "bg-amber-400/90 text-amber-950";
-  return "bg-rose-500/90 text-rose-950";
-}
-
 export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -31,7 +27,7 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
         <Link
           key={title.id}
           href={title.href ?? `/titles/${title.id}`}
-          className="group overflow-hidden rounded-xl border border-border bg-panel transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lg hover:shadow-black/20"
+          className={`group overflow-hidden ${CARD} ${CARD_HOVER}`}
         >
           <div className="relative aspect-[2/3] w-full overflow-hidden bg-panel-hover">
             {title.coverUrl ? (

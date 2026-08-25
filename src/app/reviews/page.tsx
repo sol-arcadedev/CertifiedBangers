@@ -66,7 +66,7 @@ export default async function ReviewsPage(props: PageProps<"/reviews">) {
       <form className="mb-8 flex flex-wrap items-end gap-4 rounded-xl border border-border bg-panel p-4" action="/reviews">
         <label className={`${LABEL} min-w-[200px] flex-1`}>
           Search
-          <LiveSearchInput defaultValue={q} className={INPUT} />
+          <LiveSearchInput defaultValue={q} />
         </label>
 
         <label className={LABEL}>

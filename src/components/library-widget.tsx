@@ -37,7 +37,7 @@ export function LibraryWidget({
         defaultValue={currentStatus ?? ""}
         onChange={(e) => handleChange(e.target.value)}
         disabled={pending}
-        className="rounded-lg border border-border bg-panel px-2 py-1 text-sm text-foreground disabled:opacity-50"
+        className="rounded-lg border border-border bg-panel px-2 py-1 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
       >
         <option value="">Not in library</option>
         {(Object.entries(STATUS_LABELS) as [LibraryStatus, string][]).map(([value, label]) => (

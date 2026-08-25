@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UsernameLabel } from "@/components/username-label";
+import { CARD, CARD_HOVER } from "@/lib/ui-classes";
 
 type LatestReview = {
   id: string;
@@ -17,7 +18,7 @@ export function LatestReviews({ reviews }: { reviews: LatestReview[] }) {
         <Link
           key={review.id}
           href={`/titles/${review.title.id}`}
-          className="group flex gap-4 rounded-xl border border-border bg-panel p-4 transition-all hover:-translate-y-0.5 hover:border-border-strong hover:bg-panel-hover hover:shadow-lg hover:shadow-black/20"
+          className={`group flex gap-4 p-4 ${CARD} ${CARD_HOVER}`}
         >
           {review.title.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

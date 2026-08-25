@@ -2,7 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { UsernameLabel } from "@/components/username-label";
-import { LINK } from "@/lib/ui-classes";
+import { LINK, CARD } from "@/lib/ui-classes";
+import { EmptyState } from "@/components/empty-state";
 
 // Entry 54: a followed user's qualifying activity — a published review, or
 // a library status set to Finished/Dropped — derived live from Review/
@@ -31,10 +32,7 @@ export default async function FeedPage() {
     return (
       <div className="mx-auto w-full max-w-2xl px-6 py-8">
         <h1 className="mb-4 text-xl font-semibold text-foreground">Feed</h1>
-        <p className="text-sm text-muted">
-          You&apos;re not following anyone yet. Follow a user from their profile to see their
-          reviews and reading activity here.
-        </p>
+        <EmptyState message="You're not following anyone yet. Follow a user from their profile to see their reviews and reading activity here." />
       </div>
     );
   }
@@ -91,7 +89,7 @@ export default async function FeedPage() {
       {items.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {items.map((item, i) => (
-            <li key={i} className="rounded-xl border border-border bg-panel p-4 text-sm">
+            <li key={i} className={`p-4 text-sm ${CARD}`}>
               <Link href={`/profile/${item.username}`} className="font-medium text-foreground hover:text-accent">
                 <UsernameLabel username={item.username} role={item.role} />
               </Link>{" "}
@@ -107,7 +105,7 @@ export default async function FeedPage() {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted">No recent activity from people you follow yet.</p>
+        <EmptyState message="No recent activity from people you follow yet." />
       )}
     </div>
   );

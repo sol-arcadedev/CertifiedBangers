@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic, useTransition } from "react";
+import { ArrowBigUp, ArrowBigDown } from "lucide-react";
 import { voteOnReview } from "@/lib/actions/votes";
 
 type VoteValue = "UP" | "DOWN";
@@ -60,22 +61,27 @@ export function VoteButtons({
         type="button"
         onClick={() => vote("UP")}
         aria-label="Upvote"
-        className={`-m-1.5 p-1.5 ${
-          optimistic.userVote === "UP" ? "text-emerald-400" : "text-muted hover:text-foreground"
+        aria-pressed={optimistic.userVote === "UP"}
+        className={`-m-1.5 rounded-full p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          optimistic.userVote === "UP" ? "text-success" : "text-muted hover:text-foreground"
         }`}
       >
-        ▲
+        <ArrowBigUp className="h-4 w-4" fill={optimistic.userVote === "UP" ? "currentColor" : "none"} />
       </button>
       <span className="text-muted">{netScore >= 0 ? `+${netScore}` : netScore}</span>
       <button
         type="button"
         onClick={() => vote("DOWN")}
         aria-label="Downvote"
-        className={`-m-1.5 p-1.5 ${
-          optimistic.userVote === "DOWN" ? "text-red-400" : "text-muted hover:text-foreground"
+        aria-pressed={optimistic.userVote === "DOWN"}
+        className={`-m-1.5 rounded-full p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          optimistic.userVote === "DOWN" ? "text-danger" : "text-muted hover:text-foreground"
         }`}
       >
-        ▼
+        <ArrowBigDown
+          className="h-4 w-4"
+          fill={optimistic.userVote === "DOWN" ? "currentColor" : "none"}
+        />
       </button>
     </div>
   );

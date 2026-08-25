@@ -5,6 +5,7 @@ import { UsernameLabel } from "@/components/username-label";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { ProfileImageForm } from "@/components/profile-image-form";
 import { FollowButton } from "@/components/follow-button";
+import { EmptyState } from "@/components/empty-state";
 import type { LibraryStatus } from "@/generated/prisma/enums";
 
 const LIBRARY_STATUS_ORDER: { status: LibraryStatus; label: string }[] = [
@@ -140,14 +141,26 @@ export default async function ProfilePage(
           </div>
         </div>
 
-        {libraryGroups.map((group) => (
-          <div key={group.label} className="mt-8 border-t border-border pt-6">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">
-              {group.label} ({group.titles.length})
-            </h2>
-            <TitleCardGrid titles={group.titles} />
+        {libraryGroups.length > 0 ? (
+          libraryGroups.map((group) => (
+            <div key={group.label} className="mt-8 border-t border-border pt-6">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">
+                {group.label} ({group.titles.length})
+              </h2>
+              <TitleCardGrid titles={group.titles} />
+            </div>
+          ))
+        ) : (
+          <div className="mt-8 border-t border-border pt-6">
+            <EmptyState
+              message={
+                isOwner
+                  ? "Your library is empty — add a title from any title page to track it here."
+                  : `${user.username} hasn't added any titles to their library yet.`
+              }
+            />
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
