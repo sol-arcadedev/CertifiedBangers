@@ -19,6 +19,7 @@
     "refresh:anilist-catalog": "tsx scripts/refresh-anilist-catalog.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.18.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@supabase/ssr": "^0.12.4",
