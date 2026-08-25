@@ -10,24 +10,11 @@ import { checkReviewRateLimit } from "@/lib/rate-limit";
 import { recomputeTitleAggregates } from "@/lib/title-aggregates";
 import { recomputeUserReputation } from "@/lib/user-reputation";
 import { performAniListImport } from "@/lib/actions/anilist-import";
+import { computeApprovalStatus } from "@/lib/review-approval";
 
 export type ReviewActionState = { error?: string } | undefined;
 
 const MIN_BODY_LENGTH = 50;
-
-// Entry 28: only non-Main-Admin admin reviews are gated; Main Admin (no one
-// above them to approve against) and regular users are unaffected. Entry 41:
-// the per-admin exemption (adminReviewsRequireApproval=false) is a manual
-// trust call, not automatic.
-function computeApprovalStatus(user: { role: string; adminReviewsRequireApproval: boolean }) {
-  return {
-    isAdminAuthored: user.role !== "USER",
-    approvalStatus:
-      user.role === "ADMIN" && user.adminReviewsRequireApproval
-        ? ("PENDING_APPROVAL" as const)
-        : ("PUBLISHED" as const),
-  };
-}
 
 // Shared by submitReview (existing title) and submitReviewForAniListTitle
 // (title imported on the fly, below) — everything past "we have a real

@@ -1,6 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 
+// Pure — extracted from recomputeTitleAggregates (Entry 64) so the
+// per-category-average -> single community score rollup is unit-testable
+// without a database.
+export function computeCommunityScore(
+  avgCategoryScores: Record<string, number | null>,
+): number | null {
+  const scoreValues = Object.values(avgCategoryScores).filter(
+    (v): v is number => typeof v === "number",
+  );
+  return scoreValues.length > 0
+    ? Math.round((scoreValues.reduce((sum, v) => sum + v, 0) / scoreValues.length) * 100) / 100
+    : null;
+}
+
 // Precomputed aggregates, updated incrementally whenever a review's
 // published state or scores change — never recalculated live on read
 // (Journal Entry 39). Only PUBLISHED reviews count (Entry 42: a pending
@@ -35,13 +49,7 @@ export async function recomputeTitleAggregates(
 
   // WP5.1's "highest overall score" sort reads this directly instead of
   // recomputing from the avgCategoryScores JSON blob on every page render.
-  const scoreValues = Object.values(avgCategoryScores).filter(
-    (v): v is number => typeof v === "number",
-  );
-  const communityScore =
-    scoreValues.length > 0
-      ? Math.round((scoreValues.reduce((sum, v) => sum + v, 0) / scoreValues.length) * 100) / 100
-      : null;
+  const communityScore = computeCommunityScore(avgCategoryScores);
 
   await client.title.update({
     where: { id: titleId },

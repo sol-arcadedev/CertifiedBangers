@@ -5,6 +5,29 @@ import { recomputeUserReputation } from "@/lib/user-reputation";
 
 const PROBATION_STREAK_DAYS = 30; // Entry 12
 
+// Pure — extracted from runSealProbationCheck's loop body (Entry 64) so the
+// streak state-transition rules (extend / convert at 30 days / reset on any
+// dip) are unit-testable without a database or real clock.
+export function computeNextStreakState(
+  currentStreakDays: number,
+  netScore: number,
+  now: Date,
+): {
+  positiveStreakDays: number;
+  status: "PROVISIONAL" | "PERMANENT";
+  permanentAt: Date | null;
+  lastStreakResetAt: Date | null;
+} {
+  if (netScore >= 0) {
+    const positiveStreakDays = currentStreakDays + 1;
+    if (positiveStreakDays >= PROBATION_STREAK_DAYS) {
+      return { positiveStreakDays, status: "PERMANENT", permanentAt: now, lastStreakResetAt: null };
+    }
+    return { positiveStreakDays, status: "PROVISIONAL", permanentAt: null, lastStreakResetAt: null };
+  }
+  return { positiveStreakDays: 0, status: "PROVISIONAL", permanentAt: null, lastStreakResetAt: now };
+}
+
 async function grantAutoSeal(reviewId: string, sealTypeId: string, justificationText: string) {
   await prisma.sealAward.create({
     data: {
@@ -72,25 +95,30 @@ export async function runSealProbationCheck() {
 
   for (const award of provisional) {
     const netScore = award.review.upvoteCount - award.review.downvoteCount;
+    const next = computeNextStreakState(award.positiveStreakDays, netScore, new Date());
 
-    if (netScore >= 0) {
-      const positiveStreakDays = award.positiveStreakDays + 1;
-      if (positiveStreakDays >= PROBATION_STREAK_DAYS) {
-        await prisma.sealAward.update({
-          where: { id: award.id },
-          data: { positiveStreakDays, status: "PERMANENT", permanentAt: new Date() },
-        });
-        converted++;
-      } else {
-        await prisma.sealAward.update({ where: { id: award.id }, data: { positiveStreakDays } });
-        extended++;
-      }
+    if (next.status === "PERMANENT") {
+      await prisma.sealAward.update({
+        where: { id: award.id },
+        data: {
+          positiveStreakDays: next.positiveStreakDays,
+          status: "PERMANENT",
+          permanentAt: next.permanentAt!,
+        },
+      });
+      converted++;
+    } else if (next.lastStreakResetAt) {
+      await prisma.sealAward.update({
+        where: { id: award.id },
+        data: { positiveStreakDays: next.positiveStreakDays, lastStreakResetAt: next.lastStreakResetAt },
+      });
+      reset++;
     } else {
       await prisma.sealAward.update({
         where: { id: award.id },
-        data: { positiveStreakDays: 0, lastStreakResetAt: new Date() },
+        data: { positiveStreakDays: next.positiveStreakDays },
       });
-      reset++;
+      extended++;
     }
   }
 

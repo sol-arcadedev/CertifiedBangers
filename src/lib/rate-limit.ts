@@ -3,13 +3,16 @@ import { getPlatformSettings } from "@/lib/settings";
 
 const HOUR_MS = 60 * 60 * 1000;
 
-function hourAgo() {
-  return new Date(Date.now() - HOUR_MS);
+// Entry 64: now defaults to a fresh Date() at call time but is injectable —
+// callers don't need to change, tests can pass a fixed instant instead of
+// mocking the global clock.
+export function hourAgo(now: Date = new Date()): Date {
+  return new Date(now.getTime() - HOUR_MS);
 }
 
 export type RateLimitResult = { allowed: true } | { allowed: false; reason: string };
 
-function overLimit(count: number, limit: number, what: string): RateLimitResult {
+export function overLimit(count: number, limit: number, what: string): RateLimitResult {
   if (count >= limit) {
     return {
       allowed: false,

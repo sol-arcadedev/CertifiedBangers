@@ -17,6 +17,33 @@ const CERTIFIED_BANGER_REPUTATION_POINTS = 25;
 const VOTE_CAST_REPUTATION_POINTS = 1;
 const DAILY_VOTE_REPUTATION_CAP = 10;
 
+// Pure — extracted from recomputeUserReputation (Entry 64) so the
+// point-weighting formula is unit-testable without a database.
+export function computeReputationScore({
+  reviewCount,
+  certifiedBangerCount,
+  netVotesReceived,
+  votesCastByDay,
+}: {
+  reviewCount: number;
+  certifiedBangerCount: number;
+  netVotesReceived: number;
+  votesCastByDay: number[];
+}): number {
+  const voteEngagementPoints = votesCastByDay.reduce(
+    (sum, count) => sum + Math.min(count, DAILY_VOTE_REPUTATION_CAP),
+    0,
+  );
+
+  return Math.max(
+    0,
+    reviewCount * REVIEW_REPUTATION_POINTS +
+      certifiedBangerCount * CERTIFIED_BANGER_REPUTATION_POINTS +
+      netVotesReceived +
+      voteEngagementPoints * VOTE_CAST_REPUTATION_POINTS,
+  );
+}
+
 // Same precomputed-aggregate pattern as Title's (Entry 39) — recomputed
 // from source data on every relevant event (new review, seal granted/
 // revoked, review approval status changed, vote cast/switched/undone),
@@ -50,18 +77,12 @@ export async function recomputeUserReputation(
   const netVotesReceived =
     (voteTotals._sum.upvoteCount ?? 0) - (voteTotals._sum.downvoteCount ?? 0);
 
-  const voteEngagementPoints = votesCastByDay.reduce(
-    (sum, day) => sum + Math.min(Number(day.count), DAILY_VOTE_REPUTATION_CAP),
-    0,
-  );
-
-  const reputationScore = Math.max(
-    0,
-    reviewCount * REVIEW_REPUTATION_POINTS +
-      certifiedBangerCount * CERTIFIED_BANGER_REPUTATION_POINTS +
-      netVotesReceived +
-      voteEngagementPoints * VOTE_CAST_REPUTATION_POINTS,
-  );
+  const reputationScore = computeReputationScore({
+    reviewCount,
+    certifiedBangerCount,
+    netVotesReceived,
+    votesCastByDay: votesCastByDay.map((d) => Number(d.count)),
+  });
 
   await client.user.update({ where: { id: userId }, data: { reputationScore } });
 }
