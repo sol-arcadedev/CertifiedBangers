@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Search } from "lucide-react";
+import { Search, PenLine, ArrowBigUp, Award } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { LatestReviews } from "@/components/latest-reviews";
@@ -73,11 +73,6 @@ export default async function Home() {
               certified banger, a genuinely great read. No reviews for mid titles, just
               recommendations worth reading.
             </p>
-            <p className="mt-3 max-w-xl text-sm text-muted">
-              Every review is put to a vote. Hold an 80% upvote ratio and the title earns the 🏅
-              Certified Banger badge. The mission: help a great but lesser-known title get
-              discovered by someone willing to give it a chance.
-            </p>
           </div>
 
           <div className="relative shrink-0">
@@ -93,6 +88,45 @@ export default async function Home() {
               priority
               className="h-auto w-56 select-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] sm:w-72 lg:w-80"
             />
+          </div>
+        </div>
+
+        {/* How it works (Entry 69) — added right on the hero since the
+            mechanic (a review earns the seal, not the title directly, and
+            a title can carry more than one from different reviewers) isn't
+            obvious just from browsing. Deliberately not framed as "80%
+            upvote ratio" (stale copy this replaced) — the real gate is a
+            net-vote-score threshold, admin-tunable, not a fixed ratio. */}
+        <div className="relative mx-auto max-w-5xl px-4 pb-10">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                icon: PenLine,
+                title: "Write the review",
+                description:
+                  "Just finished something you'd call a banger? Write a review explaining why.",
+              },
+              {
+                icon: ArrowBigUp,
+                title: "The community votes",
+                description:
+                  "Other readers see your review and upvote it if they agree it's worth reading.",
+              },
+              {
+                icon: Award,
+                title: "Earn the seal",
+                description:
+                  "Enough net upvotes and your review earns the 🏅 Certified Banger seal, with your name on it — a title can carry more than one, one per review that earns it.",
+              },
+            ].map((step) => (
+              <div key={step.title} className={`flex gap-3 p-4 ${CARD}`}>
+                <step.icon aria-hidden="true" className="h-5 w-5 shrink-0 text-accent" />
+                <div>
+                  <div className="font-display text-sm font-bold text-foreground">{step.title}</div>
+                  <p className="mt-1 text-sm text-muted">{step.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
