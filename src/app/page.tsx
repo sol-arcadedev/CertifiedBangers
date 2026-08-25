@@ -91,12 +91,17 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* How it works (Entry 69) — added right on the hero since the
-            mechanic (a review earns the seal, not the title directly, and
-            a title can carry more than one from different reviewers) isn't
-            obvious just from browsing. Deliberately not framed as "80%
-            upvote ratio" (stale copy this replaced) — the real gate is a
-            net-vote-score threshold, admin-tunable, not a fixed ratio. */}
+        {/* How it works (Entry 69/70) — added right on the hero since the
+            mechanic isn't obvious just from browsing. Deliberately not
+            framed as "80% upvote ratio" (stale copy this replaced) — the
+            real gate is a net-vote-score threshold, admin-tunable, not a
+            fixed ratio. Also deliberately doesn't claim "one seal" or
+            "more than one" — that's an implementation detail (a review
+            earns the seal, not the title directly, so more than one
+            review on a title can independently earn it) that doesn't need
+            to be marketing copy; the user-facing story is just the
+            personal-motivation loop: write well, get upvoted, get
+            recognized, help the title get found. */}
         <div className="relative mx-auto max-w-5xl px-4 pb-10">
           <div className="grid gap-4 sm:grid-cols-3">
             {[
@@ -116,7 +121,7 @@ export default async function Home() {
                 icon: Award,
                 title: "Earn the seal",
                 description:
-                  "Enough net upvotes and your review earns the 🏅 Certified Banger seal, with your name on it — a title can carry more than one, one per review that earns it.",
+                  "Enough net upvotes and your review earns the 🏅 Certified Banger seal — with your name on it, helping other readers find this title and give it a chance.",
               },
             ].map((step) => (
               <div key={step.title} className={`flex gap-3 p-4 ${CARD}`}>
