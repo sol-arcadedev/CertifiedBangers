@@ -1218,5 +1218,27 @@
     "options": [],
     "decision": "src/lib/auth.ts: extracted getAuthUser() (just the raw Supabase auth.getUser() call) wrapped in React's cache(), and getCurrentUser() (the app-User-joined version) now calls it instead of creating its own Supabase client. review-gate.ts's checkReviewGate() was switched from its own createClient()+getUser() call to the same shared getAuthUser() — collapsing what could be three independent Auth network calls into one memoized-per-request call, reused by Header, any page needing the user, and the review gate.\n\ntitles/[id]/page.tsx was restructured from up to six sequential stages (title, then a 4-query Promise.all, then existingReview, then libraryEntry, then the gate check, then userVotes) down to three: title+user fetched together (independent of each other), then a single batch (categories, reviews, libraryStats, existingReview, libraryEntry, and the gate check — none of which depend on each other or on the reviews list itself), then userVotes last (the only piece that genuinely needs review ids from the batch). The gate check now always runs in that batch instead of being conditionally skipped when existingReview is truthy — behaviorally identical, since checkReviewGate's own first check (a user's global review count) already short-circuits to {allowed:true} whenever a review already exists for this title, so the 'unconditional' version can never produce a different result, only different timing.",
     "rationale": "Confirmed via direct DB-level timing before touching any code that no individual query was the bottleneck (each ran in well under 500ms), which ruled out another missing-index fix and pointed at request structure instead. React's cache() is the standard, low-risk fix for exactly this shape of problem (multiple components in one render tree independently needing the same per-request-stable value) and required no behavior change, only a memoization boundary. The Promise.all restructuring was verified safe by explicitly reasoning through the one place a dependency looked implicit (the gate check's conditioning on existingReview) rather than assuming parallelizing was safe by default."
+  },
+  {
+    "id": 62,
+    "date": "2026-08-25",
+    "title": "Pin Vercel Functions to fra1 — Closing a Region-Mismatch Latency Gap",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Entry 61 (the title-page latency fix) — asked directly afterward whether Vercel itself, not the app/DB layer, could be contributing to remaining load times.",
+    "summary": "After Entries 58-61 fixed every genuinely slow/redundant query and Auth call, title pages on the live Vercel deployment still ran noticeably slower than the identical code running on localhost against the same Supabase database (~0.5-0.85s vs ~0.23s). Diagnosed by running the app locally with the same production Supabase credentials and directly comparing response times side by side. The X-Vercel-Id response header showed requests entering through Vercel's Frankfurt edge (fra1) but executing in iad1 (US East, Washington D.C.), while Supabase is hosted in eu-west-1 (Ireland) — every database query was paying a transatlantic round-trip. Pinning Vercel's serverless functions to fra1 via vercel.json closed the gap almost entirely: warm requests now run ~0.24-0.37s on Vercel, matching localhost.",
+    "context": "The user's own suspicion ('could it be vercel itself that is slow? let's try to run it localhost and connect to supabase') was the direct trigger and correct diagnostic instinct — this project has no separate dev database (localhost has always pointed at the same production Supabase instance since early in the project), which made an apples-to-apples localhost-vs-Vercel comparison possible without any extra setup.",
+    "options": [
+      {
+        "name": "fra1 (Frankfurt) — chosen",
+        "description": "Already where this project's edge traffic enters, a large/well-established Vercel region."
+      },
+      {
+        "name": "dub1 (Dublin)",
+        "description": "Geographically closest Vercel region to Supabase's eu-west-1, but smaller/less common; not chosen given fra1 already tested out effectively equivalent."
+      }
+    ],
+    "decision": "Added `\"regions\": [\"fra1\"]` to vercel.json. Verified via the X-Vercel-Id response header (format `<edge-region>::<function-region>::<id>`) that it changed from `fra1::iad1::...` to `fra1::fra1::...` after redeploy, and via direct timing (interleaved localhost/Vercel requests for the same title, before and after) that warm response times dropped from ~0.5-0.85s to ~0.24-0.37s, closing to within the same range as localhost.",
+    "rationale": "Diagnosed empirically rather than assumed — the localhost-vs-Vercel comparison and the X-Vercel-Id header gave direct, unambiguous evidence of both the problem (region mismatch) and the fix (region pin closing the gap), consistent with this project's established discipline of verifying infrastructure behavior against reality rather than guessing. fra1 over dub1 was a low-stakes choice since both are within the same broad European region as eu-west-1 and the measured improvement with fra1 was already close to eliminating the gap entirely; there was no indication dub1 would meaningfully outperform it."
   }
 ]
