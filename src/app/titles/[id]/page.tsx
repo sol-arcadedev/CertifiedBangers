@@ -24,15 +24,22 @@ const LIBRARY_STATUS_DISPLAY: { status: LibraryStatus; label: string; emoji: str
 export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) {
   const { id } = await props.params;
 
-  const title = await prisma.title.findUnique({ where: { id } });
+  // Entry 61: title and the current user don't depend on each other, so
+  // they're fetched in parallel — same reasoning applies to every stage
+  // below. This page used to run up to six DB/Auth round-trips back to
+  // back for a logged-in user (title, then a 4-query batch, then three
+  // more one at a time); it's now three stages at most.
+  const [title, user] = await Promise.all([
+    prisma.title.findUnique({ where: { id } }),
+    getCurrentUser(),
+  ]);
   if (!title) notFound();
 
-  const [categories, user, reviews, libraryStats] = await Promise.all([
+  const [categories, reviews, libraryStats, existingReview, libraryEntry, gate] = await Promise.all([
     prisma.category.findMany({
       where: { appliesToType: { has: title.type } },
       orderBy: { name: "asc" },
     }),
-    getCurrentUser(),
     prisma.review.findMany({
       where: { titleId: id, approvalStatus: "PUBLISHED" },
       include: {
@@ -49,28 +56,27 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
     // Reader-activity analytics — how many people have this title in each
     // library status. Grouped rather than 4 separate counts.
     prisma.libraryEntry.groupBy({ by: ["status"], where: { titleId: id }, _count: true }),
+    user
+      ? prisma.review.findUnique({
+          where: { userId_titleId: { userId: user.id, titleId: id } },
+          include: { categoryScores: true },
+        })
+      : Promise.resolve(null),
+    user
+      ? prisma.libraryEntry.findUnique({ where: { userId_titleId: { userId: user.id, titleId: id } } })
+      : Promise.resolve(null),
+    // Always run (not gated on "no existing review yet") so it can join
+    // the same parallel batch — checkReviewGate's own first query is a
+    // cheap no-op past a user's first-ever review, and running it
+    // redundantly in parallel costs nothing the UI doesn't already
+    // discard via `!existingReview` below.
+    user ? checkReviewGate(user.id, user.createdAt) : Promise.resolve({ allowed: true as const }),
   ]);
 
   const libraryCounts = Object.fromEntries(
     libraryStats.map((s) => [s.status, s._count]),
   ) as Partial<Record<LibraryStatus, number>>;
   const totalLibraryEntries = libraryStats.reduce((sum, s) => sum + s._count, 0);
-
-  const existingReview = user
-    ? await prisma.review.findUnique({
-        where: { userId_titleId: { userId: user.id, titleId: id } },
-        include: { categoryScores: true },
-      })
-    : null;
-
-  const libraryEntry = user
-    ? await prisma.libraryEntry.findUnique({
-        where: { userId_titleId: { userId: user.id, titleId: id } },
-      })
-    : null;
-
-  const gate =
-    user && !existingReview ? await checkReviewGate(user.id, user.createdAt) : { allowed: true as const };
 
   const userVotes = user
     ? Object.fromEntries(

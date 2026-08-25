@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 import { getPlatformSettings } from "@/lib/settings";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -18,10 +18,7 @@ export async function checkReviewGate(
   const isFirstEver = (await prisma.review.count({ where: { userId } })) === 0;
   if (!isFirstEver) return { allowed: true };
 
-  const supabase = await createClient();
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
+  const authUser = await getAuthUser();
   if (!authUser?.email_confirmed_at) {
     return { allowed: false, reason: "Verify your email before posting your first review." };
   }
