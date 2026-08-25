@@ -1340,5 +1340,27 @@
     "options": [],
     "decision": "Wrote copy that keeps the requested narrative's spirit (finish something great -> write a review -> community votes -> seal earned, crediting the reviewer by name) while stating the two corrected facts explicitly: 'enough net upvotes' rather than a ratio, and 'a title can carry more than one, one per review that earns it' rather than implying a single seal. Presented as three icon+text cards (lucide's PenLine/ArrowBigUp/Award) in a row between the hero's intro text and the search form, rather than another paragraph — matches Entry 67's move away from dense text blocks toward small distinct visual units.",
     "rationale": "Verifying user-supplied copy against the actual schema/business logic before publishing it as site content is the same 'verify, don't transcribe' discipline this project has applied to code changes all session, extended here to marketing copy — publishing inaccurate mechanics on the site itself would have been a real correctness problem, not just a style one, and would have made the existing stale '80% ratio' copy worse by restating a second inaccurate claim alongside it instead of an opportunity to fix both at once."
+  },
+  {
+    "id": 70,
+    "date": "2026-08-25",
+    "title": "Confirmed: Certified Banger Seal Stays Uncapped Per Title",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Direct follow-up to Entry 69 — the user flagged that the hero copy's 'a title can carry more than one' claim was wrong, stating their intent was one seal per title.",
+    "summary": "Checked the actual granting logic before agreeing or changing anything: checkAutoSealCandidacy (src/lib/seal-probation.ts) has no title-level cap today — it only checks whether the specific review already holds the seal, not whether any other review of the same title does, so certifiedBangerCount can and does exceed 1 in practice. The user's stated intent (one seal per title) contradicted the shipped behavior, and they were genuinely unsure which was actually right for the product ('I am not so sure about how to handle this'), so this became a real product discussion rather than a quick copy fix.",
+    "context": "The user's stated goal, in their own words: motivate people to write reviews for titles they consider genuinely great, and make a title easier to discover once enough people agree via upvotes. That goal was used as the deciding criterion between the two mechanisms rather than treating either as a default.",
+    "options": [
+      {
+        "name": "Cap at one seal per title (first qualifying review wins)",
+        "description": "Matches the user's initially-stated intent literally, but removes the personal incentive (reputation points, personal credit) for anyone who writes an equally great review of a title that's already sealed — works against the stated 'motivate people to write reviews' goal for every title after its first sealed review."
+      },
+      {
+        "name": "Leave uncapped (current behavior) — chosen",
+        "description": "Every reviewer keeps a reason to write a genuinely great review regardless of whether the title is already sealed, since their own review can still independently earn the seal and its personal reward (25 reputation points, Entry 39's weighting). Discovery is unaffected either way, since the app already treats 'certifiedBangerCount > 0' as the boolean that makes a title show up as Certified Banger (WHERE certifiedBangerCount: { gt: 0 } — the homepage showcase, /seals, and the sort-by-seals option all key off this, not the exact count)."
+      }
+    ],
+    "decision": "Kept checkAutoSealCandidacy and certifiedBangerCount exactly as they were — no code change to the granting logic. Resolved the actual discrepancy in the hero copy instead (Entry 69's three-step explainer): dropped the numeric claim entirely rather than asserting 'one' (inaccurate to the real behavior) or 'more than one' (accurate but reads as an implementation detail leaking into marketing copy, which is what actually read as 'wrong' to the user even though the underlying number was correct). The seal-earning step now just says a review earns the seal and helps the title get found, without claiming a specific count either way.",
+    "rationale": "Chose not to just implement whichever the user said first, since they explicitly signaled uncertainty rather than a firm requirement — surfacing the incentive-design trade-off (capped vs. uncapped, evaluated against their own stated 'motivate reviews' goal) gave them the information needed to make an informed call rather than defaulting to either option. This is the same pattern as other clarifying-question moments this session (the AniList mirror refresh cadence, the region-pin choice): when a request implies a consequential, hard-to-reverse code change and the user isn't certain, lay out the real trade-off against their own stated goals rather than picking a side and implementing silently."
   }
 ]
