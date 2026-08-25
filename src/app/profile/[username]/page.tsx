@@ -37,7 +37,17 @@ export default async function ProfilePage(
         // matching the hybrid browsing model (Entry 3).
         libraryEntries: {
           include: {
-            title: { select: { id: true, name: true, type: true, coverUrl: true, anilistAverageScore: true } },
+            title: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                coverUrl: true,
+                anilistAverageScore: true,
+                status: true,
+                genres: true,
+              },
+            },
           },
           orderBy: { updatedAt: "desc" },
         },
