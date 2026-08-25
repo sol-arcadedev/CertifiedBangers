@@ -135,6 +135,21 @@ async function main() {
     await sleep(REQUEST_DELAY_MS);
   }
 
+  // --- Pass 3: recompute the cached distinct-genre list (Entry 60) ---
+  // A live SELECT DISTINCT unnest(genres) scan costs ~6s at this catalog
+  // size, so the app reads a precomputed copy instead — refreshed here,
+  // once a day, alongside everything else this job already touches.
+  console.log("\nRecomputing distinct genre list...");
+  const genreRows = await prisma.$queryRawUnsafe<{ genre: string }[]>(
+    `SELECT DISTINCT unnest(genres) AS genre FROM titles ORDER BY 1`,
+  );
+  await prisma.platformSettings.upsert({
+    where: { id: "singleton" },
+    create: { id: "singleton", distinctGenres: genreRows.map((r) => r.genre) },
+    update: { distinctGenres: genreRows.map((r) => r.genre) },
+  });
+  console.log(`Cached ${genreRows.length} distinct genres.`);
+
   console.log(`\nDone. Refreshed ${refreshed}, discovered ${discovered} new titles, ${failed} failed, ${gone} no longer returned by AniList.`);
   await prisma.$disconnect();
 }

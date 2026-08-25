@@ -123,6 +123,17 @@ model PlatformSettings {
   commentRateLimitPerHour  Int      @default(20)
   voteRateLimitPerHour     Int      @default(60)
   reportRateLimitPerHour   Int      @default(10)
+  // Entry 60: cached, not admin-tunable — `SELECT DISTINCT unnest(genres)
+  // FROM titles` costs ~6s at 126k+ mirrored titles (no index can speed
+  // up "list every distinct array element" the way a GIN index speeds up
+  // containment checks) and was making the homepage/browse pages
+  // intermittently slow even with request-level caching, since every
+  // cache miss (cold serverless instance, revalidate-window expiry) paid
+  // the full cost. Recomputed once a day by
+  // scripts/refresh-anilist-catalog.ts, alongside everything else that
+  // job already refreshes — genres are a small, AniList-taxonomy-bounded
+  // set that essentially never needs same-day freshness.
+  distinctGenres           String[] @default([])
   updatedAt                DateTime @updatedAt
 
   @@map("platform_settings")
