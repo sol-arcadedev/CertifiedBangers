@@ -4,5 +4,6 @@
       "path": "/api/cron/seal-probation",
       "schedule": "0 0 * * *"
     }
-  ]
+  ],
+  "regions": ["fra1"]
 }
