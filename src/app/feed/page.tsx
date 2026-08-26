@@ -89,7 +89,7 @@ export default async function FeedPage() {
       {items.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {items.map((item, i) => (
-            <li key={i} className={`p-4 text-sm ${CARD}`}>
+            <li key={i} className={`animate-reveal-on-scroll p-4 text-sm ${CARD}`}>
               <Link href={`/profile/${item.username}`} className="font-medium text-foreground hover:text-accent">
                 <UsernameLabel username={item.username} role={item.role} />
               </Link>{" "}

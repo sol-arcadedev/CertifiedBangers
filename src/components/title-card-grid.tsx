@@ -55,7 +55,7 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
           <Link
             key={title.id}
             href={title.href ?? `/titles/${title.id}`}
-            className="group relative block hover:z-20"
+            className="animate-reveal-on-scroll group relative block hover:z-20"
           >
             {/* Clipping wrapper for the card's own rounded corners — kept
                 separate from the outer Link so the hover popover below

@@ -18,7 +18,7 @@ export function LatestReviews({ reviews }: { reviews: LatestReview[] }) {
         <Link
           key={review.id}
           href={`/titles/${review.title.id}`}
-          className={`group flex gap-4 p-4 ${CARD} ${CARD_HOVER}`}
+          className={`animate-reveal-on-scroll group flex gap-4 p-4 ${CARD} ${CARD_HOVER}`}
         >
           {review.title.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

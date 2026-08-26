@@ -9,17 +9,21 @@
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
-export const BUTTON_PRIMARY = `inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-b from-accent-hover to-accent px-5 py-2 text-sm font-medium text-accent-foreground shadow-[0_4px_14px_-4px_rgba(226,163,61,0.5)] transition-all hover:brightness-110 hover:shadow-[0_6px_18px_-4px_rgba(226,163,61,0.65)] disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none disabled:hover:brightness-100 ${FOCUS_RING}`;
+// Entry 75: active:scale-95 on every button variant is the tactile
+// "the app registered your click" press feedback — cheap, universally
+// recognized, and the same duration/easing as the rest of each button's
+// transition-all so it doesn't feel like a separate bolted-on effect.
+export const BUTTON_PRIMARY = `inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-b from-accent-hover to-accent px-5 py-2 text-sm font-medium text-accent-foreground shadow-[0_4px_14px_-4px_rgba(226,163,61,0.5)] transition-all hover:brightness-110 hover:shadow-[0_6px_18px_-4px_rgba(226,163,61,0.65)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none disabled:hover:brightness-100 disabled:active:scale-100 ${FOCUS_RING}`;
 
-export const BUTTON_SECONDARY = `inline-flex items-center justify-center gap-2 rounded-full border border-border-strong px-5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-panel-hover disabled:opacity-50 disabled:pointer-events-none ${FOCUS_RING}`;
+export const BUTTON_SECONDARY = `inline-flex items-center justify-center gap-2 rounded-full border border-border-strong px-5 py-2 text-sm font-medium text-foreground transition-all hover:bg-panel-hover active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 ${FOCUS_RING}`;
 
-export const BUTTON_GHOST = `inline-flex items-center justify-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted transition-colors hover:text-foreground disabled:opacity-50 ${FOCUS_RING}`;
+export const BUTTON_GHOST = `inline-flex items-center justify-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted transition-all hover:text-foreground active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${FOCUS_RING}`;
 
 // Destructive actions (revoke a seal, remove an admin, dismiss a report)
 // get their own variant instead of BUTTON_SECONDARY + inline red text, so
 // "this is a destructive action" is visually consistent everywhere it
 // appears.
-export const BUTTON_DANGER = `inline-flex items-center justify-center gap-2 rounded-full border border-danger/40 px-5 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger/10 disabled:opacity-50 disabled:pointer-events-none ${FOCUS_RING}`;
+export const BUTTON_DANGER = `inline-flex items-center justify-center gap-2 rounded-full border border-danger/40 px-5 py-2 text-sm font-medium text-danger transition-all hover:bg-danger/10 active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 ${FOCUS_RING}`;
 
 export const INPUT = `w-full rounded-lg border border-border bg-panel px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent`;
 
@@ -34,7 +38,7 @@ export const CARD = "rounded-xl border border-border bg-panel";
 // brand color on every hover instead of a generic drop shadow any site
 // could have.
 export const CARD_HOVER =
-  "transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_30px_-8px_rgba(226,163,61,0.35)]";
+  "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_30px_-8px_rgba(226,163,61,0.35)] active:scale-[0.98] active:duration-75";
 
 export const LINK = `text-accent underline-offset-2 hover:underline rounded-sm ${FOCUS_RING}`;
 

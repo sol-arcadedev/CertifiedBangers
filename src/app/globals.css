@@ -48,6 +48,48 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-space-grotesk);
+
+  /* Entry 75 — motion & polish. Two entrance animations sharing one
+     keyframe: `animate-reveal` plays once on mount (hero/above-the-fold
+     content, where you want it to greet you immediately) and
+     `animate-reveal-on-scroll` drives off scroll position via
+     animation-timeline instead of time (below-the-fold card grids —
+     each card animates in as it enters the viewport, not on page load).
+     Registering these as --animate-* theme tokens (same mechanism
+     --font-display already uses) makes `animate-reveal`/
+     `animate-reveal-on-scroll` real Tailwind utilities, not one-off
+     inline styles. */
+  --animate-reveal: reveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-reveal-on-scroll: reveal linear both;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll-driven, not time-driven — a browser that doesn't support
+   animation-timeline just ignores it and the animation never starts, so
+   the element stays at its plain static (fully visible) styles rather
+   than getting stuck invisible. Deliberately not applied to
+   `.animate-reveal` (the mount version) — that one always needs to
+   actually play. */
+.animate-reveal-on-scroll {
+  animation-timeline: view();
+  animation-range: entry 0% cover 30%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal,
+  .animate-reveal-on-scroll {
+    animation: none;
+  }
 }
 
 @media (prefers-color-scheme: light) {

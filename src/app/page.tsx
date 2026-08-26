@@ -68,17 +68,17 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-background/70 to-background" />
         <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 pb-6 pt-16 sm:pt-20 lg:flex-row lg:items-center lg:text-left">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            <h1 className="font-display text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
+            <h1 className="animate-reveal font-display text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
               Certified<span className="text-accent">Banger</span>
             </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-foreground/90">
+            <p className="animate-reveal mt-4 max-w-2xl text-lg leading-8 text-foreground/90 [animation-delay:100ms]">
               CertifiedBanger is a place to write reviews for manga you&apos;d call peak — a
               certified banger, a genuinely great read. No reviews for mid titles, just
               recommendations worth reading.
             </p>
           </div>
 
-          <div className="relative shrink-0">
+          <div className="animate-reveal relative shrink-0 [animation-delay:200ms]">
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 -z-10 scale-125 rounded-full bg-accent/25 blur-3xl"
@@ -126,8 +126,12 @@ export default async function Home() {
                 description:
                   "Enough net upvotes and your review earns the 🏅 Certified Banger seal — with your name on it, helping other readers find this title and give it a chance.",
               },
-            ].map((step) => (
-              <div key={step.title} className={`flex gap-3 p-4 ${CARD}`}>
+            ].map((step, i) => (
+              <div
+                key={step.title}
+                style={{ animationDelay: `${300 + i * 100}ms` }}
+                className={`animate-reveal flex gap-3 p-4 ${CARD}`}
+              >
                 <step.icon aria-hidden="true" className="h-5 w-5 shrink-0 text-accent" />
                 <div>
                   <div className="font-display text-sm font-bold text-foreground">{step.title}</div>
@@ -140,7 +144,7 @@ export default async function Home() {
 
         <div className="relative px-4 pb-14">
           <form
-            className={`mx-auto flex w-full max-w-4xl flex-wrap items-end justify-center gap-4 p-4 sm:p-5 ${CARD}`}
+            className={`animate-reveal mx-auto flex w-full max-w-4xl flex-wrap items-end justify-center gap-4 p-4 sm:p-5 [animation-delay:600ms] ${CARD}`}
             action="/titles"
           >
             <label className={`${LABEL} min-w-[200px] flex-1 text-left`}>
