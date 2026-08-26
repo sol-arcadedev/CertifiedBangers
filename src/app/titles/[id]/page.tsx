@@ -11,6 +11,7 @@ import { CommentForm } from "@/components/comment-form";
 import { ReportButton } from "@/components/report-button";
 import { LibraryWidget } from "@/components/library-widget";
 import { formatStartDate, formatSource } from "@/lib/title-format";
+import { stripHtml } from "@/lib/strip-html";
 import { BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
 import type { LibraryStatus } from "@/generated/prisma/enums";
 
@@ -144,7 +145,12 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
             </p>
           )}
           {title.synopsis && (
-            <p className="mt-3 text-sm leading-6 text-foreground/90">{title.synopsis}</p>
+            // Defensive — rows mirrored before Entry 76 fixed ingestion can
+            // still carry AniList's raw <b>/<i> formatting tags as literal
+            // text until their next daily refresh re-syncs them clean.
+            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-foreground/90">
+              {stripHtml(title.synopsis)}
+            </p>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <Link href="#review" className={BUTTON_PRIMARY}>

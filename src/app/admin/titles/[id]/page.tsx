@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { updateTitle } from "@/lib/actions/titles";
+import { stripHtml } from "@/lib/strip-html";
 import { TitleForm } from "@/components/admin/title-form";
 import { DeleteTitleButton } from "@/components/admin/delete-title-button";
 import { MergeTitleForm } from "@/components/admin/merge-title-form";
@@ -26,7 +27,10 @@ export default async function EditTitlePage(props: PageProps<"/admin/titles/[id]
           author: title.author,
           illustrator: title.illustrator,
           genres: title.genres,
-          synopsis: title.synopsis,
+          // Defensive, same as the public title page — a row mirrored
+          // before Entry 76 fixed ingestion can still carry raw AniList
+          // formatting tags until its next daily refresh.
+          synopsis: title.synopsis ? stripHtml(title.synopsis) : null,
           publicationYear: title.publicationYear,
           externalLinks: title.externalLinks,
           coverUrl: title.coverUrl,

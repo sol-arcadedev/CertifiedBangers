@@ -1,5 +1,6 @@
 import "server-only";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
+import { stripHtml } from "@/lib/strip-html";
 
 // Free public GraphQL API, no key required (Entry 44). "MANGA" is
 // AniList's media type covering manga/manhwa/manhua together, distinguished
@@ -234,7 +235,7 @@ function mapMediaToImport(media: MediaDetailItem): AniListTitleImport | null {
     author,
     illustrator,
     genres: media.genres,
-    synopsis: media.description ? media.description.replace(/<br\s*\/?>/gi, "\n").trim() : null,
+    synopsis: media.description ? stripHtml(media.description) : null,
     publicationYear: media.startDate.year,
     startMonth: media.startDate.month,
     startDay: media.startDate.day,

@@ -89,6 +89,23 @@ export function mapAniListStatus(status: string): "ONGOING" | "COMPLETED" | "HIA
   }
 }
 
+// AniList's `description(asHtml: false)` only controls whether <br> becomes
+// a real line break — it does NOT strip other inline formatting tags (<b>,
+// <i>, <a>, etc.), which come through as literal text otherwise. Kept as an
+// inline duplicate of src/lib/strip-html.ts's logic rather than a shared
+// import, per this file's own scripts/-only boundary (see file header).
+function stripHtml(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?[a-z][^>]*>/gi, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+}
+
 export function deriveCredits(edges: StaffEdge[]) {
   let author: string | null = null;
   let illustrator: string | null = null;
@@ -122,7 +139,7 @@ export function mediaToTitleData(media: Media) {
     author,
     illustrator,
     genres: media.genres,
-    synopsis: media.description ? media.description.replace(/<br\s*\/?>/gi, "\n").trim() : null,
+    synopsis: media.description ? stripHtml(media.description) : null,
     publicationYear: media.startDate.year,
     startMonth: media.startDate.month,
     startDay: media.startDate.day,

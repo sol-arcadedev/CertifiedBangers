@@ -84,7 +84,9 @@ export default async function AniListTitlePreviewPage(
             </p>
           )}
           {media.synopsis && (
-            <p className="mt-3 text-sm leading-6 text-foreground/90">{media.synopsis}</p>
+            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-foreground/90">
+              {media.synopsis}
+            </p>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <Link href="#review" className={BUTTON_PRIMARY}>
