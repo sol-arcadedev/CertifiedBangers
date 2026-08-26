@@ -1,10 +1,8 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getDistinctGenres } from "@/lib/genres";
-import { runChat, type ChatTurn } from "@/lib/chat/gemini";
+import { runChat } from "@/lib/chat/gemini";
+import { parseChatMessages } from "@/lib/chat/parse-messages";
 import { recommendTitles, recommendTitlesDeclaration, type RecommendedTitle } from "@/lib/chat/recommend-titles";
-
-const MAX_MESSAGE_LENGTH = 2000;
-const MAX_HISTORY_TURNS = 20;
 
 function buildSystemInstruction(genres: string[]): string {
   return [
@@ -31,26 +29,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const messages = (body as { messages?: unknown }).messages;
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return Response.json({ error: "messages is required." }, { status: 400 });
+  const parsed = parseChatMessages(body);
+  if (!parsed.ok) {
+    return Response.json({ error: parsed.error }, { status: 400 });
   }
-
-  const history: ChatTurn[] = messages
-    .filter(
-      (m): m is ChatTurn =>
-        typeof m === "object" &&
-        m !== null &&
-        (m as ChatTurn).role !== undefined &&
-        ["user", "model"].includes((m as ChatTurn).role) &&
-        typeof (m as ChatTurn).text === "string",
-    )
-    .slice(-MAX_HISTORY_TURNS)
-    .map((m) => ({ ...m, text: m.text.slice(0, MAX_MESSAGE_LENGTH) }));
-
-  if (history.length === 0 || history[history.length - 1].role !== "user") {
-    return Response.json({ error: "messages must end with a user turn." }, { status: 400 });
-  }
+  const { history } = parsed;
 
   // Resolved server-side from the authenticated session only — never trusted
   // from the request body — so recommendations can't be spoofed into
