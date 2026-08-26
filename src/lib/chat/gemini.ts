@@ -3,13 +3,12 @@ import {
   GoogleGenAI,
   createModelContent,
   createUserContent,
-  createPartFromFunctionCall,
   createPartFromFunctionResponse,
   type Content,
   type FunctionDeclaration,
 } from "@google/genai";
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.6-flash";
 // Caps how many times the model can call a tool before we force a final
 // answer — a runaway loop would otherwise burn API quota on every message.
 const MAX_TOOL_ROUNDS = 3;
@@ -51,14 +50,17 @@ export async function runChat(
       },
     });
 
-    const calls = response.functionCalls;
-    if (!calls || calls.length === 0 || round === MAX_TOOL_ROUNDS) {
+    const modelParts = response.candidates?.[0]?.content?.parts ?? [];
+    const calls = modelParts.filter((p) => p.functionCall).map((p) => p.functionCall!);
+    if (calls.length === 0 || round === MAX_TOOL_ROUNDS) {
       return { text: response.text ?? "", lastToolResult };
     }
 
-    contents.push(
-      createModelContent(calls.map((call) => createPartFromFunctionCall(call.name ?? "", call.args ?? {}))),
-    );
+    // Echo back the model's own response parts verbatim (not reconstructed
+    // from just name/args) — Gemini 3's function-call parts carry a
+    // thoughtSignature the API requires to be round-tripped exactly, or the
+    // next turn is rejected with 400 INVALID_ARGUMENT.
+    contents.push({ role: "model", parts: modelParts });
 
     const responseParts = [];
     for (const call of calls) {
