@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 import { LibraryStatus } from "@/generated/prisma/enums";
 import { performAniListImport } from "@/lib/actions/anilist-import";
+import { recomputeTitleLibraryCount } from "@/lib/title-aggregates";
 
 // Fully independent of reviews (Entry 19) — a user can add any title to
 // their library at any status, whether or not they've reviewed it. Upsert
@@ -19,6 +20,7 @@ export async function setLibraryStatus(titleId: string, status: LibraryStatus) {
     update: { status },
     create: { userId: user.id, titleId, status },
   });
+  await recomputeTitleLibraryCount(titleId);
 
   revalidatePath(`/titles/${titleId}`);
   revalidatePath(`/profile/${user.username}`);
@@ -28,6 +30,7 @@ export async function removeFromLibrary(titleId: string) {
   const user = await requireUser();
 
   await prisma.libraryEntry.deleteMany({ where: { userId: user.id, titleId } });
+  await recomputeTitleLibraryCount(titleId);
 
   revalidatePath(`/titles/${titleId}`);
   revalidatePath(`/profile/${user.username}`);
@@ -48,6 +51,7 @@ export async function setLibraryStatusForAniListTitle(anilistId: number, status:
     update: { status },
     create: { userId: user.id, titleId: imported.titleId, status },
   });
+  await recomputeTitleLibraryCount(imported.titleId);
 
   revalidatePath(`/profile/${user.username}`);
   redirect(`/titles/${imported.titleId}`);

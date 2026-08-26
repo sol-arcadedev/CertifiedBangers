@@ -21,6 +21,10 @@ type TitleCard = {
   // Optional (Entry 71) — same "just don't show it" fallback for a caller
   // whose query doesn't include the relation.
   discoveredByUser?: { username: string } | null;
+  // Optional (Entry 77) — a ranked-list position (1-based), rendered as a
+  // corner badge matching the reference screenshot's "#1-#5" treatment.
+  // Only the two new ranked homepage sections pass this.
+  rank?: number;
   // Overrides the default /titles/{id} link — used for titles that
   // aren't in our catalog yet, which link to the AniList preview page
   // instead (src/app/titles/anilist/[anilistId]). Search results look
@@ -89,8 +93,15 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
                     {title.anilistAverageScore}%
                   </span>
                 )}
+                {title.rank !== undefined && (
+                  <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs font-bold text-foreground backdrop-blur-sm">
+                    {title.rank}
+                  </span>
+                )}
                 {(title.certifiedBangerCount ?? 0) > 0 && (
-                  <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-black/70 px-2 py-0.5 text-xs shadow-[0_0_10px_rgba(226,163,61,0.5)] ring-2 ring-accent/60 backdrop-blur-sm">
+                  <span
+                    className={`absolute left-1.5 flex items-center gap-0.5 rounded-full bg-black/70 px-2 py-0.5 text-xs shadow-[0_0_10px_rgba(226,163,61,0.5)] ring-2 ring-accent/60 backdrop-blur-sm ${title.rank !== undefined ? "top-8" : "top-1.5"}`}
+                  >
                     <span aria-hidden="true">🏅</span>
                   </span>
                 )}

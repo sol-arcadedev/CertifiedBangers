@@ -252,6 +252,12 @@ model Title {
   communityScore       Float? // mean of avgCategoryScores' values — "highest overall score" sort
   lastReviewedAt       DateTime? // max createdAt of PUBLISHED reviews — "most recent reviews" sort
   discussionCount      Int       @default(0) // total comments across the title's reviews — "most discussed" sort
+  // Entry 77: total LibraryEntry rows for this title (any status) — the
+  // homepage's "Most Follows" proxy, since this app has no per-title
+  // follow/subscribe feature (Follow is user-to-user only). Recomputed by
+  // recomputeTitleLibraryCount whenever a LibraryEntry is created/updated/
+  // removed (src/lib/actions/library.ts).
+  libraryCount         Int       @default(0)
 
   // Entry 71: whoever's review was first to earn this title a Certified
   // Banger seal (vote-threshold or admin-granted alike) — set once, forever,
@@ -288,6 +294,19 @@ model Title {
   @@index([certifiedBangerCount])
   @@index([discussionCount])
   @@index([discoveredByUserId])
+  // Entry 77: libraryCount is never null, same reasoning as
+  // certifiedBangerCount/discussionCount above — plain index matches the
+  // "Most Follows" (desc) query exactly. createdAt/discoveredAt ARE
+  // nullable-in-spirit sort dimensions (discoveredAt is genuinely
+  // nullable; createdAt never is but is still listed here for its own
+  // sort), but both are always queried alongside a highly selective
+  // filter first (certifiedBangerCount > 0 for discoveredAt's one caller,
+  // the homepage sidebar), so the candidate set Postgres actually has to
+  // sort is small regardless — unlike the four DESC NULLS LAST columns
+  // above, a raw-SQL nulls-ordered index isn't worth it here.
+  @@index([createdAt])
+  @@index([discoveredAt])
+  @@index([libraryCount])
   @@map("titles")
 }
 

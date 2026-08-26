@@ -3,29 +3,43 @@ import { Search, PenLine, ArrowBigUp, Award } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { TitleCardGrid } from "@/components/title-card-grid";
 import { LatestReviews } from "@/components/latest-reviews";
+import { HomeSidebar } from "@/components/home-sidebar";
 import { getDistinctGenres } from "@/lib/genres";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
 import { INPUT, LABEL, BUTTON_PRIMARY, CARD } from "@/lib/ui-classes";
 import { SectionHeading } from "@/components/section-heading";
 
+// No real Discord server yet — swap in the real invite URL once one
+// exists (Entry 77).
+const DISCORD_HREF = "#";
+
 export default async function Home() {
-  const [certifiedBangers, mostPopular, highestRated, genres, latestReviews] =
+  const includeDiscoveredBy = { discoveredByUser: { select: { username: true } } } as const;
+
+  const [certifiedBangers, recentlyAdded, mostFollowed, recentSeals, genres, latestReviews] =
     await Promise.all([
     prisma.title.findMany({
       where: { certifiedBangerCount: { gt: 0 } },
       orderBy: [{ certifiedBangerCount: "desc" }, { reviewCount: "desc" }],
       take: 8,
-      include: { discoveredByUser: { select: { username: true } } },
+      include: includeDiscoveredBy,
     }),
     prisma.title.findMany({
-      orderBy: { anilistPopularity: { sort: "desc", nulls: "last" } },
+      orderBy: { createdAt: "desc" },
       take: 8,
-      include: { discoveredByUser: { select: { username: true } } },
+      include: includeDiscoveredBy,
     }),
     prisma.title.findMany({
-      orderBy: { anilistAverageScore: { sort: "desc", nulls: "last" } },
+      where: { libraryCount: { gt: 0 } },
+      orderBy: { libraryCount: "desc" },
       take: 8,
-      include: { discoveredByUser: { select: { username: true } } },
+      include: includeDiscoveredBy,
+    }),
+    prisma.title.findMany({
+      where: { certifiedBangerCount: { gt: 0 } },
+      orderBy: { discoveredAt: { sort: "desc", nulls: "last" } },
+      take: 8,
+      select: { id: true, name: true, coverUrl: true, discoveredAt: true },
     }),
     getDistinctGenres(),
     prisma.review.findMany({
@@ -42,17 +56,6 @@ export default async function Home() {
       },
     }),
   ]);
-
-  // Certified Bangers lead — the brief calls the seal showcase out
-  // explicitly as "your differentiator — make it prominent" (Section 4.5).
-  // Entry 67: given its own visually distinct showcase treatment below
-  // rather than sitting in the same generic loop as Most Popular/Highest
-  // Rated — "prominent" should mean it actually looks different, not just
-  // appears first in an identical list.
-  const rankedSections = [
-    { heading: "Most Popular", titles: mostPopular, browseHref: "/titles" },
-    { heading: "Highest Rated", titles: highestRated, browseHref: "/titles" },
-  ].filter((section) => section.titles.length > 0);
 
   return (
     <div className="flex flex-1 flex-col bg-background">
@@ -206,36 +209,63 @@ export default async function Home() {
         </div>
       </div>
 
-      {latestReviews.length > 0 && (
-        <div className="mx-auto w-full max-w-5xl px-6 py-10">
-          <SectionHeading href="/titles?sort=recent">Latest Reviews</SectionHeading>
-          <div className="mt-4">
-            <LatestReviews reviews={latestReviews} />
-          </div>
-        </div>
-      )}
+      {/* Entry 77: sectioned layout below the hero — a main column of
+          ranked sections plus a right sidebar, replacing the old
+          Most Popular/Highest Rated sections with the four the redesign
+          asked for. Certified Bangers keeps a distinct "spotlight" tint
+          (still the brief's called-out differentiator, Section 4.5) but
+          as a bounded card rather than a full-bleed section — a full-width
+          background break wouldn't compose with the sidebar column
+          sitting alongside it. */}
+      <div className="mx-auto w-full max-w-6xl px-6 py-10">
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
+          <div className="flex min-w-0 flex-1 flex-col gap-10">
+            {latestReviews.length > 0 && (
+              <div>
+                <SectionHeading href="/titles?sort=recent">Recent Reviews</SectionHeading>
+                <div className="mt-4">
+                  <LatestReviews reviews={latestReviews} />
+                </div>
+              </div>
+            )}
 
-      {certifiedBangers.length > 0 && (
-        <div className="relative overflow-hidden border-y border-accent/20 bg-gradient-to-b from-accent/10 via-accent/[0.03] to-transparent">
-          <div className="mx-auto w-full max-w-5xl px-6 py-10">
-            <SectionHeading emoji="🏅" href="/seals">
-              Certified Bangers
-            </SectionHeading>
-            <div className="mt-4">
-              <TitleCardGrid titles={certifiedBangers} />
-            </div>
-          </div>
-        </div>
-      )}
+            {certifiedBangers.length > 0 && (
+              <div className="rounded-2xl border border-accent/20 bg-gradient-to-b from-accent/10 via-accent/[0.03] to-transparent p-6">
+                <SectionHeading emoji="🏅" href="/seals">
+                  Certified Bangers
+                </SectionHeading>
+                <div className="mt-4">
+                  <TitleCardGrid titles={certifiedBangers} />
+                </div>
+              </div>
+            )}
 
-      {rankedSections.map((section) => (
-        <div key={section.heading} className="mx-auto w-full max-w-5xl px-6 py-10">
-          <SectionHeading href={section.browseHref}>{section.heading}</SectionHeading>
-          <div className="mt-4">
-            <TitleCardGrid titles={section.titles} />
+            {recentlyAdded.length > 0 && (
+              <div>
+                <SectionHeading href="/titles">Recently Added</SectionHeading>
+                <div className="mt-4">
+                  <TitleCardGrid
+                    titles={recentlyAdded.map((title, i) => ({ ...title, rank: i + 1 }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {mostFollowed.length > 0 && (
+              <div>
+                <SectionHeading href="/titles">Most Follows</SectionHeading>
+                <div className="mt-4">
+                  <TitleCardGrid
+                    titles={mostFollowed.map((title, i) => ({ ...title, rank: i + 1 }))}
+                  />
+                </div>
+              </div>
+            )}
           </div>
+
+          <HomeSidebar discordHref={DISCORD_HREF} recentSeals={recentSeals} />
         </div>
-      ))}
+      </div>
     </div>
   );
 }

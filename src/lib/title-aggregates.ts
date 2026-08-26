@@ -122,3 +122,15 @@ export async function recomputeTitleDiscussionCount(
   });
   await client.title.update({ where: { id: titleId }, data: { discussionCount } });
 }
+
+// Entry 77's "Most Follows" proxy — every LibraryEntry counts regardless of
+// status (CURRENTLY_READING/FINISHED/PLAN_TO_READ/DROPPED all mean "this
+// reader is tracking this title"). Called from src/lib/actions/library.ts
+// after every add/status-change/remove.
+export async function recomputeTitleLibraryCount(
+  titleId: string,
+  client: typeof prisma | Prisma.TransactionClient = prisma,
+) {
+  const libraryCount = await client.libraryEntry.count({ where: { titleId } });
+  await client.title.update({ where: { id: titleId }, data: { libraryCount } });
+}
