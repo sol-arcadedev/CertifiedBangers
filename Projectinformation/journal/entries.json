@@ -1401,5 +1401,18 @@
     "options": [],
     "decision": "Updated the MODEL constant to gemini-3.6-flash. Changed runChat's tool-call loop to grab response.candidates[0].content.parts directly (which includes each part's thoughtSignature field) and push that whole array back as the next 'model' content verbatim, rather than calling response.functionCalls (which returns bare FunctionCall objects with no thoughtSignature) and rebuilding new parts from them via createPartFromFunctionCall.",
     "rationale": "Verified with three real conversations against the live API: plain chat, a single-turn genre-based recommendation (correctly returned real catalog titles with real cover URLs, ranked by the site's own community signals), and a multi-turn follow-up that correctly switched genre focus using the prior turns as context — confirming the fix actually resolved the thought_signature error rather than just changing the failure mode. Library-exclusion for a logged-in account still wasn't verified (no test credentials available to this session for a cookie-authenticated curl request) — left for the user to confirm in their own logged-in browser session, the same honestly-flagged gap as Entry 72."
+  },
+  {
+    "id": 74,
+    "date": "2026-08-26",
+    "title": "Closed the Two Test-Coverage Gaps Flagged by the Clean-Code/Architecture Review",
+    "type": "Decision",
+    "status": "Resolved",
+    "relatesTo": "Direct follow-up to a clean-code/architecture self-assessment the user asked for, which named two concrete gaps: the /api/chat route's request validation and src/lib/actions/seals.ts were the freshest untested surface, both introduced by Entries 71-73.",
+    "summary": "Extracted the chat route's inline message-validation logic (shape filtering, MAX_MESSAGE_LENGTH truncation, MAX_HISTORY_TURNS cap, 'must end with a user turn') into a new pure function, parseChatMessages (src/lib/chat/parse-messages.ts) — the same 'extract DB/route-coupled logic into a small pure function' pattern as Entry 64's computeNextStreakState/computeCommunityScore. Added src/lib/actions/seals.test.ts covering grantSeal and revokeSeal, following the existing vi.hoisted/vi.mock pattern from votes.test.ts and reviews.test.ts.",
+    "context": "The seals.ts tests specifically pin down the Entry 71 conditional that had no coverage: maybeSetDiscoveredBy is called when an admin grants a Certified Banger seal, and is NOT called when the granted seal is any other seal type — the exact scoping rule that made grantSeal need a guard in the first place. A separate test also pins down that revokeSeal never touches discovered-by credit at all, matching Entry 71's deliberate 'permanent once earned' decision.",
+    "options": [],
+    "decision": "82 tests total now (61 existing + 21 new across the two new files), all passing; build/typecheck/lint stayed clean throughout.",
+    "rationale": "This closes both gaps the self-assessment named without expanding scope beyond what was actually flagged — no attempt to backfill tests for the other 12 untested action modules, which weren't part of what was asked and don't have the same freshly-added, previously-unverified conditional logic that seals.ts and the chat route did."
   }
 ]
