@@ -3,11 +3,11 @@ const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 const RELATIVE_CUTOFF_DAYS = 30;
 
-// Pure — used only by the homepage sidebar's "Recently gained Certified
-// Bangers" list (Entry 77). The rest of the app keeps its existing absolute-
-// date convention (toLocaleDateString) everywhere else; this is additive
-// for the one place a "recent activity" feed genuinely reads better as
-// relative time.
+// Pure — used by the homepage sidebar's "Recently gained Certified Bangers"
+// list (Entry 77) and the /reviews page's review feed (Entry 78). The rest
+// of the app keeps its existing absolute-date convention (toLocaleDateString)
+// everywhere else; this is additive for "recent activity" feeds specifically,
+// where relative time genuinely reads better.
 export function formatRelativeTime(date: Date, now: Date = new Date()): string {
   const diffMs = now.getTime() - date.getTime();
 

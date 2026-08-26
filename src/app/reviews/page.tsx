@@ -2,10 +2,10 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { TitleStatus, TitleType } from "@/generated/prisma/enums";
 import { LiveSearchInput } from "@/components/live-search-input";
-import { LatestReviews } from "@/components/latest-reviews";
+import { ReviewList } from "@/components/review-list";
 import { searchTitleIds } from "@/lib/title-search";
 import { getDistinctGenres } from "@/lib/genres";
-import { INPUT, LABEL, BUTTON_PRIMARY } from "@/lib/ui-classes";
+import { INPUT, LABEL, BUTTON_PRIMARY, CONTAINER } from "@/lib/ui-classes";
 
 const REVIEWS_PER_PAGE = 24;
 
@@ -53,6 +53,7 @@ export default async function ReviewsPage(props: PageProps<"/reviews">) {
       id: true,
       bodyText: true,
       overallScore: true,
+      createdAt: true,
       title: { select: { id: true, name: true, coverUrl: true } },
       user: { select: { username: true, role: true } },
       sealAwards: { select: { sealType: { select: { name: true } } } },
@@ -60,7 +61,7 @@ export default async function ReviewsPage(props: PageProps<"/reviews">) {
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-8">
+    <div className={CONTAINER}>
       <h1 className="mb-6 font-display text-xl font-bold text-foreground">Reviews</h1>
 
       <form className="mb-8 flex flex-wrap items-end gap-4 rounded-xl border border-border bg-panel p-4" action="/reviews">
@@ -111,7 +112,7 @@ export default async function ReviewsPage(props: PageProps<"/reviews">) {
       </form>
 
       {reviews.length > 0 ? (
-        <LatestReviews reviews={reviews} />
+        <ReviewList reviews={reviews} />
       ) : (
         <p className="py-6 text-sm text-muted">No reviews match these filters.</p>
       )}
