@@ -6,7 +6,7 @@ import { LatestReviews } from "@/components/latest-reviews";
 import { HomeSidebar } from "@/components/home-sidebar";
 import { getDistinctGenres } from "@/lib/genres";
 import { TitleType, TitleStatus } from "@/generated/prisma/enums";
-import { INPUT, LABEL, BUTTON_PRIMARY, CARD } from "@/lib/ui-classes";
+import { INPUT, LABEL, BUTTON_HERO, CARD, CARD_HOVER, HERO_ICON_TINTS } from "@/lib/ui-classes";
 import { SectionHeading } from "@/components/section-heading";
 
 // No real Discord server yet — swap in the real invite URL once one
@@ -58,7 +58,7 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="flex flex-1 flex-col bg-background">
+    <div className="flex flex-1 flex-col">
       <div className="relative overflow-hidden border-b border-border">
         <Image
           src="/Hero-Background.jpg"
@@ -72,7 +72,10 @@ export default async function Home() {
         <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 px-4 pb-6 pt-16 sm:pt-20 lg:flex-row lg:items-center lg:text-left">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             <h1 className="animate-reveal font-display text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
-              Certified<span className="text-accent">Banger</span>
+              Certified
+              <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
+                Banger
+              </span>
             </h1>
             <p className="animate-reveal mt-4 max-w-2xl text-lg leading-8 text-foreground/90 [animation-delay:100ms]">
               CertifiedBanger is a place to write reviews for manga you&apos;d call peak — a
@@ -84,7 +87,11 @@ export default async function Home() {
           <div className="animate-reveal relative shrink-0 [animation-delay:200ms]">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 -z-10 scale-125 rounded-full bg-accent/25 blur-3xl"
+              className="pointer-events-none absolute inset-0 -z-10 scale-125 rounded-full bg-accent/30 blur-3xl"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-10 translate-x-10 translate-y-6 scale-110 rounded-full bg-accent-2/25 blur-3xl"
             />
             <Image
               src="/CB-WAIFU.png"
@@ -133,9 +140,13 @@ export default async function Home() {
               <div
                 key={step.title}
                 style={{ animationDelay: `${300 + i * 100}ms` }}
-                className={`animate-reveal flex gap-3 p-4 ${CARD}`}
+                className={`animate-reveal flex gap-3 p-4 ${CARD} ${CARD_HOVER}`}
               >
-                <step.icon aria-hidden="true" className="h-5 w-5 shrink-0 text-accent" />
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${HERO_ICON_TINTS[i]}`}
+                >
+                  <step.icon aria-hidden="true" className="h-5 w-5" />
+                </div>
                 <div>
                   <div className="font-display text-sm font-bold text-foreground">{step.title}</div>
                   <p className="mt-1 text-sm text-muted">{step.description}</p>
@@ -202,7 +213,7 @@ export default async function Home() {
               </select>
             </label>
 
-            <button type="submit" className={`h-[38px] ${BUTTON_PRIMARY}`}>
+            <button type="submit" className={`h-[38px] ${BUTTON_HERO}`}>
               Search
             </button>
           </form>
@@ -230,7 +241,7 @@ export default async function Home() {
             )}
 
             {certifiedBangers.length > 0 && (
-              <div className="rounded-2xl border border-accent/20 bg-gradient-to-b from-accent/10 via-accent/[0.03] to-transparent p-6">
+              <div className="rounded-2xl border border-accent/25 bg-gradient-to-br from-accent/15 via-accent-2/[0.06] to-transparent p-6 shadow-[0_0_40px_-20px_rgba(255,61,154,0.35)]">
                 <SectionHeading emoji="🏅" href="/seals">
                   Certified Bangers
                 </SectionHeading>

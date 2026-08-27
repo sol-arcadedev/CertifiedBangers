@@ -13,7 +13,13 @@ const FOCUS_RING =
 // "the app registered your click" press feedback — cheap, universally
 // recognized, and the same duration/easing as the rest of each button's
 // transition-all so it doesn't feel like a separate bolted-on effect.
-export const BUTTON_PRIMARY = `inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-b from-accent-hover to-accent px-5 py-2 text-sm font-medium text-accent-foreground shadow-[0_4px_14px_-4px_rgba(226,163,61,0.5)] transition-all hover:brightness-110 hover:shadow-[0_6px_18px_-4px_rgba(226,163,61,0.65)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none disabled:hover:brightness-100 disabled:active:scale-100 ${FOCUS_RING}`;
+export const BUTTON_PRIMARY = `inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-b from-accent-hover to-accent px-5 py-2 text-sm font-medium text-accent-foreground shadow-[0_4px_16px_-4px_rgba(255,138,61,0.55)] transition-all hover:brightness-110 hover:shadow-[0_6px_22px_-4px_rgba(255,138,61,0.75)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none disabled:hover:brightness-100 disabled:active:scale-100 ${FOCUS_RING}`;
+
+// Reserved for marketing/brand moments (hero CTA, spotlight sections) —
+// the two-tone accent+accent-2 gradient reads as "bold" precisely because
+// it's not the button used for every form submit across the admin panel;
+// see the --accent-2 comment in globals.css for the same reasoning.
+export const BUTTON_HERO = `inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent via-accent to-accent-2 bg-[length:160%_100%] bg-left px-6 py-2.5 text-sm font-semibold text-accent-foreground shadow-[0_8px_24px_-6px_rgba(255,61,154,0.5)] transition-all hover:bg-right hover:shadow-[0_10px_30px_-6px_rgba(255,61,154,0.65)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 ${FOCUS_RING}`;
 
 export const BUTTON_SECONDARY = `inline-flex items-center justify-center gap-2 rounded-full border border-border-strong px-5 py-2 text-sm font-medium text-foreground transition-all hover:bg-panel-hover active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 ${FOCUS_RING}`;
 
@@ -38,9 +44,19 @@ export const CARD = "rounded-xl border border-border bg-panel";
 // brand color on every hover instead of a generic drop shadow any site
 // could have.
 export const CARD_HOVER =
-  "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_30px_-8px_rgba(226,163,61,0.35)] active:scale-[0.98] active:duration-75";
+  "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-[0_16px_36px_-8px_rgba(255,138,61,0.4)] active:scale-[0.98] active:duration-75";
 
 export const LINK = `text-accent underline-offset-2 hover:underline rounded-sm ${FOCUS_RING}`;
+
+// Alternating icon-chip tints for the homepage "how it works" strip (Entry
+// 80) — cycling accent/accent-2 instead of three identical flat-colored
+// icons is what makes that row read as deliberately colorful rather than
+// monochrome-with-icons.
+export const HERO_ICON_TINTS = [
+  "bg-accent/15 text-accent",
+  "bg-accent-2/15 text-accent-2",
+  "bg-accent/15 text-accent",
+];
 
 export const PILL_BADGE =
   "inline-flex items-center gap-1 rounded-full bg-panel-hover px-2.5 py-0.5 text-xs font-medium text-foreground";

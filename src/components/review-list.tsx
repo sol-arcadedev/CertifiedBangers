@@ -2,6 +2,7 @@ import Link from "next/link";
 import { UsernameLabel } from "@/components/username-label";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { CARD, CARD_HOVER } from "@/lib/ui-classes";
+import { reviewScoreColor } from "@/lib/score-color";
 
 type ReviewListItem = {
   id: string;
@@ -46,7 +47,9 @@ export function ReviewList({ reviews }: { reviews: ReviewListItem[] }) {
                   {review.title.name}
                 </h3>
                 {review.overallScore !== null && (
-                  <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-sm font-bold text-accent">
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-bold ${reviewScoreColor(review.overallScore)}`}
+                  >
                     {review.overallScore.toFixed(1)}
                   </span>
                 )}
@@ -56,14 +59,17 @@ export function ReviewList({ reviews }: { reviews: ReviewListItem[] }) {
                 <UsernameLabel username={review.user.username} role={review.user.role} />
                 <span aria-hidden="true">·</span>
                 <span>{formatRelativeTime(review.createdAt)}</span>
-                {review.sealAwards.map((award, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent"
-                  >
-                    {award.sealType.name === "Certified Banger" ? "🏅" : "💎"} {award.sealType.name}
-                  </span>
-                ))}
+                {review.sealAwards.map((award, i) => {
+                  const isCertifiedBanger = award.sealType.name === "Certified Banger";
+                  return (
+                    <span
+                      key={i}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${isCertifiedBanger ? "bg-accent/15 text-accent" : "bg-sky-400/15 text-sky-400"}`}
+                    >
+                      {isCertifiedBanger ? "🏅" : "💎"} {award.sealType.name}
+                    </span>
+                  );
+                })}
               </div>
 
               <p className="mt-2.5 line-clamp-3 text-sm leading-6 text-foreground/80 sm:line-clamp-4">

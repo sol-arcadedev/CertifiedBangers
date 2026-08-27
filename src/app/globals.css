@@ -5,26 +5,36 @@
    the old default-light-with-a-dark:-escape-hatch setup. Light mode is
    still available for anyone whose OS explicitly prefers it. */
 :root {
-  --background: #0b0f17;
-  --panel: #131a26;
-  --panel-hover: #1a2230;
-  --foreground: #e8ebf0;
-  --muted: #8b93a3;
-  --accent: #e2a33d;
-  --accent-hover: #eeb459;
-  --accent-foreground: #1a1206;
+  --background: #0a0a13;
+  --panel: #141220;
+  --panel-hover: #1c1930;
+  --foreground: #f1f1f6;
+  --muted: #948fa8;
+  --accent: #ff8a3d;
+  --accent-hover: #ffab6b;
+  --accent-foreground: #1a0e02;
+  /* Entry 80 — bold/vibrant redesign. A second, hot-pink accent gives the
+     site a real duotone identity (hero wordmark, glow mesh, decorative
+     gradients) instead of the single muted amber everything used to
+     funnel through. Reserved for marketing/brand moments (hero, section
+     spotlights) rather than every button — see BUTTON_PRIMARY in
+     ui-classes.ts for why the two aren't blended indiscriminately. */
+  --accent-2: #ff3d9a;
+  --accent-2-hover: #ff6bb3;
+  --accent-2-foreground: #2b0416;
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.16);
   /* Semantic tokens (Entry 66) — the exact shades already used ad hoc
      throughout the app (emerald/amber/red-400) for score tiers, form
      success/error text, and destructive actions, now named so new code
      reaches for a token instead of picking a Tailwind palette shade by
-     eye each time. */
-  --success: #34d399;
+     eye each time. Entry 80: pushed more saturated to match the bolder
+     palette. */
+  --success: #1fe0a0;
   --success-foreground: #052e1f;
-  --warning: #fbbf24;
+  --warning: #ffc93c;
   --warning-foreground: #2b1a02;
-  --danger: #f87171;
+  --danger: #ff5470;
   --danger-foreground: #2c0b0b;
 }
 
@@ -37,6 +47,9 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-hover: var(--accent-2-hover);
+  --color-accent-2-foreground: var(--accent-2-foreground);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-success: var(--success);
@@ -99,16 +112,19 @@
     --panel-hover: #f0f1f4;
     --foreground: #14171c;
     --muted: #666e7c;
-    --accent: #b6791f;
-    --accent-hover: #a06818;
+    --accent: #e8641c;
+    --accent-hover: #d1560f;
     --accent-foreground: #ffffff;
+    --accent-2: #d6207a;
+    --accent-2-hover: #b91868;
+    --accent-2-foreground: #ffffff;
     --border: rgba(0, 0, 0, 0.09);
     --border-strong: rgba(0, 0, 0, 0.18);
-    --success: #059669;
+    --success: #00996f;
     --success-foreground: #ffffff;
     --warning: #b45309;
     --warning-foreground: #ffffff;
-    --danger: #dc2626;
+    --danger: #e0245e;
     --danger-foreground: #ffffff;
   }
 }
@@ -124,7 +140,36 @@
 }
 
 body {
+  position: relative;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Entry 80 — sitewide atmosphere. A fixed, heavily-blurred two-color mesh
+   behind every page so flat dark panels read as "moody" rather than
+   "empty" even far from the hero. Low opacity + huge blur radius is
+   deliberate: it should read as ambient color in peripheral vision, never
+   as a shape competing with foreground content. -z-10 (not a negative
+   z-index on body itself) keeps it behind panels without pulling them
+   into a stacking context that would break their own z-index use. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background:
+    radial-gradient(48% 40% at 8% -6%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%),
+    radial-gradient(42% 36% at 100% 12%, color-mix(in srgb, var(--accent-2) 20%, transparent), transparent 70%),
+    radial-gradient(40% 32% at 50% 100%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+}
+
+@media (prefers-color-scheme: light) {
+  body::before {
+    background:
+      radial-gradient(48% 40% at 8% -6%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
+      radial-gradient(42% 36% at 100% 12%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 70%),
+      radial-gradient(40% 32% at 50% 100%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%);
+  }
 }

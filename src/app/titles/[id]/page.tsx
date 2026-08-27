@@ -13,6 +13,7 @@ import { LibraryWidget } from "@/components/library-widget";
 import { formatStartDate, formatSource } from "@/lib/title-format";
 import { stripHtml } from "@/lib/strip-html";
 import { BUTTON_PRIMARY, LINK, CARD } from "@/lib/ui-classes";
+import { reviewScoreColor } from "@/lib/score-color";
 import type { LibraryStatus } from "@/generated/prisma/enums";
 
 const LIBRARY_STATUS_DISPLAY: { status: LibraryStatus; label: string; emoji: string }[] = [
@@ -281,7 +282,9 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                 <Link href={`/profile/${review.user.username}`} className="font-medium text-foreground hover:text-accent">
                   <UsernameLabel username={review.user.username} role={review.user.role} />
                 </Link>
-                <span className="text-sm font-medium text-accent">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-sm font-bold ${review.overallScore !== null ? reviewScoreColor(review.overallScore, categories[0]?.scaleMax ?? 10) : ""}`}
+                >
                   {review.overallScore?.toFixed(2)} / {categories[0]?.scaleMax ?? 10}
                 </span>
               </div>
@@ -293,7 +296,7 @@ export default async function TitleDetailPage(props: PageProps<"/titles/[id]">) 
                       className={
                         award.sealType.name === "Certified Banger"
                           ? "inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent"
-                          : "inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400"
+                          : "inline-flex items-center gap-1 rounded-full bg-sky-400/15 px-2 py-0.5 text-xs font-medium text-sky-400"
                       }
                     >
                       {award.sealType.name === "Certified Banger" ? "🏅" : "💎"} {award.sealType.name}

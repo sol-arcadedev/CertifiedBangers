@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UsernameLabel } from "@/components/username-label";
 import { CARD, CARD_HOVER } from "@/lib/ui-classes";
+import { reviewScoreColor } from "@/lib/score-color";
 
 type LatestReview = {
   id: string;
@@ -36,19 +37,24 @@ export function LatestReviews({ reviews }: { reviews: LatestReview[] }) {
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
               {review.overallScore !== null && (
-                <span className="inline-flex items-center rounded-md bg-accent/15 px-1.5 py-0.5 text-xs font-semibold text-accent">
+                <span
+                  className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-semibold ${reviewScoreColor(review.overallScore)}`}
+                >
                   {review.overallScore.toFixed(1)}
                 </span>
               )}
-              {review.sealAwards.map((award, i) => (
-                <span
-                  key={i}
-                  aria-hidden="true"
-                  className="inline-flex items-center rounded-md bg-panel-hover px-1.5 py-0.5 text-xs"
-                >
-                  {award.sealType.name === "Certified Banger" ? "🏅" : award.sealType.name}
-                </span>
-              ))}
+              {review.sealAwards.map((award, i) => {
+                const isCertifiedBanger = award.sealType.name === "Certified Banger";
+                return (
+                  <span
+                    key={i}
+                    aria-hidden="true"
+                    className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs ${isCertifiedBanger ? "bg-accent/15 text-accent" : "bg-sky-400/15 text-sky-400"}`}
+                  >
+                    {isCertifiedBanger ? "🏅" : award.sealType.name}
+                  </span>
+                );
+              })}
             </div>
             <div className="mt-1.5 text-xs text-muted">
               <UsernameLabel username={review.user.username} role={review.user.role} />

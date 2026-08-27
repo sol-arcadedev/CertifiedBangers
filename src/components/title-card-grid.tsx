@@ -100,7 +100,7 @@ export function TitleCardGrid({ titles }: { titles: TitleCard[] }) {
                 )}
                 {(title.certifiedBangerCount ?? 0) > 0 && (
                   <span
-                    className={`absolute left-1.5 flex h-5 items-center justify-center gap-0.5 rounded-full bg-black/70 px-2 text-xs leading-none shadow-[0_0_10px_rgba(226,163,61,0.5)] ring-2 ring-accent/60 backdrop-blur-sm ${title.rank !== undefined ? "top-8" : "top-1.5"}`}
+                    className={`absolute left-1.5 flex h-5 items-center justify-center gap-0.5 rounded-full bg-black/70 px-2 text-xs leading-none shadow-[0_0_12px_rgba(255,61,154,0.55)] ring-2 ring-accent-2/60 backdrop-blur-sm ${title.rank !== undefined ? "top-8" : "top-1.5"}`}
                   >
                     <span aria-hidden="true">🏅</span>
                   </span>
